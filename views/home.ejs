@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hash Generator - HealthLOQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+            font-family: DM Sans, sans-serif;
+        }
+        .hash-generator-container{
+            width: 100%;
+            max-width: 1200px;
+            margin: 50px auto;
+        }
+        .heading{
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+        .heading span{
+            color: #28A745;
+        }
+        .last-synced{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .last-synced-date{
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .last-synced-date h3{
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .sync-now-btn{
+            font-size: 20px;
+            line-height: 30px;
+            font-weight: 400;
+            border: 1px solid #28A745;
+            background-color: #28A745;
+            color: #fff;
+            padding: 10px 20px;
+            text-transform: capitalize;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0px 3px 1px -2px rgba(0, 0, 0,  20%), 0px 2px 2px 0px rgba(0, 0, 0,  14%), 0px 1px 5px 0px rgba(0, 0, 0, 12%);
+        }
+        .sync-now-btn:hover{
+            background-color: #EAF7ED;
+            color: #28A745;
+            box-shadow: 0px 2px 4px -1px rgba(0,0, 0,  20%), 0px 4px 5px 0px rgba(0, 0, 0,  14%), 0px 1px 10px 0px rgba(0, 0, 0,  12%);
+        }
+        .synced-files-ul{
+            display: flex;
+            flex-direction: column;
+        }
+        .synced-file-li{
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border: 2px solid #28A745;
+            margin-bottom: 20px;
+            border-radius:10px;
+        }
+        .synced-file-li div{
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 5px;
+        }
+        .synced-file-li div h3{
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .last-synced-leftside{
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <div class="hash-generator-container">
+        <h1 class="heading"><span>HealthLOQ</span> hash generator overview</h1>
+        <div class="last-synced">
+            <div class="last-synced-leftside">
+                <div class="last-synced-date">
+                    <h3>Last synced:</h3>
+                    <p><%=lastSyncedDate %></p>
+                </div>
+                <div class="last-synced-date">
+                    <h3>Total Files:</h3>
+                    <p><%=totalFiles %></p>
+                </div>
+            </div>
+            <!-- <button class="sync-now-btn" onclick=<% syncNow() %>>Sync Now</button> -->
+        </div>
+        <h1 class="heading">Last few synced files</h1>
+        <div class="synced-files-ul">
+            <% for(let item of files){ %>
+            <div class="synced-file-li">
+                <div><h3>File Name:</h3><p><%=item?.fileName %></p></div>
+                <div><h3>File Size:</h3><p><%=item?.state?.size %></p></div>
+                <div><h3>File Path:</h3><p><%=item?.path %></p></div>
+                <div><h3>CreatedAt:</h3><p><%=item?.state?.birthtime %></p></div>
+                <div><h3>ModifiedAt:</h3><p><%=item?.state?.mtime %></p></div>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "hash",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "author": "IIHGlobal",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "chokidar": "^3.5.3",
+    "dotenv": "^8.2.0",
+    "ejs": "^3.1.8",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "moment": "^2.29.4",
+    "node-localstorage": "^2.2.1"
+  }
+}
