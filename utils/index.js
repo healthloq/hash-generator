@@ -39,8 +39,7 @@ exports.getHealthLoqApiPayload = (oldData, newData) => {
 exports.generateJwtToken = () =>
   jwt.sign(
     { organization_id: process.env.ORGANIZATION_ID },
-    process.env.JWT_SECRET,
-    { expiresIn: 5 * 60 * 1000 } // 5 Min
+    process.env.JWT_SECRET
   );
 
 /**

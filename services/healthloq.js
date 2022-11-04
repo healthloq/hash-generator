@@ -1,17 +1,15 @@
 const { default: axios } = require("axios");
-const { generateJwtToken } = require("../utils");
 
 exports.syncHash = async (data) => {
   try {
     if (data.hashList.length || data.deletedHashList.length) {
       console.log("Start syncing with healthloq db...");
-      const token = generateJwtToken();
       const response = await axios.post(
         `${process.env.HEALTHLOQ_API_BASE_URL}/document-hash/createOrDelete`,
         data,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${process.env.JWT_TOKEN}`,
           },
         }
       );
