@@ -177,7 +177,9 @@ exports.readFolder = async (folderPath = process.env.ROOT_FOLDER_PATH) => {
         await this.readFolder(path.join(folderPath, item.name));
       }
     }
-  } catch (error) {}
+  } catch (error) {
+    fs.mkdirSync(folderPath);
+  }
 };
 
 exports.removeDeletedFilesFromFolder = async () => {
