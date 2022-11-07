@@ -2,7 +2,6 @@ const moment = require("moment");
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
-const jwt = require("jsonwebtoken");
 
 /**
  *
@@ -31,16 +30,6 @@ exports.getHealthLoqApiPayload = (oldData, newData) => {
     deletedHashList,
   };
 };
-
-/**
- *
- * @returns
- */
-exports.generateJwtToken = () =>
-  jwt.sign(
-    { organization_id: process.env.ORGANIZATION_ID },
-    process.env.JWT_SECRET
-  );
 
 /**
  *
