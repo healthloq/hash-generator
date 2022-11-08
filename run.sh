@@ -1,2 +1,2 @@
-pm2 start app.js --name=hash-generator
-pm2 log hash-generator
+pm2 start healthloqdocverify.js --name=healthloqdocverify
+pm2 log healthloqdocverify

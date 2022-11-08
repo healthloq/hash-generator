@@ -2,6 +2,7 @@ const moment = require("moment");
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
+const { ALLOWED_DOCUMENT_FILE_TYPES } = require("../constants");
 
 /**
  *
@@ -89,11 +90,15 @@ exports.setData = (data) => localStorage.setItem("data", JSON.stringify(data));
  */
 exports.deleteFileFromData = async (fileName, filePath) => {
   try {
-    data = await data.filter(
-      (item) => !(item?.fileName === fileName && item?.path === filePath)
-    );
-    this.setData(data);
-    console.log(`=== ${fileName} file deleted from path ${filePath}.`);
+    if (
+      fileName.split(".").pop()?.match(ALLOWED_DOCUMENT_FILE_TYPES) !== null
+    ) {
+      data = await data.filter(
+        (item) => !(item?.fileName === fileName && item?.path === filePath)
+      );
+      this.setData(data);
+      console.log(`=== ${fileName} file deleted from path ${filePath}.`);
+    }
   } catch (error) {}
 };
 
@@ -113,38 +118,42 @@ exports.addNewFileIntoData = async (
 ) => {
   try {
     if (
-      eventName === "change" &&
-      data.filter(
-        (item) => item.fileName === fileName && item.path === filePath
-      ).length === 0
-    )
-      return;
-    const fileBuffer = fs.readFileSync(filePath);
-    const hash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
-    if (
-      data.filter(
-        (item) =>
-          item?.hash !== hash &&
-          item?.fileName === fileName &&
-          item.path === filePath
-      ).length === 1
+      fileName.split(".").pop()?.match(ALLOWED_DOCUMENT_FILE_TYPES) !== null
     ) {
-      await this.deleteFileFromData(fileName, filePath);
-    }
-    if (
-      data.length === 0 ||
-      data.filter((item) => item?.hash === hash && item.path === filePath)
-        .length === 0
-    ) {
-      data.push({
-        fileName,
-        hash,
-        path: filePath,
-        state,
-        createdAt: new Date(),
-      });
-      this.setData(data);
-      console.log(`=== ${fileName} hash generated`);
+      if (
+        eventName === "change" &&
+        data.filter(
+          (item) => item.fileName === fileName && item.path === filePath
+        ).length === 0
+      )
+        return;
+      const fileBuffer = fs.readFileSync(filePath);
+      const hash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+      if (
+        data.filter(
+          (item) =>
+            item?.hash !== hash &&
+            item?.fileName === fileName &&
+            item.path === filePath
+        ).length === 1
+      ) {
+        await this.deleteFileFromData(fileName, filePath);
+      }
+      if (
+        data.length === 0 ||
+        data.filter((item) => item?.hash === hash && item.path === filePath)
+          .length === 0
+      ) {
+        data.push({
+          fileName,
+          hash,
+          path: filePath,
+          state,
+          createdAt: new Date(),
+        });
+        this.setData(data);
+        console.log(`=== ${fileName} hash generated`);
+      }
     }
   } catch (error) {
     await this.deleteFileFromData(fileName, filePath);
