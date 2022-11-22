@@ -7,7 +7,7 @@ const {
 } = require("../utils");
 const fs = require("fs");
 
-exports.renderHomePage = async (req, res) => {
+exports.getDashboardData = async (req, res) => {
   const data = await getData();
   const lastSyncedDate = getDateWith12HourTimeFormate(
     sort("createdAt", data).reverse()[0]?.createdAt
@@ -29,26 +29,33 @@ exports.renderHomePage = async (req, res) => {
           },
         })) || [],
   });
-  // res.render("home", {
-  //   lastSyncedDate,
-  //   totalFiles: data.length,
-  //   files:
-  //     sort("createdAt", data)
-  //       .reverse()
-  //       .slice(0, 5)
-  //       ?.map((item) => ({
-  //         ...item,
-  //         state: {
-  //           ...item?.state,
-  //           mtime: getDateWith12HourTimeFormate(item.state.mtime),
-  //           birthtime: getDateWith12HourTimeFormate(item.state.birthtime),
-  //         },
-  //       })) || [],
-  //   syncNow: async () => {
-  //     await removeDeletedFilesFromFolder();
-  //     await readFolder();
-  //   },
-  // });
+};
+
+exports.renderHomePage = async (req, res) => {
+  const data = await getData();
+  const lastSyncedDate = getDateWith12HourTimeFormate(
+    sort("createdAt", data).reverse()[0]?.createdAt
+  );
+  res.render("home", {
+    lastSyncedDate,
+    totalFiles: data.length,
+    files:
+      sort("createdAt", data)
+        .reverse()
+        .slice(0, 5)
+        ?.map((item) => ({
+          ...item,
+          state: {
+            ...item?.state,
+            mtime: getDateWith12HourTimeFormate(item.state.mtime),
+            birthtime: getDateWith12HourTimeFormate(item.state.birthtime),
+          },
+        })) || [],
+    syncNow: async () => {
+      await removeDeletedFilesFromFolder();
+      await readFolder();
+    },
+  });
 };
 
 exports.verifyDocuments = async (req, res) => {

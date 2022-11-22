@@ -51,7 +51,7 @@ const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
 })();
 
 app.use(cors());
-app.use("/dashboard", require("./routes/dashboard"));
+app.use("/", require("./routes/dashboard"));
 
 app.listen(port, () =>
   console.log(

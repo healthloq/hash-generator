@@ -41,7 +41,7 @@ export default function Home() {
   const [data, setData] = useState(null);
   useEffect(() => {
     axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/dashboard`)
+      .get(`${process.env.REACT_APP_API_BASE_URL}/dashboard/overview-data`)
       .then((res) => {
         setData(res.data);
       })

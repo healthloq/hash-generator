@@ -23,9 +23,12 @@ export default function DocumentVerification() {
     if (folderPath?.trim()) {
       setIsLoading(true);
       axios
-        .post(`${process.env.REACT_APP_API_BASE_URL}/verify-documents`, {
-          folderPath,
-        })
+        .post(
+          `${process.env.REACT_APP_API_BASE_URL}/dashboard/verify-documents`,
+          {
+            folderPath,
+          }
+        )
         .then((res) => {
           setDocumentVerificationRes(res.data);
           setIsLoading(false);
