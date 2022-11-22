@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const port = process.env.PORT || 7001;
 const app = express();
+const cors = require("cors");
 const chokidar = require("chokidar");
 const { LocalStorage } = require("node-localstorage");
 global.localStorage = new LocalStorage("./scratch");
@@ -49,7 +50,8 @@ const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
   });
 })();
 
-app.use("/", require("./routes/dashboard"));
+app.use(cors());
+app.use("/dashboard", require("./routes/dashboard"));
 
 app.listen(port, () =>
   console.log(
