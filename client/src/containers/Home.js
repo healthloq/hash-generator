@@ -3,6 +3,7 @@ import { Body } from "../components/common";
 import { Typography, makeStyles, Box } from "../components";
 import axios from "axios";
 import { DocumentVerification } from "../components/Home";
+import moment from "moment";
 
 const useStyle = makeStyles((theme) => ({
   homeContainer: {
@@ -62,7 +63,9 @@ export default function Home() {
         >
           <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
             <Typography variant="h6">Last synced:</Typography>
-            <Typography variant="body2">{data?.lastSyncedDate}</Typography>
+            <Typography variant="body2">
+              {moment(data?.lastSyncedDate).format("MM/DD/YYYY hh:mm A")}
+            </Typography>
           </Box>
           <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
             <Typography variant="h6">Total Files:</Typography>
@@ -112,7 +115,9 @@ export default function Home() {
                 >
                   <Typography variant="h6">Created:</Typography>
                   <Typography variant="body2">
-                    {file?.state?.birthtime}
+                    {moment(file?.state?.birthtime).format(
+                      "MM/DD/YYYY hh:mm A"
+                    )}
                   </Typography>
                 </Box>
                 <Box
@@ -121,7 +126,9 @@ export default function Home() {
                   justifyContent={"flex-start"}
                 >
                   <Typography variant="h6">Modified:</Typography>
-                  <Typography variant="body2">{file?.state?.mtime}</Typography>
+                  <Typography variant="body2">
+                    {moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A")}
+                  </Typography>
                 </Box>
               </Box>
             );

@@ -21,3 +21,24 @@ exports.syncHash = async (data) => {
     console.log("sync hash with healthloq catch block", error);
   }
 };
+
+exports.verifyDocument = async (params) => {
+  try {
+    const response = await axios.post(
+      `${process.env.HEALTHLOQ_API_BASE_URL}/document-hash/verify-document`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log(error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};

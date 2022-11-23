@@ -175,7 +175,19 @@ export const theme = () => {
             },
           }),
         },
+        {
+          props: { disabled: true },
+          style: ({ ownerState, theme }) => ({
+            borderColor: "rgba(0, 0, 0, 0.12)",
+          }),
+        },
       ],
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          height: "max-content",
+          padding: "6px 30px",
+        }),
+      },
     },
     MuiLink: {
       variants: [
@@ -223,21 +235,68 @@ export const theme = () => {
         },
       ],
     },
-    MuiTextField: {
+    MuiSelect: {
       variants: [
         {
           props: { variant: "standard" },
           style: ({ ownerState, theme }) => ({
             border: `2px solid ${theme.palette.primary.main}`,
+            height: "max-content",
+            borderRadius: 5,
+          }),
+        },
+      ],
+      styleOverrides: {
+        select: ({ ownerState, theme }) => ({
+          padding: "8px 15px ",
+          minHeight: "unset",
+          "&>p": {
+            textTransform: "capitalize",
+          },
+          "&:focus": {
+            backgroundColor: "transparent",
+          },
+        }),
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          "&>p": {
+            textTransform: "capitalize",
+          },
+          "&:hover": {
+            "&>p": {
+              color: theme.palette.primary.main,
+            },
+          },
+        }),
+      },
+    },
+    MuiListItemIcon: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          minWidth: "unset",
+        }),
+      },
+    },
+    MuiTextField: {
+      variants: [
+        {
+          props: { variant: "standard" },
+          style: ({ ownerState, theme }) => ({
+            "&>div": {
+              border: `2px solid ${theme.palette.primary.main}`,
+            },
           }),
         },
       ],
       styleOverrides: {
         root: ({ ownerState, theme }) => ({
           width: "100%",
-          padding: "8px 15px",
-          borderRadius: 5,
           "&>div": {
+            padding: "8px 15px",
+            borderRadius: 5,
             "&>input": {
               padding: 0,
               fontSize: 18,

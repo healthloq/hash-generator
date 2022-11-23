@@ -6,6 +6,7 @@ const cors = require("cors");
 const chokidar = require("chokidar");
 const { LocalStorage } = require("node-localstorage");
 global.localStorage = new LocalStorage("./scratch");
+const server = require("http").createServer(app);
 
 app.set("view engine", "ejs");
 
@@ -50,11 +51,35 @@ const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
   });
 })();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use("/", require("./routes/dashboard"));
 
-app.listen(port, () =>
+server.listen(port, () =>
   console.log(
     `Check basic hash generation overview visit http://localhost:${port} url.`
   )
 );
+
+module.exports = io = require("socket.io")(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Access-Control-Allow-Origin", "Content-Type"],
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  app.socket = socket;
+  console.log("New User with socket Id: ", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("Disconnect User with socket Id: ", socket.id);
+  });
+});

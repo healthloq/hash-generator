@@ -192,3 +192,26 @@ exports.removeDeletedFilesFromFolder = async () => {
     this.setData(data);
   }
 };
+
+exports.getFolderOverview = async (folderPath, result = {}) => {
+  let files = [];
+  if (!result?.errorMsg) result["errorMsg"] = "";
+  if (!result?.filesCount) result["filesCount"] = 0;
+  try {
+    files = fs.readdirSync(folderPath, { withFileTypes: true });
+  } catch (error) {
+    result[
+      "errorMsg"
+    ] = `Invalid folder name. we are not able to get any folder on ${folderPath} this path.`;
+    return result;
+  }
+  for (let item of files) {
+    if (item.isFile()) {
+      const filePath = path.join(folderPath, item.name);
+      result["filesCount"] = result?.filesCount + 1;
+    } else {
+      await this.getFolderOverview(path.join(folderPath, item.name), result);
+    }
+  }
+  return result;
+};
