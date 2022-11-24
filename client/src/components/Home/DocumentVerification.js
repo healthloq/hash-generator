@@ -44,7 +44,9 @@ const useStyle = makeStyles((theme) => ({
       },
     },
   },
-  selectBox: {},
+  selectBox: {
+    minHeight: 45,
+  },
 }));
 
 const folderOverviewDataDefaultObj = {
