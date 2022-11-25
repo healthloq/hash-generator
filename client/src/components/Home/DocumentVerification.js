@@ -321,13 +321,7 @@ export default function DocumentVerification() {
               No of errors in files:&nbsp;
               {documentVerificationData?.data?.errorsCount}
             </Typography>
-            <CSVLink
-              data={documentVerificationData?.data?.files}
-              className={classes.exportBtn}
-              filename="document-verification-result"
-            >
-              <Button variant="contained">Export</Button>
-            </CSVLink>
+            <CSVDownload data={documentVerificationData?.data?.files} />
           </Box>
         )}
       </Box>

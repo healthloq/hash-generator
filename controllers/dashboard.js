@@ -10,6 +10,7 @@ const { verifyDocument } = require("../services/healthloq");
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
+const moment = require("moment");
 
 exports.getDashboardData = async (req, res) => {
   const data = await getData();
@@ -67,11 +68,12 @@ exports.verifyDocuments = async (req, res) => {
         files = fs.readdirSync(dirPath, { withFileTypes: true });
       } catch (error) {
         result.push({
-          fileName: "",
-          filePath: "",
-          isVerifiedDocument: null,
-          message: "Folder not found.",
-          folderPath: dirPath,
+          "File Name": "",
+          "File Path": "",
+          "Is Verified Document": null,
+          "Created": null,
+          "Message": "Folder not found.",
+          "Folder Path": dirPath,
         });
       }
       for (let item of files) {
@@ -94,19 +96,21 @@ exports.verifyDocuments = async (req, res) => {
             console.log("HealthLOQ document verification response: ", response);
             if (response?.status === "1") {
               result.push({
-                fileName: item.name,
-                filePath,
-                isVerifiedDocument: response?.data?.isVerifiedDocument,
-                message: response?.message,
-                folderPath: "",
+                "File Name": item.name,
+                "File Path": filePath,
+                "Is Verified Document": response?.data?.isVerifiedDocument,
+                "Created": (response?.data?.created_on) ? moment(response?.data?.created_on).format("DD MMMM, YYYY hh:mm A") : null,
+                "Message": response?.message,
+                "Folder Path": "",
               });
             } else {
               result.push({
-                fileName: item.name,
-                filePath,
-                isVerifiedDocument: null,
-                message: response?.message,
-                folderPath: "",
+                "File Name": item.name,
+                "File Path": filePath,
+                "Is Verified Document": null,
+                "Created": null,
+                "Message": response?.message,
+                "Folder Path": "",
               });
             }
             io.sockets.emit("documentVerificationUpdate", {
@@ -116,11 +120,12 @@ exports.verifyDocuments = async (req, res) => {
             });
           } catch (error) {
             result.push({
-              fileName: item.name,
-              filePath,
-              isVerifiedDocument: null,
-              message: "File not found.",
-              folderPath: "",
+              "File Name": item.name,
+              "File Path": filePath,
+              "Is Verified Document": null,
+              "Created": null,
+              "Message": "File not found.",
+              "Folder Path": "",
             });
           }
         } else {
