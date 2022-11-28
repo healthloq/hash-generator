@@ -15,10 +15,12 @@ const moment = require("moment");
 exports.getDashboardData = async (req, res) => {
   const data = await getData();
   res.status(200).json({
-    status: "success",
-    lastSyncedDate: sort("createdAt", data).reverse()[0]?.createdAt,
-    totalFiles: data.length,
-    files: sort("createdAt", data).reverse().slice(0, 5) || [],
+    status: "1",
+    data: {
+      lastSyncedDate: sort("createdAt", data).reverse()[0]?.createdAt,
+      totalFiles: data.length,
+      files: sort("createdAt", data).reverse() || [],
+    },
   });
 };
 
@@ -71,8 +73,8 @@ exports.verifyDocuments = async (req, res) => {
           "File Name": "",
           "File Path": "",
           "Is Verified Document": null,
-          "Created": null,
-          "Message": "Folder not found.",
+          Created: null,
+          Message: "Folder not found.",
           "Folder Path": dirPath,
         });
       }
@@ -99,8 +101,12 @@ exports.verifyDocuments = async (req, res) => {
                 "File Name": item.name,
                 "File Path": filePath,
                 "Is Verified Document": response?.data?.isVerifiedDocument,
-                "Created": (response?.data?.created_on) ? moment(response?.data?.created_on).format("DD MMMM, YYYY hh:mm A") : null,
-                "Message": response?.message,
+                Created: response?.data?.created_on
+                  ? moment(response?.data?.created_on).format(
+                      "DD MMMM, YYYY hh:mm A"
+                    )
+                  : null,
+                Message: response?.message,
                 "Folder Path": "",
               });
             } else {
@@ -108,8 +114,8 @@ exports.verifyDocuments = async (req, res) => {
                 "File Name": item.name,
                 "File Path": filePath,
                 "Is Verified Document": null,
-                "Created": null,
-                "Message": response?.message,
+                Created: null,
+                Message: response?.message,
                 "Folder Path": "",
               });
             }
@@ -123,8 +129,8 @@ exports.verifyDocuments = async (req, res) => {
               "File Name": item.name,
               "File Path": filePath,
               "Is Verified Document": null,
-              "Created": null,
-              "Message": "File not found.",
+              Created: null,
+              Message: "File not found.",
               "Folder Path": "",
             });
           }
@@ -136,10 +142,10 @@ exports.verifyDocuments = async (req, res) => {
     await readDir(folderPath);
     let response = {
       verifiedDocumentCount: result?.filter(
-        (item) => item?.isVerifiedDocument === true
+        (item) => item["Is Verified Document"] === "Yes"
       )?.length,
       unVerifiedDocumentCount: result?.filter(
-        (item) => item?.isVerifiedDocument === false
+        (item) => item["Is Verified Document"] === "No"
       )?.length,
     };
     res.status(200).json({

@@ -280,13 +280,25 @@ export const theme = () => {
         }),
       },
     },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          fontFamily: theme.typography.fontFamily,
+          fontSize: 16,
+          lineHeight: "20px",
+          fontWeight: theme.typography.fontWeightRegular,
+        }),
+      },
+    },
     MuiTextField: {
       variants: [
         {
-          props: { variant: "standard" },
+          props: { variant: "standard", styletype: "custom" },
           style: ({ ownerState, theme }) => ({
             "&>div": {
+              padding: "8px 15px",
               border: `2px solid ${theme.palette.primary.main}`,
+              borderRadius: 5,
             },
           }),
         },
@@ -295,8 +307,6 @@ export const theme = () => {
         root: ({ ownerState, theme }) => ({
           width: "100%",
           "&>div": {
-            padding: "8px 15px",
-            borderRadius: 5,
             "&>input": {
               padding: 0,
               fontSize: 18,
@@ -305,6 +315,14 @@ export const theme = () => {
               color: theme.palette.text.primary,
             },
           },
+        }),
+      },
+    },
+    MuiPopper: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          zIndex: 1,
+          borderRadius: 5,
         }),
       },
     },

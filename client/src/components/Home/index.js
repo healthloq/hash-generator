@@ -1,3 +1,3 @@
-import DocumentVerification from "./DocumentVerification";
+import DocumentVerifier from "./DocumentVerifier";
 
-export { DocumentVerification };
+export { DocumentVerifier };

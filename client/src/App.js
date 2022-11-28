@@ -1,7 +1,9 @@
 import "./App.css";
 import theme from "./theme";
-import { Box, ThemeProvider } from "./components";
-import Home from "./containers/Home";
+import { Box, ThemeProvider } from "@mui/material";
+import Main from "./Main";
+import { Provider } from "react-redux";
+import store from "./redux/store";
 
 window.addEventListener("resize", () => {
   let vh = window.innerHeight * 0.01;
@@ -10,11 +12,13 @@ window.addEventListener("resize", () => {
 
 function App() {
   return (
-    <Box>
+    <Provider store={store}>
       <ThemeProvider theme={theme()}>
-        <Home />
+        <Box>
+          <Main />
+        </Box>
       </ThemeProvider>
-    </Box>
+    </Provider>
   );
 }
 

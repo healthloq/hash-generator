@@ -10,7 +10,7 @@ import {
   ListItemIcon,
   MenuItem,
   Avatar,
-} from "../";
+} from "..";
 import axios from "axios";
 import { LinearWithValueLabel } from "../common";
 import { CSVLink, CSVDownload } from "react-csv";
@@ -72,7 +72,9 @@ const documentVerificationProgresDefaultObj = {
   isUpdated: false,
 };
 
-export default function DocumentVerification() {
+let isCsvDownload = false;
+
+export default function DocumentVerifier() {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
   const [organization_id, setOrganization_id] = useState("");
@@ -92,7 +94,15 @@ export default function DocumentVerification() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (folderPath?.trim() && organization_id) {
-      setDocumentVerificationData((pre) => ({ ...pre, isLoading: true }));
+      setDocumentVerificationProgres((pre) => ({
+        ...documentVerificationProgresDefaultObj,
+        totalFile: pre.totalFile,
+      }));
+      setDocumentVerificationData((pre) => ({
+        ...pre,
+        ...documentVerificationDataDefaultObj,
+        isLoading: true,
+      }));
       axios
         .post(
           `${process.env.REACT_APP_API_BASE_URL}/dashboard/verify-documents`,
@@ -102,18 +112,16 @@ export default function DocumentVerification() {
           }
         )
         .then((res) => {
+          isCsvDownload = true;
           setDocumentVerificationData((pre) => ({
             ...pre,
             isLoading: false,
             ...res.data,
           }));
-          setFolderOverviewData(folderOverviewDataDefaultObj);
-          setDocumentVerificationProgres(documentVerificationProgresDefaultObj);
         })
         .catch((err) => {
           console.log(err);
           setDocumentVerificationData((pre) => ({ ...pre, isLoading: false }));
-          setFolderOverviewData(folderOverviewDataDefaultObj);
         });
     }
   };
@@ -193,11 +201,10 @@ export default function DocumentVerification() {
     });
   }, []);
 
+  console.log(isCsvDownload);
+
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography variant="h4" sx={{ mb: 2 }}>
-        Document Verification
-      </Typography>
       <Box className={classes.formRoot}>
         <form onSubmit={handleSubmit}>
           <Box display={"flex"}>
@@ -256,6 +263,7 @@ export default function DocumentVerification() {
               type="text"
               placeholder="Enter folder path"
               variant="standard"
+              styletype="custom"
               InputProps={{ disableUnderline: true }}
               required
               error={Boolean(folderOverviewData?.errorMsg)}
@@ -321,6 +329,11 @@ export default function DocumentVerification() {
               No of errors in files:&nbsp;
               {documentVerificationData?.data?.errorsCount}
             </Typography>
+            {console.log(
+              "before",
+              isCsvDownload,
+              documentVerificationData?.data?.files
+            )}
             <CSVDownload data={documentVerificationData?.data?.files} />
           </Box>
         )}
