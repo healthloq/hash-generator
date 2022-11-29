@@ -4,7 +4,8 @@
   "description": "",
   "main": "healthloqdocverify.js",
   "scripts": {
-    "start": "node healthloqdocverify.js"
+    "start": "node healthloqdocverify.js",
+    "setupClient": "npm install --prefix client && npm run build --prefix client"
   },
   "author": "IIHGlobal",
   "license": "ISC",

@@ -5,8 +5,10 @@ import DocumentVerifier from "../components/Home/DocumentVerifier";
 import { Box, Button, Typography } from "@mui/material";
 import { Link } from "../components";
 import { ArrowBack } from "@mui/icons-material";
+import { setInitialState } from "../redux/actions";
 
 export const DocumentVerification = (props) => {
+  const { setInitialState } = props;
   return (
     <Body>
       <Box
@@ -22,7 +24,13 @@ export const DocumentVerification = (props) => {
         >
           Document Verification
         </Typography>
-        <Link to="/" underline="none">
+        <Link
+          to="/"
+          underline="none"
+          onClick={() =>
+            setInitialState(["documentVerificationData", "folderOverview"])
+          }
+        >
           <Button startIcon={<ArrowBack />} variant="contained">
             Back
           </Button>
@@ -35,7 +43,9 @@ export const DocumentVerification = (props) => {
 
 const mapStateToProps = (state) => ({});
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  setInitialState,
+};
 
 export default connect(
   mapStateToProps,

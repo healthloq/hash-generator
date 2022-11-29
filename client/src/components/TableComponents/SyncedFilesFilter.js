@@ -9,7 +9,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { handleSyncedFilter } from "../../redux/actions/dashboard";
+import { handleSyncedFilter } from "../../redux/actions";
 import { connect } from "react-redux";
 import { Search } from "@mui/icons-material";
 
@@ -77,7 +77,7 @@ export function SyncedFilesFilter({
   );
 }
 
-const mapStateToProps = ({ DashboardReducer: { syncedFilesFilter } }) => ({
+const mapStateToProps = ({ reducer: { syncedFilesFilter } }) => ({
   syncedFilesFilter,
 });
 

@@ -2,10 +2,9 @@ import React, { Suspense, lazy } from "react";
 import { connect } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SuspenseLoader } from "./components/common";
+import Socket from "./components/socket/Socket";
+import DocumentVerification from "./containers/DocumentVerification";
 const Home = lazy(() => import("./containers/Home"));
-const DocumentVerification = lazy(() =>
-  import("./containers/DocumentVerification")
-);
 
 export const Main = (props) => {
   const routes = [
@@ -20,6 +19,7 @@ export const Main = (props) => {
   ];
   return (
     <Suspense fallback={<SuspenseLoader />}>
+      <Socket />
       <BrowserRouter>
         <Routes>
           {routes?.map((route, key) => {

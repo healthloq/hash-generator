@@ -7,15 +7,18 @@ import {
   Button,
   CircularProgress,
   Select,
-  ListItemIcon,
   MenuItem,
-  Avatar,
 } from "..";
 import axios from "axios";
 import { LinearWithValueLabel } from "../common";
-import { CSVLink, CSVDownload } from "react-csv";
+import { CSVDownload } from "react-csv";
 import { rightIcon, wrongIcon } from "../../assets";
-import { socket } from "../../configs/socket";
+import { connect } from "react-redux";
+import {
+  getOrganizationList,
+  getFolderOverview,
+  handleDocumentVerification,
+} from "../../redux/actions";
 
 const useStyle = makeStyles((theme) => ({
   formRoot: {
@@ -49,159 +52,38 @@ const useStyle = makeStyles((theme) => ({
   },
 }));
 
-const folderOverviewDataDefaultObj = {
-  isLoading: false,
-  errorMsg: "",
-  successMsg: "",
-  filesCount: 0,
-};
-
-const documentVerificationDataDefaultObj = {
-  isLoading: false,
-  status: "",
-  message: "",
-  data: [],
-};
-
-const documentVerificationProgresDefaultObj = {
-  totalFile: 0,
-  verificationCompletedCount: 0,
-  verificationType: "",
-  fileName: "",
-  filePath: "",
-  isUpdated: false,
-};
-
-let isCsvDownload = false;
-
-export default function DocumentVerifier() {
+function DocumentVerifier({
+  docVerificationProgress,
+  getOrganizationList,
+  organizationList,
+  getFolderOverview,
+  folderOverview,
+  handleDocumentVerification,
+  documentVerificationData,
+}) {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
   const [organization_id, setOrganization_id] = useState("");
-  const [documentVerificationData, setDocumentVerificationData] = useState(
-    documentVerificationDataDefaultObj
-  );
-  const [folderOverviewData, setFolderOverviewData] = useState(
-    folderOverviewDataDefaultObj
-  );
-  const [organizationsData, setOrganizationsData] = useState({
-    isLoading: false,
-    data: [],
-  });
-  const [documentVerificationProgres, setDocumentVerificationProgres] =
-    useState(documentVerificationProgresDefaultObj);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (folderPath?.trim() && organization_id) {
-      setDocumentVerificationProgres((pre) => ({
-        ...documentVerificationProgresDefaultObj,
-        totalFile: pre.totalFile,
-      }));
-      setDocumentVerificationData((pre) => ({
-        ...pre,
-        ...documentVerificationDataDefaultObj,
-        isLoading: true,
-      }));
-      axios
-        .post(
-          `${process.env.REACT_APP_API_BASE_URL}/dashboard/verify-documents`,
-          {
-            folderPath,
-            organization_id,
-          }
-        )
-        .then((res) => {
-          isCsvDownload = true;
-          setDocumentVerificationData((pre) => ({
-            ...pre,
-            isLoading: false,
-            ...res.data,
-          }));
-        })
-        .catch((err) => {
-          console.log(err);
-          setDocumentVerificationData((pre) => ({ ...pre, isLoading: false }));
-        });
+      handleDocumentVerification({ folderPath, organization_id });
     }
   };
 
   useEffect(() => {
     const cancelToken = axios.CancelToken.source();
     if (folderPath) {
-      setFolderOverviewData((pre) => ({ ...pre, isLoading: true }));
-      axios
-        .post(
-          `${process.env.REACT_APP_API_BASE_URL}/dashboard/get-folder-overview`,
-          {
-            folderPath,
-          },
-          {
-            cancelToken: cancelToken.token,
-          }
-        )
-        .then((res) => {
-          const {
-            data: { errorMsg, filesCount },
-          } = res.data;
-          setFolderOverviewData((pre) => ({
-            ...pre,
-            isLoading: false,
-            ...res?.data?.data,
-            successMsg: !errorMsg ? `Total Files: ${filesCount}` : "",
-          }));
-          setDocumentVerificationProgres((pre) => ({
-            ...pre,
-            totalFile: filesCount,
-          }));
-        })
-        .catch((err) => {
-          console.log(err);
-          setFolderOverviewData((pre) => ({
-            ...pre,
-            isLoading: false,
-          }));
-        });
-    } else {
-      setFolderOverviewData(folderOverviewDataDefaultObj);
+      getFolderOverview({ folderPath }, { cancelToken: cancelToken.token });
     }
     return () => {
       cancelToken.cancel();
-      setFolderOverviewData(folderOverviewDataDefaultObj);
     };
   }, [folderPath]);
 
   useEffect(() => {
-    setOrganizationsData((pre) => ({ ...pre, isLoading: true }));
-    axios
-      .post(
-        `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/client-app/organization-list`
-      )
-      .then((res) => {
-        setOrganizationsData((pre) => ({
-          ...pre,
-          data: res.data,
-          isLoading: false,
-        }));
-      })
-      .catch((err) => {
-        setOrganizationsData((pre) => ({ ...pre, isLoading: false }));
-        console.log(err);
-      });
-    socket.on("documentVerificationUpdate", (data) => {
-      setDocumentVerificationProgres((pre) => ({
-        ...pre,
-        ...data,
-        verificationCompletedCount:
-          data?.verificationType === "end" && !pre?.isUpdated
-            ? pre?.verificationCompletedCount + 1
-            : pre?.verificationCompletedCount,
-        isUpdated: data?.verificationType === "end" ? true : false,
-      }));
-    });
+    getOrganizationList();
   }, []);
-
-  console.log(isCsvDownload);
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -227,8 +109,8 @@ export default function DocumentVerifier() {
                   Select Producer
                 </Typography>
               </MenuItem>
-              {organizationsData?.isLoading &&
-                organizationsData?.data?.length === 0 && (
+              {organizationList?.isLoading &&
+                organizationList?.data?.length === 0 && (
                   <MenuItem value={"loading"} disabled>
                     <Typography
                       className="notranslate"
@@ -240,12 +122,9 @@ export default function DocumentVerifier() {
                     </Typography>
                   </MenuItem>
                 )}
-              {organizationsData?.data?.map((item, i) => {
+              {organizationList?.data?.map((item, i) => {
                 return (
                   <MenuItem value={item.id} key={i}>
-                    {/* <ListItemIcon sx={{ mr: 1 }}>
-                      <Avatar src={item?.logo_url} />
-                    </ListItemIcon> */}
                     <Typography
                       className="notranslate"
                       variant="body2"
@@ -266,12 +145,11 @@ export default function DocumentVerifier() {
               styletype="custom"
               InputProps={{ disableUnderline: true }}
               required
-              error={Boolean(folderOverviewData?.errorMsg)}
+              error={Boolean(folderOverview?.errorMsg)}
               helperText={
-                folderOverviewData?.isLoading
+                folderOverview?.isLoading
                   ? "Please wait we are fetching folder info..."
-                  : folderOverviewData?.errorMsg ||
-                    folderOverviewData?.successMsg
+                  : folderOverview?.errorMsg || folderOverview?.successMsg
               }
             />
             <Button
@@ -279,8 +157,8 @@ export default function DocumentVerifier() {
               sx={{ ml: 1 }}
               disabled={Boolean(
                 documentVerificationData.isLoading ||
-                  folderOverviewData.isLoading ||
-                  folderOverviewData?.errorMsg ||
+                  folderOverview.isLoading ||
+                  folderOverview?.errorMsg ||
                   !folderPath
               )}
               type="submit"
@@ -297,47 +175,65 @@ export default function DocumentVerifier() {
         {documentVerificationData?.isLoading && (
           <Box display="flex" flexDirection={"column"} sx={{ my: 1 }}>
             <LinearWithValueLabel
-              totalCount={documentVerificationProgres?.totalFile}
+              totalCount={docVerificationProgress?.totalFile}
               completedCount={
-                documentVerificationProgres?.verificationCompletedCount
+                docVerificationProgress?.verificationCompletedCount
               }
             />
             <Typography variant="body2" sx={{ mt: 1 }}>
-              {documentVerificationProgres?.verificationType === "start"
-                ? `Starting ${documentVerificationProgres?.fileName} document verification...`
-                : `Complete ${documentVerificationProgres?.fileName} document verification.`}
+              {docVerificationProgress?.verificationType === "start"
+                ? `Starting ${docVerificationProgress?.fileName} document verification...`
+                : `Complete ${docVerificationProgress?.fileName} document verification.`}
             </Typography>
           </Box>
         )}
-        {documentVerificationData?.data?.files?.length > 0 && (
-          <Box
-            display="flex"
-            flexDirection="column"
-            className={classes.documentVerificationOutput}
-          >
-            <Typography variant="h6">
-              No of verified documents:&nbsp;
-              {documentVerificationData?.data?.verifiedDocumentCount}
-              <img src={rightIcon} alt="right-icon" />
-            </Typography>
-            <Typography variant="h6">
-              No of unverified documents:&nbsp;
-              {documentVerificationData?.data?.unVerifiedDocumentCount}
-              <img src={wrongIcon} alt="wrong-icon" />
-            </Typography>
-            <Typography variant="h6">
-              No of errors in files:&nbsp;
-              {documentVerificationData?.data?.errorsCount}
-            </Typography>
-            {console.log(
-              "before",
-              isCsvDownload,
-              documentVerificationData?.data?.files
-            )}
-            <CSVDownload data={documentVerificationData?.data?.files} />
-          </Box>
-        )}
+        {!documentVerificationData?.isLoading &&
+          documentVerificationData?.data?.files?.length > 0 && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              className={classes.documentVerificationOutput}
+            >
+              <Typography variant="h6">
+                No of verified documents:&nbsp;
+                {documentVerificationData?.data?.verifiedDocumentCount}
+                <img src={rightIcon} alt="right-icon" />
+              </Typography>
+              <Typography variant="h6">
+                No of unverified documents:&nbsp;
+                {documentVerificationData?.data?.unVerifiedDocumentCount}
+                <img src={wrongIcon} alt="wrong-icon" />
+              </Typography>
+              <Typography variant="h6">
+                No of errors in files:&nbsp;
+                {documentVerificationData?.data?.errorsCount}
+              </Typography>
+              <CSVDownload data={documentVerificationData?.data?.files} />
+            </Box>
+          )}
       </Box>
     </Box>
   );
 }
+
+const mapStateToProps = ({
+  reducer: {
+    docVerificationProgress,
+    organizationList,
+    folderOverview,
+    documentVerificationData,
+  },
+}) => ({
+  docVerificationProgress,
+  documentVerificationData,
+  organizationList,
+  folderOverview,
+});
+
+const mapDispatchToProps = {
+  getOrganizationList,
+  getFolderOverview,
+  handleDocumentVerification,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(DocumentVerifier);

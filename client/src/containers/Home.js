@@ -6,7 +6,7 @@ import { ArrowForward } from "@mui/icons-material";
 import { Link } from "../components";
 import moment from "moment";
 import { connect } from "react-redux";
-import { getDashboardOverviewData } from "../redux/actions/dashboard";
+import { getDashboardOverviewData } from "../redux/actions";
 import EnhancedTable from "../components/TableComponents";
 import { syncedFilesHeaders } from "../constants/tableConfigs";
 
@@ -82,9 +82,6 @@ export function Home({ getDashboardOverviewData, dashboardOverview }) {
           </Typography>
         </Box>
       </Box>
-      {/* <Typography variant="h4" sx={{ mb: 2 }}>
-        Last few synced files
-      </Typography> */}
       <EnhancedTable
         tableTitle="Synced Files"
         headCells={syncedFilesHeaders}
@@ -98,63 +95,11 @@ export function Home({ getDashboardOverviewData, dashboardOverview }) {
         tableId="syncedFilesFilter"
         isLoading={dashboardOverview?.isLoading}
       />
-      {/* <Box display="flex" flexDirection="column" className={classes.filesList}>
-        {dashboardOverview?.data?.files?.map((file, key) => {
-          return (
-            <Box display="flex" flexDirection="column" key={key}>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent={"flex-start"}
-              >
-                <Typography variant="h6">File Name:</Typography>
-                <Typography variant="body2">{file?.fileName}</Typography>
-              </Box>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent={"flex-start"}
-              >
-                <Typography variant="h6">File Size:</Typography>
-                <Typography variant="body2">{file?.state?.size}</Typography>
-              </Box>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent={"flex-start"}
-              >
-                <Typography variant="h6">File Path:</Typography>
-                <Typography variant="body2">{file?.path}</Typography>
-              </Box>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent={"flex-start"}
-              >
-                <Typography variant="h6">Created:</Typography>
-                <Typography variant="body2">
-                  {moment(file?.state?.birthtime).format("MM/DD/YYYY hh:mm A")}
-                </Typography>
-              </Box>
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent={"flex-start"}
-              >
-                <Typography variant="h6">Modified:</Typography>
-                <Typography variant="body2">
-                  {moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A")}
-                </Typography>
-              </Box>
-            </Box>
-          );
-        })}
-      </Box> */}
     </Body>
   );
 }
 
-const mapStateToProps = ({ DashboardReducer: { dashboardOverview } }) => ({
+const mapStateToProps = ({ reducer: { dashboardOverview } }) => ({
   dashboardOverview,
 });
 

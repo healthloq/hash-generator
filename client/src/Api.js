@@ -36,12 +36,12 @@ const healthloqInstance = axios.create({
   },
 });
 
-export async function post(url, paramObj = {}, headers = {}) {
+export async function post(url, paramObj = {}, config = {}) {
   //   const { token } = utils.getLocalStorageItems();
   //   instance.defaults.headers.common["x-access-token"] = token;
 
   return instance
-    .post(url, paramObj)
+    .post(url, paramObj, config)
     .then((response) => {
       return response?.data;
     })
@@ -53,9 +53,9 @@ export async function post(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function put(url, paramObj = {}, headers = {}) {
+export async function put(url, paramObj = {}, config = {}) {
   return instance
-    .put(url, paramObj)
+    .put(url, paramObj, config)
     .then((response) => {
       return response?.data;
     })
@@ -67,9 +67,9 @@ export async function put(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function patch(url, paramObj = {}, headers = {}) {
+export async function patch(url, paramObj = {}, config = {}) {
   return instance
-    .patch(url, paramObj)
+    .patch(url, paramObj, config)
     .then((response) => {
       return response?.data;
     })
@@ -81,9 +81,9 @@ export async function patch(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function get(url, paramObj = {}, headers = {}) {
+export async function get(url, config = {}) {
   return instance
-    .get(url, { params: paramObj })
+    .get(url, config)
     .then((response) => {
       return response?.data;
     })
@@ -92,9 +92,9 @@ export async function get(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function deleteM(url, payload = {}, headers = {}) {
+export async function deleteM(url, config = {}) {
   return instance
-    .delete(url, { data: payload })
+    .delete(url, config)
     .then((response) => {
       return response?.data;
     })
@@ -106,12 +106,12 @@ export async function deleteM(url, payload = {}, headers = {}) {
     });
 }
 
-export async function healthloqPost(url, paramObj = {}, headers = {}) {
+export async function healthloqPost(url, paramObj = {}, config = {}) {
   instance.defaults.headers.common["Authorization"] =
     process.env.REACT_APP_JWT_TOKEN;
 
   return healthloqInstance
-    .post(url, paramObj)
+    .post(url, paramObj, config)
     .then((response) => {
       return response?.data;
     })
@@ -123,11 +123,11 @@ export async function healthloqPost(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function healthloqPut(url, paramObj = {}, headers = {}) {
+export async function healthloqPut(url, paramObj = {}, config = {}) {
   instance.defaults.headers.common["Authorization"] =
     process.env.REACT_APP_JWT_TOKEN;
   return healthloqInstance
-    .put(url, paramObj)
+    .put(url, paramObj, config)
     .then((response) => {
       return response?.data;
     })
@@ -139,11 +139,11 @@ export async function healthloqPut(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function healthloqPatch(url, paramObj = {}, headers = {}) {
+export async function healthloqPatch(url, paramObj = {}, config = {}) {
   instance.defaults.headers.common["Authorization"] =
     process.env.REACT_APP_JWT_TOKEN;
   return healthloqInstance
-    .patch(url, paramObj)
+    .patch(url, paramObj, config)
     .then((response) => {
       return response?.data;
     })
@@ -155,11 +155,11 @@ export async function healthloqPatch(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function healthloqGet(url, paramObj = {}, headers = {}) {
+export async function healthloqGet(url, config = {}) {
   instance.defaults.headers.common["Authorization"] =
     process.env.REACT_APP_JWT_TOKEN;
   return healthloqInstance
-    .get(url, { params: paramObj })
+    .get(url, config)
     .then((response) => {
       return response?.data;
     })
@@ -171,11 +171,11 @@ export async function healthloqGet(url, paramObj = {}, headers = {}) {
     });
 }
 
-export async function healthloqDelete(url, payload = {}, headers = {}) {
+export async function healthloqDelete(url, config = {}) {
   instance.defaults.headers.common["Authorization"] =
     process.env.REACT_APP_JWT_TOKEN;
   return healthloqInstance
-    .delete(url, { data: payload })
+    .delete(url, config)
     .then((response) => {
       return response?.data;
     })
