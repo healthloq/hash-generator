@@ -1,4 +1,4 @@
-npm start
+npm install
 npm run setupClient
 npm install pm2 -g
 pm2 list
