@@ -18,6 +18,7 @@ import {
   getOrganizationList,
   getFolderOverview,
   handleDocumentVerification,
+  setInitialState,
 } from "../../redux/actions";
 
 const useStyle = makeStyles((theme) => ({
@@ -60,6 +61,7 @@ function DocumentVerifier({
   folderOverview,
   handleDocumentVerification,
   documentVerificationData,
+  setInitialState,
 }) {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
@@ -138,7 +140,10 @@ function DocumentVerifier({
             </Select>
             <TextField
               value={folderPath}
-              onChange={(e) => setFolderPath(e.target.value?.trim())}
+              onChange={(e) => {
+                setFolderPath(e.target.value?.trim());
+                setInitialState(["folderOverview"]);
+              }}
               type="text"
               placeholder="Enter folder path"
               variant="standard"
@@ -234,6 +239,7 @@ const mapDispatchToProps = {
   getOrganizationList,
   getFolderOverview,
   handleDocumentVerification,
+  setInitialState,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DocumentVerifier);

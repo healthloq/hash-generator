@@ -9,8 +9,6 @@ const { LocalStorage } = require("node-localstorage");
 global.localStorage = new LocalStorage("./scratch");
 const server = require("http").createServer(app);
 
-app.set("view engine", "ejs");
-
 const {
   removeDeletedFilesFromFolder,
   readFolder,
@@ -72,9 +70,6 @@ module.exports = io = require("socket.io")(server);
 
 io.on("connection", (socket) => {
   app.socket = socket;
-  console.log("New User with socket Id: ", socket.id);
 
-  socket.on("disconnect", () => {
-    console.log("Disconnect User with socket Id: ", socket.id);
-  });
+  socket.on("disconnect", () => {});
 });

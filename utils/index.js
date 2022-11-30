@@ -1,4 +1,3 @@
-const moment = require("moment");
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
@@ -59,14 +58,6 @@ exports.sort = (prop, arr) => {
   });
   return arr;
 };
-
-/**
- *
- * @param {String || Date} date
- * @returns
- */
-exports.getDateWith12HourTimeFormate = (date) =>
-  moment(date).format("MM/DD/YYYY hh:mm A");
 
 /**
  *
@@ -207,14 +198,13 @@ exports.getFolderOverview = async (folderPath, result = {}) => {
   }
   for (let item of files) {
     if (item.isFile()) {
-      if (result?.filesCount >= 2000) {
-        result["errorMsg"] = `You can't sync more then 2000 files at a time.`;
-        break;
-      }
-      const filePath = path.join(folderPath, item.name);
       result["filesCount"] = result?.filesCount + 1;
     } else {
       await this.getFolderOverview(path.join(folderPath, item.name), result);
+    }
+    if (result?.filesCount > 2000) {
+      result["errorMsg"] = `You can't sync more than 2000 files at a time.`;
+      break;
     }
   }
   return result;
