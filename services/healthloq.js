@@ -5,11 +5,11 @@ exports.syncHash = async (data) => {
     if (data.hashList.length || data.deletedHashList.length) {
       console.log("Start syncing with healthloq db...");
       const response = await axios.post(
-        `${process.env.HEALTHLOQ_API_BASE_URL}/document-hash/createOrDelete`,
+        `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/createOrDelete`,
         data,
         {
           headers: {
-            Authorization: `Bearer ${process.env.JWT_TOKEN}`,
+            Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
           },
         }
       );
@@ -25,11 +25,11 @@ exports.syncHash = async (data) => {
 exports.verifyDocument = async (params) => {
   try {
     const response = await axios.post(
-      `${process.env.HEALTHLOQ_API_BASE_URL}/document-hash/verify-document`,
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/verify-document`,
       params,
       {
         headers: {
-          Authorization: `Bearer ${process.env.JWT_TOKEN}`,
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
         },
       }
     );
