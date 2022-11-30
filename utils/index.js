@@ -207,6 +207,10 @@ exports.getFolderOverview = async (folderPath, result = {}) => {
   }
   for (let item of files) {
     if (item.isFile()) {
+      if (result?.filesCount >= 2000) {
+        result["errorMsg"] = `You can't sync more then 2000 files at a time.`;
+        break;
+      }
       const filePath = path.join(folderPath, item.name);
       result["filesCount"] = result?.filesCount + 1;
     } else {
