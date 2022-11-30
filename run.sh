@@ -1,5 +1,8 @@
 npm install
-npm run setupClient
+cd client
+npm install
+npm run build
+cd ..
 npm install pm2 -g
 pm2 list
 pm2 restart healthloqdocverify
