@@ -52,6 +52,9 @@ export const handleDocumentVerification = (params) => async (dispatch) => {
   try {
     dispatch({
       type: HANDLE_VERIFY_DOCUMENTS,
+      payload:{
+        isLoading: true
+      }
     });
     dispatch({
       type: SOCKET_DOCUMENT_VERIFICATION_PROGRESS,
@@ -71,6 +74,9 @@ export const handleDocumentVerification = (params) => async (dispatch) => {
     console.log(error);
     dispatch({
       type: HANDLE_VERIFY_DOCUMENTS,
+      payload:{
+        isLoading: false
+      }
     });
   }
 };

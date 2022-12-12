@@ -6,6 +6,7 @@ import {
   GET_FOLDER_OVERVIEW,
   HANDLE_VERIFY_DOCUMENTS,
   SET_INITIALSTATE,
+  SOCKET_DOCUMENT_VERIFICATION_RESULT
 } from "../actionTypes";
 
 const initialState = {
@@ -51,6 +52,16 @@ const Reducer = (
   state
 ) => {
   switch (type) {
+    case SOCKET_DOCUMENT_VERIFICATION_RESULT:{
+      return {
+        ...previousState,
+        documentVerificationData:{
+          ...previousState.documentVerificationData,
+          data: payload,
+          isLoading: false
+        }
+      }
+    }
     case SET_INITIALSTATE: {
       return Object.assign(
         previousState,
@@ -68,7 +79,6 @@ const Reducer = (
         ...previousState,
         documentVerificationData: {
           ...previousState.documentVerificationData,
-          isLoading: !previousState.documentVerificationData.isLoading,
           ...payload,
         },
       };

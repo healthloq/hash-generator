@@ -30,6 +30,10 @@ exports.verifyDocuments = async (req, res) => {
   let result = [];
   try {
     const { folderPath, organization_id } = req.body;
+    res.status(200).json({
+      status: "1",
+      data: []
+    });
     const readDir = async (dirPath) => {
       let files = [];
       try {
@@ -114,22 +118,15 @@ exports.verifyDocuments = async (req, res) => {
         (item) => item["Is Verified Document"] === "No"
       )?.length,
     };
-    res.status(200).json({
-      status: "1",
-      data: {
+    io.sockets.emit("documentVerificationResult", {
         ...response,
         errorsCount:
           result?.length -
           response.verifiedDocumentCount -
           response.unVerifiedDocumentCount,
         files: result,
-      },
     });
   } catch (error) {
     console.log(error);
-    res.status(422).json({
-      status: "0",
-      message: "Something went wrong! please try after sometime.",
-    });
   }
 };
