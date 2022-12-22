@@ -90,14 +90,14 @@ function DocumentVerifier({
     getOrganizationList();
   }, []);
 
-  useEffect(() => {
-    if (
-      documentVerificationData?.isDocVerificationFinalOverview &&
-      documentVerificationData?.url
-    ) {
-      window.open(documentVerificationData?.url, "_blank");
-    }
-  }, [documentVerificationData.isDocVerificationFinalOverview]);
+  // useEffect(() => {
+  //   if (
+  //     documentVerificationData?.isDocVerificationFinalOverview &&
+  //     documentVerificationData?.url
+  //   ) {
+  //     window.open(documentVerificationData?.url, "_blank");
+  //   }
+  // }, [documentVerificationData.isDocVerificationFinalOverview]);
 
   return (
     <Box sx={{ mb: 3 }}>
