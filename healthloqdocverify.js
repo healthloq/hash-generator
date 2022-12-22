@@ -18,44 +18,64 @@ const {
   getFileNameFromFilePath,
   deleteFileFromData,
 } = require("./utils");
-const { syncHash } = require("./services/healthloq");
+const { syncHash, getSubscriptionDetail } = require("./services/healthloq");
 const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
   persistent: true,
 });
 
+module.exports = io = require("socket.io")(server);
+
+io.on("connection", (socket) => {
+  app.socket = socket;
+
+  socket.on("disconnect", () => {});
+});
+
 (async () => {
-  global.data = await getData();
-  const oldData = await getData();
-  await removeDeletedFilesFromFolder();
-  await readFolder();
-  const newData = await getData();
-  await syncHash(getHealthLoqApiPayload(oldData, newData));
-  watcher.on("all", async (eventName, filePath, state = {}) => {
-    if (["add", "unlink", "change"].includes(eventName)) {
-      setTimeout(async () => {
-        const oldData = await getData();
-        if (["add", "change"].includes(eventName))
-          await addNewFileIntoData(
-            getFileNameFromFilePath(filePath),
-            filePath,
-            state,
-            eventName
-          );
-        if (eventName === "unlink")
-          await deleteFileFromData(getFileNameFromFilePath(filePath), filePath);
-        const newData = await getData();
-        await syncHash(getHealthLoqApiPayload(oldData, newData));
-      }, 500);
-    }
-  });
+  const subscriptionDetail = await getSubscriptionDetail();
+  global.subscriptionDetail = subscriptionDetail?.data;
+  if (
+    subscriptionDetail?.data?.filter(
+      (item) => item?.subscription_type === "publisher"
+    )?.length
+  ) {
+    global.data = await getData();
+    const oldData = await getData();
+    await removeDeletedFilesFromFolder();
+    await readFolder();
+    const newData = await getData();
+    await syncHash(getHealthLoqApiPayload(oldData, newData));
+    watcher.on("all", async (eventName, filePath, state = {}) => {
+      if (["add", "unlink", "change"].includes(eventName)) {
+        setTimeout(async () => {
+          const oldData = await getData();
+          if (["add", "change"].includes(eventName))
+            await addNewFileIntoData(
+              getFileNameFromFilePath(filePath),
+              filePath,
+              state,
+              eventName
+            );
+          if (eventName === "unlink")
+            await deleteFileFromData(
+              getFileNameFromFilePath(filePath),
+              filePath
+            );
+          const newData = await getData();
+          await syncHash(getHealthLoqApiPayload(oldData, newData));
+        }, 500);
+      }
+    });
+  }
 })();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use("/public", express.static(path.join(__dirname, "./public")));
 app.use("/api/client", require("./routes/client"));
 
-app.use(express.static(path.join(__dirname, "client/build")));
+app.use("/client", express.static(path.join(__dirname, "client/build")));
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "client/build/index.html"));
 });
@@ -65,11 +85,3 @@ server.listen(port, () =>
     `Check basic hash generation overview visit http://localhost:${port} url.`
   )
 );
-
-module.exports = io = require("socket.io")(server);
-
-io.on("connection", (socket) => {
-  app.socket = socket;
-
-  socket.on("disconnect", () => {});
-});

@@ -6,8 +6,11 @@ import {
   GET_FOLDER_OVERVIEW,
   HANDLE_VERIFY_DOCUMENTS,
   SET_INITIALSTATE,
-  SOCKET_DOCUMENT_VERIFICATION_RESULT
+  SOCKET_DOCUMENT_VERIFICATION_RESULT,
+  GET_SUBSCRIPTION_OVERVIEW,
+  SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR,
 } from "../actionTypes";
+import { numberWithCommas } from "../../utils";
 
 const initialState = {
   dashboardOverview: {
@@ -16,17 +19,11 @@ const initialState = {
     message: "",
     data: null,
     filteredFiles: [],
+    errorMsg: "",
   },
   syncedFilesFilter: {
     searchText: "",
     isFilterData: false,
-  },
-  docVerificationProgress: {
-    totalFile: 0,
-    verificationCompletedCount: 0,
-    verificationType: "",
-    fileName: "",
-    filePath: "",
   },
   organizationList: {
     isLoading: false,
@@ -43,6 +40,25 @@ const initialState = {
     status: "",
     message: "",
     data: [],
+    totalFilesCount: 0,
+    verifiedFilesCount: 0,
+    verificationType: "",
+    fileName: "",
+    filePath: "",
+    noOfVerifiedDocuments: 0,
+    noOfUnverifiedDocuments: 0,
+    noOfErrors: 0,
+    verificationData: [],
+    errorMsg: "",
+    url: "",
+    isDocVerificationFinalOverview: false,
+  },
+  subscriptionDetails: {
+    isLoading: false,
+    status: "",
+    message: "",
+    data: [],
+    subscriptionList: [],
   },
 };
 
@@ -52,15 +68,39 @@ const Reducer = (
   state
 ) => {
   switch (type) {
-    case SOCKET_DOCUMENT_VERIFICATION_RESULT:{
+    case SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR: {
       return {
         ...previousState,
-        documentVerificationData:{
-          ...previousState.documentVerificationData,
-          data: payload,
-          isLoading: false
-        }
+        dashboardOverview: {
+          ...previousState.dashboardOverview,
+          ...payload,
+        },
+      };
+    }
+    case GET_SUBSCRIPTION_OVERVIEW: {
+      const subscriptionDetails = {
+        ...previousState.subscriptionDetails,
+        isLoading: !previousState.subscriptionDetails.isLoading,
+        ...payload,
+      };
+      if (!subscriptionDetails?.isLoading) {
+        subscriptionDetails["subscriptionList"] =
+          subscriptionDetails?.data?.map((item) => item?.subscription_type);
       }
+      return {
+        ...previousState,
+        subscriptionDetails,
+      };
+    }
+    case SOCKET_DOCUMENT_VERIFICATION_RESULT: {
+      return {
+        ...previousState,
+        documentVerificationData: {
+          ...previousState.documentVerificationData,
+          isLoading: false,
+          ...payload,
+        },
+      };
     }
     case SET_INITIALSTATE: {
       return Object.assign(
@@ -77,10 +117,17 @@ const Reducer = (
     case HANDLE_VERIFY_DOCUMENTS: {
       return {
         ...previousState,
-        documentVerificationData: {
-          ...previousState.documentVerificationData,
-          ...payload,
-        },
+        documentVerificationData: payload.isLoading
+          ? {
+              ...initialState.documentVerificationData,
+              ...payload,
+              totalFilesCount:
+                previousState.documentVerificationData.totalFilesCount,
+            }
+          : {
+              ...previousState.documentVerificationData,
+              ...payload,
+            },
       };
     }
     case GET_FOLDER_OVERVIEW: {
@@ -89,7 +136,7 @@ const Reducer = (
         folderOverview = {
           ...payload,
           successMsg: !payload?.errorMsg
-            ? `Total Files: ${payload?.filesCount}`
+            ? `Total Files: ${numberWithCommas(parseInt(payload?.filesCount))}`
             : "",
         };
       } else {
@@ -101,11 +148,11 @@ const Reducer = (
       return {
         ...previousState,
         folderOverview,
-        docVerificationProgress: {
-          ...previousState.docVerificationProgress,
-          totalFile:
-            payload?.filesCount ||
-            previousState.docVerificationProgress?.totalFile,
+        documentVerificationData: {
+          ...previousState.documentVerificationData,
+          totalFilesCount: payload?.isLoading
+            ? previousState.documentVerificationData.totalFilesCount
+            : payload?.filesCount || 0,
         },
       };
     }
@@ -119,17 +166,16 @@ const Reducer = (
       };
     }
     case SOCKET_DOCUMENT_VERIFICATION_PROGRESS: {
-      let docVerificationProgress = {
-        ...previousState.docVerificationProgress,
-        ...payload,
-      };
-      if (payload?.verificationType === "end") {
-        docVerificationProgress["verificationCompletedCount"] =
-          docVerificationProgress?.verificationCompletedCount + 1;
-      }
       return {
         ...previousState,
-        docVerificationProgress,
+        documentVerificationData: {
+          ...previousState.documentVerificationData,
+          ...payload,
+          verifiedFilesCount:
+            payload?.verificationType === "end"
+              ? previousState.documentVerificationData.verifiedFilesCount + 1
+              : previousState.documentVerificationData.verifiedFilesCount,
+        },
       };
     }
     case GET_DASHBOARD_OVERVIEW_DATA: {

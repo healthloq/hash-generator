@@ -8,4 +8,6 @@ export const API = {
     await post("/api/client/get-folder-overview", params, config),
   getOrganizationList: async () =>
     await healthloqPost("/client-app/organization-list"),
+  getSubscriptionOverview: async () =>
+    await get("/api/client/get-subscription-overview"),
 };

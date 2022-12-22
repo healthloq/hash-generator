@@ -16,6 +16,11 @@ exports.syncHash = async (data) => {
       if (response.data.status === "1")
         console.log("Hash synced with healthloq successful");
       else console.log(response.data.message);
+      if (response?.data?.status === "2") {
+        io.sockets.emit("docUploadLimitExceededError", {
+          errorMsg: response?.data?.message,
+        });
+      }
     }
   } catch (error) {
     console.log("sync hash with healthloq catch block", error);
@@ -27,6 +32,26 @@ exports.verifyDocument = async (params) => {
     const response = await axios.post(
       `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/verify-document`,
       params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log(error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.getSubscriptionDetail = async () => {
+  try {
+    const response = await axios.get(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/get-subscription-details`,
       {
         headers: {
           Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,

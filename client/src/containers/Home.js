@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Body } from "../components/common";
+import React, { useEffect, useState } from "react";
+import { Body, MuiLinearProgress } from "../components/common";
 import { Typography, Box, Button } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { ArrowForward } from "@mui/icons-material";
@@ -9,6 +9,7 @@ import { connect } from "react-redux";
 import { getDashboardOverviewData } from "../redux/actions";
 import EnhancedTable from "../components/TableComponents";
 import { syncedFilesHeaders } from "../constants/tableConfigs";
+import { numberWithCommas } from "../utils";
 
 const useStyle = makeStyles((theme) => ({
   lastsyncedData: {
@@ -36,11 +37,36 @@ const useStyle = makeStyles((theme) => ({
   },
 }));
 
-export function Home({ getDashboardOverviewData, dashboardOverview }) {
+export function Home({
+  getDashboardOverviewData,
+  dashboardOverview,
+  subscriptionDetails,
+}) {
   const classes = useStyle();
+  const [linearProgressData, setLinearProgressData] = useState({
+    label: "",
+    value: 0,
+  });
   useEffect(() => {
     getDashboardOverviewData();
   }, []);
+  useEffect(() => {
+    if (subscriptionDetails?.data?.length) {
+      const publisherData =
+        subscriptionDetails?.data?.filter(
+          (item) => item?.subscription_type === "publisher"
+        )[0] || null;
+      if (publisherData)
+        setLinearProgressData({
+          label: `${numberWithCommas(
+            parseInt(publisherData.current_num_daily_hashes)
+          )}/${numberWithCommas(parseInt(publisherData.num_daily_hashes))}`,
+          value:
+            (parseInt(publisherData.current_num_daily_hashes) * 100) /
+            parseInt(publisherData.num_daily_hashes),
+        });
+    }
+  }, [subscriptionDetails]);
   return (
     <Body>
       <Box
@@ -49,18 +75,16 @@ export function Home({ getDashboardOverviewData, dashboardOverview }) {
         justifyContent={"space-between"}
         sx={{ mb: 3 }}
       >
-        <Typography
-          variant="h3"
-          highlight="true"
-          sx={{ textTransform: "capitalize" }}
-        >
-          <span>HealthLOQ</span> hash generator overview
+        <Typography variant="h3" sx={{ textTransform: "capitalize" }}>
+          Document Authenticator Dashboard
         </Typography>
-        <Link to="/document-verification" underline="none">
-          <Button endIcon={<ArrowForward />} variant="contained">
-            Go To Document Verification
-          </Button>
-        </Link>
+        {subscriptionDetails?.subscriptionList?.includes("verifier") && (
+          <Link to="/document-verification" underline="none">
+            <Button endIcon={<ArrowForward />} variant="contained">
+              Go To Document Verifier
+            </Button>
+          </Link>
+        )}
       </Box>
       <Box
         display={"flex"}
@@ -82,6 +106,17 @@ export function Home({ getDashboardOverviewData, dashboardOverview }) {
           </Typography>
         </Box>
       </Box>
+      <Box sx={{ my: 2 }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Your today's document publish limit overview
+        </Typography>
+        <MuiLinearProgress
+          {...{
+            loading: subscriptionDetails?.isLoading,
+            ...linearProgressData,
+          }}
+        />
+      </Box>
       <EnhancedTable
         tableTitle="Synced Files"
         headCells={syncedFilesHeaders}
@@ -99,8 +134,11 @@ export function Home({ getDashboardOverviewData, dashboardOverview }) {
   );
 }
 
-const mapStateToProps = ({ reducer: { dashboardOverview } }) => ({
+const mapStateToProps = ({
+  reducer: { dashboardOverview, subscriptionDetails },
+}) => ({
   dashboardOverview,
+  subscriptionDetails,
 });
 
 const mapDispatchToProps = {

@@ -10,8 +10,7 @@ import {
   MenuItem,
 } from "..";
 import axios from "axios";
-import { LinearWithValueLabel } from "../common";
-import { CSVDownload } from "react-csv";
+import { MuiLinearProgress } from "../common";
 import { rightIcon, wrongIcon } from "../../assets";
 import { connect } from "react-redux";
 import {
@@ -20,6 +19,7 @@ import {
   handleDocumentVerification,
   setInitialState,
 } from "../../redux/actions";
+import { numberWithCommas } from "../../utils";
 
 const useStyle = makeStyles((theme) => ({
   formRoot: {
@@ -47,6 +47,9 @@ const useStyle = makeStyles((theme) => ({
         height: 25,
       },
     },
+    "&>p": {
+      color: theme.palette.error.main,
+    },
   },
   selectBox: {
     minHeight: 45,
@@ -54,7 +57,6 @@ const useStyle = makeStyles((theme) => ({
 }));
 
 function DocumentVerifier({
-  docVerificationProgress,
   getOrganizationList,
   organizationList,
   getFolderOverview,
@@ -62,6 +64,7 @@ function DocumentVerifier({
   handleDocumentVerification,
   documentVerificationData,
   setInitialState,
+  subscriptionDetails,
 }) {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
@@ -86,6 +89,15 @@ function DocumentVerifier({
   useEffect(() => {
     getOrganizationList();
   }, []);
+
+  useEffect(() => {
+    if (
+      documentVerificationData?.isDocVerificationFinalOverview &&
+      documentVerificationData?.url
+    ) {
+      window.open(documentVerificationData?.url, "_blank");
+    }
+  }, [documentVerificationData.isDocVerificationFinalOverview]);
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -142,7 +154,7 @@ function DocumentVerifier({
               value={folderPath}
               onChange={(e) => {
                 setFolderPath(e.target.value?.trim());
-                setInitialState(["folderOverview"]);
+                setInitialState(["folderOverview", "documentVerificationData"]);
               }}
               type="text"
               placeholder="Enter folder path"
@@ -156,6 +168,7 @@ function DocumentVerifier({
                   ? "Please wait we are fetching folder info..."
                   : folderOverview?.errorMsg || folderOverview?.successMsg
               }
+              disabled={documentVerificationData.isLoading}
             />
             <Button
               variant="contained"
@@ -179,21 +192,28 @@ function DocumentVerifier({
         </form>
         {documentVerificationData?.isLoading && (
           <Box display="flex" flexDirection={"column"} sx={{ my: 1 }}>
-            <LinearWithValueLabel
-              totalCount={docVerificationProgress?.totalFile}
-              completedCount={
-                docVerificationProgress?.verificationCompletedCount
-              }
+            <MuiLinearProgress
+              {...{
+                loading: false,
+                label: `${numberWithCommas(
+                  parseInt(documentVerificationData?.verifiedFilesCount)
+                )}/${numberWithCommas(
+                  parseInt(documentVerificationData?.totalFilesCount)
+                )}`,
+                value:
+                  (documentVerificationData?.verifiedFilesCount * 100) /
+                  documentVerificationData?.totalFilesCount,
+              }}
             />
             <Typography variant="body2" sx={{ mt: 1 }}>
-              {docVerificationProgress?.verificationType === "start"
-                ? `Starting ${docVerificationProgress?.fileName} document verification...`
-                : `Complete ${docVerificationProgress?.fileName} document verification.`}
+              {documentVerificationData?.verificationType === "start"
+                ? `Starting ${documentVerificationData?.fileName} document verification...`
+                : `Complete ${documentVerificationData?.fileName} document verification.`}
             </Typography>
           </Box>
         )}
         {!documentVerificationData?.isLoading &&
-          documentVerificationData?.data?.files?.length > 0 && (
+          documentVerificationData?.isDocVerificationFinalOverview && (
             <Box
               display="flex"
               flexDirection="column"
@@ -201,19 +221,29 @@ function DocumentVerifier({
             >
               <Typography variant="h6">
                 No of verified documents:&nbsp;
-                {documentVerificationData?.data?.verifiedDocumentCount}
+                {numberWithCommas(
+                  parseInt(documentVerificationData?.noOfVerifiedDocuments)
+                )}
                 <img src={rightIcon} alt="right-icon" />
               </Typography>
               <Typography variant="h6">
                 No of unverified documents:&nbsp;
-                {documentVerificationData?.data?.unVerifiedDocumentCount}
+                {numberWithCommas(
+                  parseInt(documentVerificationData?.noOfUnverifiedDocuments)
+                )}
                 <img src={wrongIcon} alt="wrong-icon" />
               </Typography>
               <Typography variant="h6">
                 No of errors in files:&nbsp;
-                {documentVerificationData?.data?.errorsCount}
+                {numberWithCommas(
+                  parseInt(documentVerificationData?.noOfErrors)
+                )}
               </Typography>
-              <CSVDownload data={documentVerificationData?.data?.files} />
+              {documentVerificationData?.errorMsg && (
+                <Typography variant="body1" sx={{ my: 1 }}>
+                  {documentVerificationData?.errorMsg}
+                </Typography>
+              )}
             </Box>
           )}
       </Box>
@@ -223,16 +253,16 @@ function DocumentVerifier({
 
 const mapStateToProps = ({
   reducer: {
-    docVerificationProgress,
     organizationList,
     folderOverview,
     documentVerificationData,
+    subscriptionDetails,
   },
 }) => ({
-  docVerificationProgress,
   documentVerificationData,
   organizationList,
   folderOverview,
+  subscriptionDetails,
 });
 
 const mapDispatchToProps = {

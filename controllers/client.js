@@ -1,9 +1,13 @@
 const { sort, getData, getFolderOverview } = require("../utils");
-const { verifyDocument } = require("../services/healthloq");
+const {
+  verifyDocument,
+  getSubscriptionDetail,
+} = require("../services/healthloq");
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
 const moment = require("moment");
+const json2csv = require("json2csv").parse;
 
 exports.getDashboardData = async (req, res) => {
   const data = await getData();
@@ -26,26 +30,41 @@ exports.getFolderOverviewData = async (req, res) => {
   });
 };
 
+exports.getSubscriptionOverview = async (req, res) => {
+  try {
+    const subscriptionDetails = await getSubscriptionDetail();
+    res.status(200).json({
+      ...subscriptionDetails,
+    });
+  } catch (error) {
+    res.status(200).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
 exports.verifyDocuments = async (req, res) => {
-  let result = [];
   try {
     const { folderPath, organization_id } = req.body;
     res.status(200).json({
       status: "1",
-      data: []
+      data: [],
     });
+    let verificationData = [];
+    let errorMsg = "";
     const readDir = async (dirPath) => {
       let files = [];
       try {
         files = fs.readdirSync(dirPath, { withFileTypes: true });
       } catch (error) {
-        result.push({
+        verificationData.push({
           "File Name": "",
           "File Path": "",
           "Is Verified Document": null,
           Created: null,
-          Message: "Folder not found.",
-          "Folder Path": dirPath,
+          Message: "",
+          "Error Message": `Something went wrong! We are not able to scan folder which located in this location ${dirPath}`,
         });
       }
       for (let item of files) {
@@ -65,9 +84,8 @@ exports.verifyDocuments = async (req, res) => {
               .update(fileBuffer)
               .digest("hex");
             const response = await verifyDocument({ hash, organization_id });
-            console.log("HealthLOQ document verification response: ", response);
             if (response?.status === "1") {
-              result.push({
+              verificationData.push({
                 "File Name": item.name,
                 "File Path": filePath,
                 "Is Verified Document": response?.data?.isVerifiedDocument,
@@ -77,16 +95,19 @@ exports.verifyDocuments = async (req, res) => {
                     )
                   : null,
                 Message: response?.message,
-                "Folder Path": "",
+                "Error Message": "",
               });
+            } else if (response?.status === "2") {
+              errorMsg = response?.message;
+              return;
             } else {
-              result.push({
+              verificationData.push({
                 "File Name": item.name,
                 "File Path": filePath,
                 "Is Verified Document": null,
                 Created: null,
-                Message: response?.message,
-                "Folder Path": "",
+                Message: "",
+                "Error Message": `Something went wrong! We are not able to verify the file which located in this location ${filePath}.`,
               });
             }
             io.sockets.emit("documentVerificationUpdate", {
@@ -95,13 +116,13 @@ exports.verifyDocuments = async (req, res) => {
               verificationType: "end",
             });
           } catch (error) {
-            result.push({
+            verificationData.push({
               "File Name": item.name,
               "File Path": filePath,
               "Is Verified Document": null,
               Created: null,
-              Message: "File not found.",
-              "Folder Path": "",
+              Message: "",
+              "Error Message": `Something went wrong! We are not able to scan file which located in this location ${filePath}`,
             });
           }
         } else {
@@ -110,21 +131,35 @@ exports.verifyDocuments = async (req, res) => {
       }
     };
     await readDir(folderPath);
-    let response = {
-      verifiedDocumentCount: result?.filter(
+    if (verificationData?.length) {
+      const csv = json2csv(verificationData);
+      try {
+        fs.writeFileSync(
+          path.join(
+            __dirname,
+            "../public/exports/document-verification-overview.csv"
+          ),
+          csv
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    io.sockets.emit("documentVerificationResult", {
+      noOfVerifiedDocuments: verificationData?.filter(
         (item) => item["Is Verified Document"] === "Yes"
       )?.length,
-      unVerifiedDocumentCount: result?.filter(
+      noOfUnverifiedDocuments: verificationData?.filter(
         (item) => item["Is Verified Document"] === "No"
       )?.length,
-    };
-    io.sockets.emit("documentVerificationResult", {
-        ...response,
-        errorsCount:
-          result?.length -
-          response.verifiedDocumentCount -
-          response.unVerifiedDocumentCount,
-        files: result,
+      noOfErrors: verificationData?.filter((item) => item["Error Message"])
+        .length,
+      verificationData,
+      errorMsg,
+      url: verificationData?.length
+        ? `http://localhost:${process.env.PORT}/public/exports/document-verification-overview.csv`
+        : null,
+      isDocVerificationFinalOverview: true,
     });
   } catch (error) {
     console.log(error);

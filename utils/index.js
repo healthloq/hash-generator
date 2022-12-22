@@ -130,10 +130,16 @@ exports.addNewFileIntoData = async (
       ) {
         await this.deleteFileFromData(fileName, filePath);
       }
+      const hashLimit =
+        subscriptionDetail?.filter(
+          (item) => item?.subscription_type === "publisher"
+        )[0]?.num_daily_hashes || null;
       if (
         data.length === 0 ||
-        data.filter((item) => item?.hash === hash && item.path === filePath)
-          .length === 0
+        (data.filter((item) => item?.hash === hash && item.path === filePath)
+          .length === 0 &&
+          hashLimit &&
+          data?.length < parseInt(hashLimit))
       ) {
         data.push({
           fileName,
@@ -144,6 +150,8 @@ exports.addNewFileIntoData = async (
         });
         this.setData(data);
         console.log(`=== ${fileName} hash generated`);
+      } else {
+        return;
       }
     }
   } catch (error) {

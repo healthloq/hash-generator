@@ -5,7 +5,7 @@ import {
   HANDLE_SYNCED_FILE_FILTER,
   HANDLE_VERIFY_DOCUMENTS,
   SET_INITIALSTATE,
-  SOCKET_DOCUMENT_VERIFICATION_PROGRESS,
+  GET_SUBSCRIPTION_OVERVIEW,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -17,6 +17,21 @@ export const getDashboardOverviewData = (params) => async (dispatch) => {
     const response = await API.getDashboardOverviewData(params);
     dispatch({
       type: GET_DASHBOARD_OVERVIEW_DATA,
+      payload: response,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getSubscriptionOverview = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: GET_SUBSCRIPTION_OVERVIEW,
+    });
+    const response = await API.getSubscriptionOverview(params);
+    dispatch({
+      type: GET_SUBSCRIPTION_OVERVIEW,
       payload: response,
     });
   } catch (error) {
@@ -52,17 +67,8 @@ export const handleDocumentVerification = (params) => async (dispatch) => {
   try {
     dispatch({
       type: HANDLE_VERIFY_DOCUMENTS,
-      payload:{
-        isLoading: true
-      }
-    });
-    dispatch({
-      type: SOCKET_DOCUMENT_VERIFICATION_PROGRESS,
       payload: {
-        verificationCompletedCount: 0,
-        verificationType: "",
-        fileName: "",
-        filePath: "",
+        isLoading: true,
       },
     });
     const response = await API.verifyDocuments(params);
@@ -74,9 +80,9 @@ export const handleDocumentVerification = (params) => async (dispatch) => {
     console.log(error);
     dispatch({
       type: HANDLE_VERIFY_DOCUMENTS,
-      payload:{
-        isLoading: false
-      }
+      payload: {
+        isLoading: false,
+      },
     });
   }
 };

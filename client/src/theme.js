@@ -297,7 +297,11 @@ export const theme = () => {
           style: ({ ownerState, theme }) => ({
             "&>div": {
               padding: "8px 15px",
-              border: `2px solid ${theme.palette.primary.main}`,
+              border: `2px solid ${
+                ownerState?.disabled
+                  ? "rgba(0, 0, 0, 0.38)"
+                  : theme.palette.primary.main
+              }`,
               borderRadius: 5,
             },
           }),
