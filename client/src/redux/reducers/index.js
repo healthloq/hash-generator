@@ -9,6 +9,7 @@ import {
   SOCKET_DOCUMENT_VERIFICATION_RESULT,
   GET_SUBSCRIPTION_OVERVIEW,
   SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR,
+  SET_APIFLAGS_INITIALSTATE,
 } from "../actionTypes";
 import { numberWithCommas } from "../../utils";
 
@@ -60,6 +61,10 @@ const initialState = {
     data: [],
     subscriptionList: [],
   },
+  apiFlags: {
+    subscriptionDetailFlag: false,
+    downloadVerifierResultCSVFlag: false,
+  },
 };
 
 const Reducer = (
@@ -100,6 +105,15 @@ const Reducer = (
           isLoading: false,
           ...payload,
         },
+        apiFlags: {
+          ...previousState.apiFlags,
+          subscriptionDetailFlag:
+            payload?.isDocVerificationFinalOverview ||
+            previousState.apiFlags.subscriptionDetailFlag,
+          downloadVerifierResultCSVFlag:
+            Boolean(payload?.url) ||
+            previousState.apiFlags.downloadVerifierResultCSVFlag,
+        },
       };
     }
     case SET_INITIALSTATE: {
@@ -113,6 +127,17 @@ const Reducer = (
             )
           : {}
       );
+    }
+    case SET_APIFLAGS_INITIALSTATE: {
+      return {
+        ...previousState,
+        apiFlags: Object.assign(
+          previousState.apiFlags,
+          Object.fromEntries(
+            payload?.map((key) => [key, initialState.apiFlags[key]])
+          )
+        ),
+      };
     }
     case HANDLE_VERIFY_DOCUMENTS: {
       return {
@@ -172,7 +197,9 @@ const Reducer = (
           ...previousState.documentVerificationData,
           ...payload,
           verifiedFilesCount:
-            payload?.verificationType === "end"
+            payload?.verificationType === "end" &&
+            previousState.documentVerificationData.verificationType !==
+              payload?.verificationType
               ? previousState.documentVerificationData.verifiedFilesCount + 1
               : previousState.documentVerificationData.verifiedFilesCount,
         },

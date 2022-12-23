@@ -14,10 +14,10 @@ import { MuiLinearProgress } from "../common";
 import { rightIcon, wrongIcon } from "../../assets";
 import { connect } from "react-redux";
 import {
-  getOrganizationList,
   getFolderOverview,
   handleDocumentVerification,
   setInitialState,
+  setApiFlagsInitialState,
 } from "../../redux/actions";
 import { numberWithCommas } from "../../utils";
 
@@ -57,14 +57,14 @@ const useStyle = makeStyles((theme) => ({
 }));
 
 function DocumentVerifier({
-  getOrganizationList,
   organizationList,
   getFolderOverview,
   folderOverview,
   handleDocumentVerification,
   documentVerificationData,
   setInitialState,
-  subscriptionDetails,
+  apiFlags,
+  setApiFlagsInitialState,
 }) {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
@@ -87,17 +87,11 @@ function DocumentVerifier({
   }, [folderPath]);
 
   useEffect(() => {
-    getOrganizationList();
-  }, []);
-
-  // useEffect(() => {
-  //   if (
-  //     documentVerificationData?.isDocVerificationFinalOverview &&
-  //     documentVerificationData?.url
-  //   ) {
-  //     window.open(documentVerificationData?.url, "_blank");
-  //   }
-  // }, [documentVerificationData.isDocVerificationFinalOverview]);
+    if (apiFlags.downloadVerifierResultCSVFlag) {
+      window.open(documentVerificationData?.url, "_blank");
+      setApiFlagsInitialState(["downloadVerifierResultCSVFlag"]);
+    }
+  }, [apiFlags.downloadVerifierResultCSVFlag]);
 
   return (
     <Box sx={{ mb: 3 }}>
@@ -256,20 +250,20 @@ const mapStateToProps = ({
     organizationList,
     folderOverview,
     documentVerificationData,
-    subscriptionDetails,
+    apiFlags,
   },
 }) => ({
   documentVerificationData,
   organizationList,
   folderOverview,
-  subscriptionDetails,
+  apiFlags,
 });
 
 const mapDispatchToProps = {
-  getOrganizationList,
   getFolderOverview,
   handleDocumentVerification,
   setInitialState,
+  setApiFlagsInitialState,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DocumentVerifier);

@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useEffect } from "react";
 import { connect } from "react-redux";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SuspenseLoader } from "./components/common";
-import Socket from "./components/socket/Socket";
+// import Socket from "./components/socket/Socket";
 import DocumentVerification from "./containers/DocumentVerification";
 import { getSubscriptionOverview } from "./redux/actions";
 const Home = lazy(() => import("./containers/Home"));
@@ -44,12 +44,12 @@ export const Main = (props) => {
       },
     ];
   }
-  if (subscriptionDetails?.isLoading) {
+  if (subscriptionDetails?.isLoading && !subscriptionDetails?.data?.length) {
     return <SuspenseLoader />;
   }
   return (
     <Suspense fallback={<SuspenseLoader />}>
-      <Socket />
+      {/* <Socket /> */}
       <BrowserRouter>
         <Routes>
           {routes?.map((route, key) => {

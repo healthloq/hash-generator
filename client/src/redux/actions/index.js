@@ -6,6 +6,7 @@ import {
   HANDLE_VERIFY_DOCUMENTS,
   SET_INITIALSTATE,
   GET_SUBSCRIPTION_OVERVIEW,
+  SET_APIFLAGS_INITIALSTATE,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -121,6 +122,13 @@ export const handleSyncedFilter = (params) => (dispatch) => {
 export const setInitialState = (params) => (dispatch) => {
   dispatch({
     type: SET_INITIALSTATE,
+    payload: params,
+  });
+};
+
+export const setApiFlagsInitialState = (params) => (dispatch) => {
+  dispatch({
+    type: SET_APIFLAGS_INITIALSTATE,
     payload: params,
   });
 };

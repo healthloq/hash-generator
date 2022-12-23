@@ -5,7 +5,12 @@ import DocumentVerifier from "../components/Home/DocumentVerifier";
 import { Box, Button, Typography } from "@mui/material";
 import { Link } from "../components";
 import { ArrowBack } from "@mui/icons-material";
-import { setInitialState, getSubscriptionOverview } from "../redux/actions";
+import {
+  setInitialState,
+  getSubscriptionOverview,
+  getOrganizationList,
+  setApiFlagsInitialState,
+} from "../redux/actions";
 import { MuiLinearProgress } from "../components/common";
 import { numberWithCommas } from "../utils";
 
@@ -14,17 +19,24 @@ export const DocumentVerification = (props) => {
     setInitialState,
     getSubscriptionOverview,
     subscriptionDetails,
-    documentVerificationData,
+    getOrganizationList,
+    apiFlags,
+    setApiFlagsInitialState,
   } = props;
   const [linearProgressData, setLinearProgressData] = useState({
     label: "",
     value: 0,
   });
   useEffect(() => {
-    if (documentVerificationData.isDocVerificationFinalOverview) {
+    if (apiFlags.subscriptionDetailFlag) {
       getSubscriptionOverview();
+      setApiFlagsInitialState(["subscriptionDetailFlag"]);
     }
-  }, [documentVerificationData.isDocVerificationFinalOverview]);
+  }, [apiFlags.subscriptionDetailFlag]);
+
+  useEffect(() => {
+    getOrganizationList();
+  }, []);
 
   useEffect(() => {
     if (subscriptionDetails?.data?.length) {
@@ -89,16 +101,16 @@ export const DocumentVerification = (props) => {
   );
 };
 
-const mapStateToProps = ({
-  reducer: { subscriptionDetails, documentVerificationData },
-}) => ({
+const mapStateToProps = ({ reducer: { subscriptionDetails, apiFlags } }) => ({
   subscriptionDetails,
-  documentVerificationData,
+  apiFlags,
 });
 
 const mapDispatchToProps = {
   setInitialState,
   getSubscriptionOverview,
+  getOrganizationList,
+  setApiFlagsInitialState,
 };
 
 export default connect(
