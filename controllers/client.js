@@ -157,7 +157,7 @@ exports.verifyDocuments = async (req, res) => {
       verificationData,
       errorMsg,
       url: verificationData?.length
-        ? `http://localhost:${process.env.PORT}/public/exports/document-verification-overview.csv`
+        ? `${process.env.REACT_APP_API_BASE_URL}/public/exports/document-verification-overview.csv`
         : null,
       isDocVerificationFinalOverview: true,
     });
