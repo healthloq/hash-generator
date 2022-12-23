@@ -64,8 +64,12 @@ exports.sort = (prop, arr) => {
  * @returns
  */
 exports.getData = async () => {
-  const data = localStorage.getItem("data");
-  return data ? await JSON.parse(data) : [];
+  let data = [];
+  try {
+    let tempData = await JSON.parse(localStorage.getItem("data"));
+    if (tempData?.length) data = tempData;
+  } catch (error) {}
+  return data;
 };
 
 /**

@@ -44,7 +44,10 @@ io.on("connection", (socket) => {
     await removeDeletedFilesFromFolder();
     await readFolder();
     const newData = await getData();
-    await syncHash(getHealthLoqApiPayload(oldData, newData));
+    await syncHash({
+      ...getHealthLoqApiPayload(oldData, newData),
+      hashCount: newData.length,
+    });
     watcher.on("all", async (eventName, filePath, state = {}) => {
       if (["add", "unlink", "change"].includes(eventName)) {
         setTimeout(async () => {
@@ -62,7 +65,10 @@ io.on("connection", (socket) => {
               filePath
             );
           const newData = await getData();
-          await syncHash(getHealthLoqApiPayload(oldData, newData));
+          await syncHash({
+            ...getHealthLoqApiPayload(oldData, newData),
+            hashCount: newData.length,
+          });
         }, 500);
       }
     });
