@@ -10,13 +10,9 @@ global.localStorage = new LocalStorage("./scratch");
 const server = require("http").createServer(app);
 
 const {
-  removeDeletedFilesFromFolder,
-  readFolder,
-  addNewFileIntoData,
-  getData,
-  getHealthLoqApiPayload,
-  getFileNameFromFilePath,
-  deleteFileFromData,
+  getSyncData,
+  setDocumentSyncTimeout,
+  setDocumentSyncInterval,
 } = require("./utils");
 const { syncHash, getSubscriptionDetail } = require("./services/healthloq");
 const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
@@ -39,37 +35,12 @@ io.on("connection", (socket) => {
       (item) => item?.subscription_type === "publisher"
     )?.length
   ) {
-    global.data = await getData();
-    const oldData = await getData();
-    await removeDeletedFilesFromFolder();
-    await readFolder();
-    const newData = await getData();
-    await syncHash({
-      ...getHealthLoqApiPayload(oldData, newData),
-      hashCount: newData.length,
-    });
+    const syncData = await getSyncData();
+    await syncHash(syncData);
+    setDocumentSyncInterval();
     watcher.on("all", async (eventName, filePath, state = {}) => {
       if (["add", "unlink", "change"].includes(eventName)) {
-        setTimeout(async () => {
-          const oldData = await getData();
-          if (["add", "change"].includes(eventName))
-            await addNewFileIntoData(
-              getFileNameFromFilePath(filePath),
-              filePath,
-              state,
-              eventName
-            );
-          if (eventName === "unlink")
-            await deleteFileFromData(
-              getFileNameFromFilePath(filePath),
-              filePath
-            );
-          const newData = await getData();
-          await syncHash({
-            ...getHealthLoqApiPayload(oldData, newData),
-            hashCount: newData.length,
-          });
-        }, 500);
+        setDocumentSyncTimeout();
       }
     });
   }
