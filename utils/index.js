@@ -277,7 +277,7 @@ exports.getSyncData = async () => {
     subscriptionDetail?.filter(
       (item) => item?.subscription_type === "publisher"
     )[0] || null;
-  let hashLimit = 30 || subscriptionData?.num_daily_hashes;
+  let hashLimit = subscriptionData?.num_daily_hashes;
   let todayHashLimit = subscriptionData?.current_num_daily_hashes;
   if (hashLimit && todayHashLimit) {
     hashLimit = parseInt(hashLimit);
