@@ -19,7 +19,7 @@ import {
   setInitialState,
   setApiFlagsInitialState,
 } from "../../redux/actions";
-import { numberWithCommas } from "../../utils";
+import { numberWithCommas, abbrNum } from "../../utils";
 
 const useStyle = makeStyles((theme) => ({
   formRoot: {
@@ -191,7 +191,7 @@ function DocumentVerifier({
                 loading: false,
                 label: `${numberWithCommas(
                   parseInt(documentVerificationData?.verifiedFilesCount)
-                )}/${numberWithCommas(
+                )}/${abbrNum(
                   parseInt(documentVerificationData?.totalFilesCount)
                 )}`,
                 value:

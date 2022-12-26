@@ -12,7 +12,7 @@ import {
   setApiFlagsInitialState,
 } from "../redux/actions";
 import { MuiLinearProgress } from "../components/common";
-import { numberWithCommas } from "../utils";
+import { abbrNum, numberWithCommas } from "../utils";
 
 export const DocumentVerification = (props) => {
   const {
@@ -48,7 +48,7 @@ export const DocumentVerification = (props) => {
         setLinearProgressData({
           label: `${numberWithCommas(
             parseInt(verifierData.current_num_daily_hashes)
-          )}/${numberWithCommas(parseInt(verifierData.num_daily_hashes))}`,
+          )}/${abbrNum(parseInt(verifierData.num_daily_hashes))}`,
           value:
             (parseInt(verifierData.current_num_daily_hashes) * 100) /
             parseInt(verifierData.num_daily_hashes),

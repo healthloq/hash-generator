@@ -11,7 +11,7 @@ import {
   SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR,
   SET_APIFLAGS_INITIALSTATE,
 } from "../actionTypes";
-import { numberWithCommas } from "../../utils";
+import { abbrNum } from "../../utils";
 
 const initialState = {
   dashboardOverview: {
@@ -161,7 +161,7 @@ const Reducer = (
         folderOverview = {
           ...payload,
           successMsg: !payload?.errorMsg
-            ? `Total Files: ${numberWithCommas(parseInt(payload?.filesCount))}`
+            ? `Total Files: ${abbrNum(parseInt(payload?.filesCount))}`
             : "",
         };
       } else {
