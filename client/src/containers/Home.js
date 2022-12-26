@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 import { getDashboardOverviewData } from "../redux/actions";
 import EnhancedTable from "../components/TableComponents";
 import { syncedFilesHeaders } from "../constants/tableConfigs";
-import { numberWithCommas } from "../utils";
+import { abbrNum } from "../utils";
 
 const useStyle = makeStyles((theme) => ({
   lastsyncedData: {
@@ -58,9 +58,9 @@ export function Home({
         )[0] || null;
       if (publisherData)
         setLinearProgressData({
-          label: `${numberWithCommas(
+          label: `${abbrNum(
             parseInt(publisherData.current_num_daily_hashes)
-          )}/${numberWithCommas(parseInt(publisherData.num_daily_hashes))}`,
+          )}/${abbrNum(parseInt(publisherData.num_daily_hashes))}`,
           value:
             (parseInt(publisherData.current_num_daily_hashes) * 100) /
             parseInt(publisherData.num_daily_hashes),
