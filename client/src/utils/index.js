@@ -3,6 +3,7 @@ export function numberWithCommas(x) {
 }
 
 export function abbrNum(number) {
+  number = parseInt(number);
   let decPlaces = 0;
   if (number >= 1000 && number < 1000000) {
     decPlaces = 0;
@@ -37,7 +38,7 @@ export function abbrNum(number) {
       }
 
       // Add the letter for the abbreviation
-      number += abbrev[i];
+      number += abbrev[i]?.toUpperCase();
 
       // We are done... stop
       break;
