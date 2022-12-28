@@ -1,4 +1,4 @@
-import { get, healthloqPost, post } from "../../Api";
+import { get, post, healthloqGet } from "../../Api";
 
 export const API = {
   getDashboardOverviewData: async () => await get("/api/client/overview-data"),
@@ -7,7 +7,7 @@ export const API = {
   getFolderOverview: async (params, config) =>
     await post("/api/client/get-folder-overview", params, config),
   getOrganizationList: async () =>
-    await healthloqPost("/client-app/organization-list"),
+    await healthloqGet("/document-hash/organization-list"),
   getSubscriptionOverview: async () =>
     await get("/api/client/get-subscription-overview"),
 };
