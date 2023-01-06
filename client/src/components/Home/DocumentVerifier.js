@@ -8,6 +8,8 @@ import {
   CircularProgress,
   Select,
   MenuItem,
+  Checkbox,
+  ListItemText,
 } from "..";
 import axios from "axios";
 import { MuiLinearProgress } from "../common";
@@ -53,6 +55,10 @@ const useStyle = makeStyles((theme) => ({
   },
   selectBox: {
     minHeight: 45,
+    width: "35%",
+    maxWidth: "35%",
+    minWidth: "35%",
+    marginRight: 10,
   },
 }));
 
@@ -68,11 +74,19 @@ function DocumentVerifier({
 }) {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
-  const [organization_id, setOrganization_id] = useState("");
+  const [organizationIds, setOrganizationIds] = useState([]);
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (folderPath?.trim() && organization_id) {
-      handleDocumentVerification({ folderPath, organization_id });
+    if (folderPath?.trim() && organizationIds?.length) {
+      handleDocumentVerification({
+        folderPath,
+        selectedOrganizations:
+          organizationIds?.length === organizationList?.data?.length
+            ? organizationList?.data
+            : organizationList?.data?.filter((item) =>
+                organizationIds?.includes(item?.id)
+              ),
+      });
     }
   };
 
@@ -99,46 +113,75 @@ function DocumentVerifier({
         <form onSubmit={handleSubmit}>
           <Box display={"flex"}>
             <Select
-              sx={{ typography: "body2", width: "40%", mr: 1 }}
-              value={organization_id}
-              onChange={(e) => setOrganization_id(e.target.value)}
+              multiple
+              value={organizationIds}
+              onChange={(e, newValue) => {
+                if (newValue?.props?.value === "all") {
+                  setOrganizationIds((pre) =>
+                    pre?.length === organizationList?.data?.length
+                      ? []
+                      : organizationList?.data?.map((item) => item?.id)
+                  );
+                } else {
+                  setOrganizationIds(e.target.value);
+                }
+              }}
+              renderValue={(selected) => {
+                if (selected.length === 0) {
+                  return "Select Producer";
+                }
+
+                return organizationList?.data
+                  ?.filter((item) => selected?.includes(item?.id))
+                  ?.map((item) => item?.name)
+                  ?.join(", ");
+              }}
               disableUnderline
               variant="standard"
               className={classes.selectBox}
               required
               displayEmpty
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 45 * 4.5,
+                  },
+                },
+              }}
+              sx={{ typography: "body2" }}
             >
               <MenuItem value={""} disabled>
-                <Typography
-                  className="notranslate"
-                  variant="body2"
-                  textTransform={"uppercase"}
-                >
+                <Typography className="notranslate" variant="body2">
                   Select Producer
                 </Typography>
               </MenuItem>
               {organizationList?.isLoading &&
                 organizationList?.data?.length === 0 && (
                   <MenuItem value={"loading"} disabled>
-                    <Typography
-                      className="notranslate"
-                      variant="body2"
-                      textTransform={"uppercase"}
-                    >
+                    <Typography className="notranslate" variant="body2">
                       Loading...
                       <CircularProgress size={20} sx={{ ml: 1 }} />
                     </Typography>
                   </MenuItem>
                 )}
+              <MenuItem value={"all"}>
+                <Checkbox
+                  checked={
+                    organizationIds?.length === organizationList?.data?.length
+                  }
+                />
+                <Typography className="notranslate" variant="body2">
+                  Select All
+                </Typography>
+              </MenuItem>
               {organizationList?.data?.map((item, i) => {
                 return (
-                  <MenuItem value={item.id} key={i}>
-                    <Typography
-                      className="notranslate"
-                      variant="body2"
-                      textTransform={"uppercase"}
-                    >
-                      {item.name}
+                  <MenuItem key={i} value={item?.id}>
+                    <Checkbox
+                      checked={organizationIds.indexOf(item?.id) > -1}
+                    />
+                    <Typography className="notranslate" variant="body2">
+                      {item?.name}
                     </Typography>
                   </MenuItem>
                 );
@@ -199,11 +242,6 @@ function DocumentVerifier({
                   documentVerificationData?.totalFilesCount,
               }}
             />
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {documentVerificationData?.verificationType === "start"
-                ? `Starting ${documentVerificationData?.fileName} document verification...`
-                : `Complete ${documentVerificationData?.fileName} document verification.`}
-            </Typography>
           </Box>
         )}
         {!documentVerificationData?.isLoading &&
@@ -226,12 +264,6 @@ function DocumentVerifier({
                   parseInt(documentVerificationData?.noOfUnverifiedDocuments)
                 )}
                 <img src={wrongIcon} alt="wrong-icon" />
-              </Typography>
-              <Typography variant="h6">
-                No of errors in files:&nbsp;
-                {numberWithCommas(
-                  parseInt(documentVerificationData?.noOfErrors)
-                )}
               </Typography>
               {documentVerificationData?.errorMsg && (
                 <Typography variant="body1" sx={{ my: 1 }}>
