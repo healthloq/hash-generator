@@ -248,8 +248,9 @@ export const theme = () => {
       ],
       styleOverrides: {
         select: ({ ownerState, theme }) => ({
-          padding: "8px 15px ",
+          padding: "5px 15px ",
           minHeight: "unset",
+          textTransform: "capitalize",
           "&>p": {
             textTransform: "capitalize",
           },

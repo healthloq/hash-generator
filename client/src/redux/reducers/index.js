@@ -43,12 +43,8 @@ const initialState = {
     data: [],
     totalFilesCount: 0,
     verifiedFilesCount: 0,
-    verificationType: "",
-    fileName: "",
-    filePath: "",
     noOfVerifiedDocuments: 0,
     noOfUnverifiedDocuments: 0,
-    noOfErrors: 0,
     verificationData: [],
     errorMsg: "",
     url: "",
@@ -196,12 +192,6 @@ const Reducer = (
         documentVerificationData: {
           ...previousState.documentVerificationData,
           ...payload,
-          verifiedFilesCount:
-            payload?.verificationType === "end" &&
-            previousState.documentVerificationData.verificationType !==
-              payload?.verificationType
-              ? previousState.documentVerificationData.verifiedFilesCount + 1
-              : previousState.documentVerificationData.verifiedFilesCount,
         },
       };
     }

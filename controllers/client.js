@@ -1,10 +1,9 @@
-const { sort, getData, getFolderOverview } = require("../utils");
+const { sort, getData, getFolderOverview, generateHash } = require("../utils");
 const {
   verifyDocument,
   getSubscriptionDetail,
 } = require("../services/healthloq");
 const fs = require("fs");
-const crypto = require("crypto");
 const path = require("path");
 const moment = require("moment");
 const json2csv = require("json2csv").parse;
@@ -46,93 +45,107 @@ exports.getSubscriptionOverview = async (req, res) => {
 
 exports.verifyDocuments = async (req, res) => {
   try {
-    const { folderPath, organization_id } = req.body;
+    const { folderPath, selectedOrganizations } = req.body;
     res.status(200).json({
       status: "1",
       data: [],
     });
-    let verificationData = [];
+    const docVerificationLimit = 500;
+    let finalResult = [];
     let errorMsg = "";
-    const readDir = async (dirPath) => {
-      let files = [];
-      try {
-        files = fs.readdirSync(dirPath, { withFileTypes: true });
-      } catch (error) {
-        verificationData.push({
-          "File Name": "",
-          "File Path": "",
-          "Is Verified Document": null,
-          Created: null,
-          Message: "",
-          "Error Message": `Something went wrong! We are not able to scan folder which located in this location ${dirPath}`,
+    const documentHashData = await generateHash(folderPath);
+    for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
+      const arr = documentHashData?.slice(i, i + docVerificationLimit);
+      if (arr?.length) {
+        const response = await verifyDocument({
+          hashList: arr?.map((item) => item?.hash),
+          organizationIds: selectedOrganizations?.map((item) => item?.id),
         });
-      }
-      for (let item of files) {
-        if (item.isFile()) {
-          const filePath = path.join(dirPath, item.name);
-          io.sockets.emit("documentVerificationUpdate", {
-            fileName: item.name,
-            filePath,
-            verificationType: "start",
-          });
-          let state = {};
-          try {
-            state = fs.statSync(filePath);
-            const fileBuffer = fs.readFileSync(filePath);
-            const hash = crypto
-              .createHash("sha256")
-              .update(fileBuffer)
-              .digest("hex");
-            const response = await verifyDocument({ hash, organization_id });
-            if (response?.status === "1") {
-              verificationData.push({
-                "File Name": item.name,
-                "File Path": filePath,
-                "Is Verified Document": response?.data?.isVerifiedDocument,
-                Created: response?.data?.created_on
-                  ? moment(response?.data?.created_on).format(
-                      "DD MMMM, YYYY hh:mm A"
-                    )
+        if (response?.status === "1") {
+          finalResult = [
+            ...finalResult,
+            ...response?.data?.data?.map((item) => {
+              const fileInfo = documentHashData?.filter(
+                (a) => a?.hash === item?.hash
+              )[0];
+              const orgInfo = item?.organization_id
+                ? selectedOrganizations?.filter(
+                    (a) => a?.id === item?.organization_id
+                  )[0]
+                : null;
+              return {
+                "Organization Name": orgInfo?.name || "",
+                "File Name": fileInfo?.fileName,
+                "File Path": fileInfo?.path,
+                "Is Verified Document": item?.isVerifiedDocument,
+                Created: item?.created_on
+                  ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
                   : null,
-                Message: response?.message,
+                Message: item?.message,
                 "Error Message": "",
-              });
-            } else if (response?.status === "2") {
-              errorMsg = response?.message;
-              return;
-            } else {
-              verificationData.push({
-                "File Name": item.name,
-                "File Path": filePath,
+              };
+            }),
+          ];
+          io.sockets.emit("documentVerificationUpdate", {
+            verifiedFilesCount: finalResult?.length,
+          });
+          if (!response?.data?.userHaveDocVerificationLimit) {
+            errorMsg = response?.data?.errorMsg;
+            break;
+          }
+        } else if (response?.status === "2") {
+          errorMsg = response?.message;
+          finalResult = [
+            ...finalResult,
+            ...response?.data?.data?.map((item) => {
+              const fileInfo = documentHashData?.filter(
+                (a) => a?.hash === item?.hash
+              )[0];
+              const orgInfo = item?.organization_id
+                ? selectedOrganizations?.filter(
+                    (a) => a?.id === item?.organization_id
+                  )[0]
+                : null;
+              return {
+                "Organization Name": orgInfo?.name || "",
+                "File Name": fileInfo?.fileName,
+                "File Path": fileInfo?.path,
+                "Is Verified Document": item?.isVerifiedDocument,
+                Created: item?.created_on
+                  ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                  : null,
+                Message: item?.message,
+                "Error Message": "",
+              };
+            }),
+          ];
+          io.sockets.emit("documentVerificationUpdate", {
+            verifiedFilesCount: finalResult?.length,
+          });
+          break;
+        } else {
+          finalResult = [
+            ...finalResult,
+            ...arr?.map((item) => {
+              return {
+                "Organization Name": "",
+                "File Name": item?.fileName,
+                "File Path": item?.path,
                 "Is Verified Document": null,
                 Created: null,
                 Message: "",
-                "Error Message": `Something went wrong! We are not able to verify the file which located in this location ${filePath}.`,
-              });
-            }
-            io.sockets.emit("documentVerificationUpdate", {
-              fileName: item.name,
-              filePath,
-              verificationType: "end",
-            });
-          } catch (error) {
-            verificationData.push({
-              "File Name": item.name,
-              "File Path": filePath,
-              "Is Verified Document": null,
-              Created: null,
-              Message: "",
-              "Error Message": `Something went wrong! We are not able to scan file which located in this location ${filePath}`,
-            });
-          }
-        } else {
-          await readDir(path.join(dirPath, item.name));
+                "Error Message": `Something went wrong! We are not able to verify the file which located in this location ${item?.path}.`,
+              };
+            }),
+          ];
+          io.sockets.emit("documentVerificationUpdate", {
+            verifiedFilesCount: finalResult?.length,
+          });
         }
       }
-    };
-    await readDir(folderPath);
-    if (verificationData?.length) {
-      const csv = json2csv(verificationData);
+    }
+    if (finalResult?.length) {
+      const csv = json2csv(finalResult);
       try {
         fs.writeFileSync(
           path.join(
@@ -146,17 +159,15 @@ exports.verifyDocuments = async (req, res) => {
       }
     }
     io.sockets.emit("documentVerificationResult", {
-      noOfVerifiedDocuments: verificationData?.filter(
+      noOfVerifiedDocuments: finalResult?.filter(
         (item) => item["Is Verified Document"] === "Yes"
       )?.length,
-      noOfUnverifiedDocuments: verificationData?.filter(
+      noOfUnverifiedDocuments: finalResult?.filter(
         (item) => item["Is Verified Document"] === "No"
       )?.length,
-      noOfErrors: verificationData?.filter((item) => item["Error Message"])
-        .length,
-      verificationData,
+      verificationData: finalResult,
       errorMsg,
-      url: verificationData?.length
+      url: finalResult?.length
         ? `${process.env.REACT_APP_API_BASE_URL}/public/exports/document-verification-overview.csv`
         : null,
       isDocVerificationFinalOverview: true,

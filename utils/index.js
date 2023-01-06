@@ -232,8 +232,11 @@ exports.generateHash = async (
     for (let item of files) {
       if (item.isFile()) {
         if (
-          item?.name?.split(".").pop()?.match(ALLOWED_DOCUMENT_FILE_TYPES) !==
-          null
+          item?.name
+            ?.split(".")
+            ?.pop()
+            ?.toLowerCase()
+            ?.match(ALLOWED_DOCUMENT_FILE_TYPES) !== null
         ) {
           const filePath = path.join(folderPath, item.name);
           let state = {};
