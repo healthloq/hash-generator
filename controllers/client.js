@@ -2,6 +2,7 @@ const { sort, getData, getFolderOverview, generateHash } = require("../utils");
 const {
   verifyDocument,
   getSubscriptionDetail,
+  verifyDocumentOrganizations,
 } = require("../services/healthloq");
 const fs = require("fs");
 const path = require("path");
@@ -50,16 +51,31 @@ exports.verifyDocuments = async (req, res) => {
       status: "1",
       data: [],
     });
-    const docVerificationLimit = 500;
+    const organizationIds = selectedOrganizations?.map((item) => item?.id);
+    // Verify document organizations
+    let docOrgVerificationData = [];
+    try {
+      let response = await verifyDocumentOrganizations({
+        organizationIds,
+      });
+      if (response?.data?.length) {
+        docOrgVerificationData = response?.data;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+    // Verify documents
+    const docVerificationLimit = 500; // No of documents verify at a time
     let finalResult = [];
     let errorMsg = "";
     const documentHashData = await generateHash(folderPath);
     for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
       const arr = documentHashData?.slice(i, i + docVerificationLimit);
       if (arr?.length) {
+        // verify documents in blockchain
         const response = await verifyDocument({
           hashList: arr?.map((item) => item?.hash),
-          organizationIds: selectedOrganizations?.map((item) => item?.id),
+          organizationIds,
         });
         if (response?.status === "1") {
           finalResult = [
@@ -73,8 +89,17 @@ exports.verifyDocuments = async (req, res) => {
                     (a) => a?.id === item?.organization_id
                   )[0]
                 : null;
+              const orgVerificationInfo =
+                docOrgVerificationData?.filter(
+                  (a) => a?.organization_id === item?.organization_id
+                )[0] || null;
               return {
                 "Organization Name": orgInfo?.name || "",
+                "Is Verified Organization": orgVerificationInfo
+                  ? orgVerificationInfo?.isVerifiedOrg
+                    ? "Yes"
+                    : "No"
+                  : "",
                 "File Name": fileInfo?.fileName,
                 "File Path": fileInfo?.path,
                 "Is Verified Document": item?.isVerifiedDocument,
@@ -89,6 +114,7 @@ exports.verifyDocuments = async (req, res) => {
           io.sockets.emit("documentVerificationUpdate", {
             verifiedFilesCount: finalResult?.length,
           });
+          // Stop document verification if subscription limit
           if (!response?.data?.userHaveDocVerificationLimit) {
             errorMsg = response?.data?.errorMsg;
             break;
@@ -106,8 +132,17 @@ exports.verifyDocuments = async (req, res) => {
                     (a) => a?.id === item?.organization_id
                   )[0]
                 : null;
+              const orgVerificationInfo =
+                docOrgVerificationData?.filter(
+                  (a) => a?.organization_id === item?.organization_id
+                )[0] || null;
               return {
                 "Organization Name": orgInfo?.name || "",
+                "Is Verified Organization": orgVerificationInfo
+                  ? orgVerificationInfo?.isVerifiedOrg
+                    ? "Yes"
+                    : "No"
+                  : "",
                 "File Name": fileInfo?.fileName,
                 "File Path": fileInfo?.path,
                 "Is Verified Document": item?.isVerifiedDocument,
@@ -129,6 +164,7 @@ exports.verifyDocuments = async (req, res) => {
             ...arr?.map((item) => {
               return {
                 "Organization Name": "",
+                "Is Verified Organization": "",
                 "File Name": item?.fileName,
                 "File Path": item?.path,
                 "Is Verified Document": null,
@@ -144,6 +180,7 @@ exports.verifyDocuments = async (req, res) => {
         }
       }
     }
+    // Create document verification final csv
     if (finalResult?.length) {
       const csv = json2csv(finalResult);
       try {
@@ -158,9 +195,17 @@ exports.verifyDocuments = async (req, res) => {
         console.log(error);
       }
     }
+    // Send final socket for document verfication quick overview and send csv url to export final result
     io.sockets.emit("documentVerificationResult", {
-      noOfVerifiedDocuments: finalResult?.filter(
-        (item) => item["Is Verified Document"] === "Yes"
+      noOfVerifiedDocumentsWithVerifiedOrg: finalResult?.filter(
+        (item) =>
+          item["Is Verified Organization"] === "Yes" &&
+          item["Is Verified Document"] === "Yes"
+      )?.length,
+      noOfVerifiedDocumentsWithUnVerifiedOrg: finalResult?.filter(
+        (item) =>
+          item["Is Verified Organization"] === "No" &&
+          item["Is Verified Document"] === "Yes"
       )?.length,
       noOfUnverifiedDocuments: finalResult?.filter(
         (item) => item["Is Verified Document"] === "No"

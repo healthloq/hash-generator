@@ -122,11 +122,13 @@ function EnhancedTableToolbar(props) {
           {tableTitle}
         </Typography>
 
-        <Tooltip title="Filter list">
-          <IconButton onClick={(e) => setOpenTableFilter(e.currentTarget)}>
-            <FilterList />
-          </IconButton>
-        </Tooltip>
+        {tableId && (
+          <Tooltip title="Filter list">
+            <IconButton onClick={(e) => setOpenTableFilter(e.currentTarget)}>
+              <FilterList />
+            </IconButton>
+          </Tooltip>
+        )}
       </Toolbar>
       {getFilterComponent()}
     </React.Fragment>
