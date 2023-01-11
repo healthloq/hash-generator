@@ -48,6 +48,27 @@ exports.verifyDocument = async (params) => {
   }
 };
 
+exports.verifyDocumentOrganizations = async (params) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/verify-document-organizations`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log(error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
 exports.getSubscriptionDetail = async () => {
   try {
     const response = await axios.get(

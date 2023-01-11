@@ -9,7 +9,7 @@ import {
   Select,
   MenuItem,
   Checkbox,
-  ListItemText,
+  Grid,
 } from "..";
 import axios from "axios";
 import { MuiLinearProgress } from "../common";
@@ -22,11 +22,14 @@ import {
   setApiFlagsInitialState,
 } from "../../redux/actions";
 import { numberWithCommas, abbrNum } from "../../utils";
+import EnhancedTable from "../TableComponents";
+import { verifiedDocumentsHeaders } from "../../constants/tableConfigs";
+import moment from "moment";
 
 const useStyle = makeStyles((theme) => ({
   formRoot: {
     width: "100%",
-    "&>div": {
+    "&>div:not(:last-child)": {
       marginTop: 10,
     },
   },
@@ -51,6 +54,28 @@ const useStyle = makeStyles((theme) => ({
     },
     "&>p": {
       color: theme.palette.error.main,
+    },
+  },
+  docVerificationOverviewBox: {
+    border: `2px solid ${theme.palette.primary.main}`,
+    borderRadius: 10,
+    padding: "10px 15px",
+    backgroundColor: theme.palette.secondary.main,
+    height: 150,
+    boxSizing: "border-box",
+    "&>p": {
+      "&:first-child": {
+        color: theme.palette.common.black,
+        fontSize: 60,
+        lineHeight: "65px",
+        marginBottom: 5,
+        "&>img": {
+          marginLeft: 5,
+          width: 30,
+          height: 30,
+        },
+      },
+      "&:last-child": {},
     },
   },
   selectBox: {
@@ -246,7 +271,80 @@ function DocumentVerifier({
         )}
         {!documentVerificationData?.isLoading &&
           documentVerificationData?.isDocVerificationFinalOverview && (
-            <Box
+            <>
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={4}>
+                  <Box className={classes.docVerificationOverviewBox}>
+                    <Typography variant="body1">
+                      {numberWithCommas(
+                        parseInt(
+                          documentVerificationData?.noOfVerifiedDocumentsWithVerifiedOrg
+                        )
+                      )}
+                      <img src={rightIcon} alt="right-icon" />
+                    </Typography>
+                    <Typography variant="body2">
+                      No of verified documents with verified organizations
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box className={classes.docVerificationOverviewBox}>
+                    <Typography variant="body1">
+                      {numberWithCommas(
+                        parseInt(
+                          documentVerificationData?.noOfVerifiedDocumentsWithUnVerifiedOrg
+                        )
+                      )}
+                      <img src={rightIcon} alt="right-icon" />
+                    </Typography>
+                    <Typography variant="body2">
+                      No of verified documents with unverified organizations
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <Box className={classes.docVerificationOverviewBox}>
+                    <Typography variant="body1">
+                      {numberWithCommas(
+                        parseInt(
+                          documentVerificationData?.noOfUnverifiedDocuments
+                        )
+                      )}
+                      <img src={wrongIcon} alt="wrong-icon" />
+                    </Typography>
+                    <Typography variant="body2">
+                      No of unverified documents
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+              <Box sx={{ mt: 2 }}>
+                <EnhancedTable
+                  tableTitle="Document Verification Overview"
+                  headCells={verifiedDocumentsHeaders}
+                  rows={documentVerificationData?.verificationData?.map(
+                    (item) => ({
+                      organization_name: item["Organization Name"],
+                      is_verified_organization:
+                        item["Is Verified Organization"],
+                      file_name: item["File Name"],
+                      file_path: item["File Path"],
+                      is_verified_document: item["Is Verified Document"],
+                      created: item["Created"]
+                        ? moment(item["Created"]).format("MM/DD/YYYY hh:mm A")
+                        : "",
+                      message: item["Message"],
+                      error_message: item["Error Message"],
+                    })
+                  )}
+                  tableId=""
+                  isLoading={false}
+                />
+              </Box>
+            </>
+          )}
+        {/* <Box
               display="flex"
               flexDirection="column"
               className={classes.documentVerificationOutput}
@@ -270,8 +368,7 @@ function DocumentVerifier({
                   {documentVerificationData?.errorMsg}
                 </Typography>
               )}
-            </Box>
-          )}
+            </Box> */}
       </Box>
     </Box>
   );

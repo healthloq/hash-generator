@@ -43,12 +43,14 @@ const initialState = {
     data: [],
     totalFilesCount: 0,
     verifiedFilesCount: 0,
-    noOfVerifiedDocuments: 0,
+    noOfVerifiedDocumentsWithVerifiedOrg: 0,
+    noOfVerifiedDocumentsWithUnVerifiedOrg: 0,
     noOfUnverifiedDocuments: 0,
     verificationData: [],
     errorMsg: "",
     url: "",
     isDocVerificationFinalOverview: false,
+    filteredVerificationData: [],
   },
   subscriptionDetails: {
     isLoading: false,
@@ -100,6 +102,7 @@ const Reducer = (
           ...previousState.documentVerificationData,
           isLoading: false,
           ...payload,
+          filteredVerificationData: payload?.verificationData || [],
         },
         apiFlags: {
           ...previousState.apiFlags,
