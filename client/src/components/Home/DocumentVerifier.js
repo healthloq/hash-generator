@@ -323,7 +323,7 @@ function DocumentVerifier({
                 <EnhancedTable
                   tableTitle="Document Verification Overview"
                   headCells={verifiedDocumentsHeaders}
-                  rows={documentVerificationData?.verificationData?.map(
+                  rows={documentVerificationData?.filteredVerificationData?.map(
                     (item) => ({
                       organization_name: item["Organization Name"],
                       is_verified_organization:
@@ -338,7 +338,7 @@ function DocumentVerifier({
                       error_message: item["Error Message"],
                     })
                   )}
-                  tableId=""
+                  tableId="documentVerificationOverviewFilter"
                   isLoading={false}
                 />
               </Box>
