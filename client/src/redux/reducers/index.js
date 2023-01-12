@@ -10,6 +10,7 @@ import {
   GET_SUBSCRIPTION_OVERVIEW,
   SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR,
   SET_APIFLAGS_INITIALSTATE,
+  HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -52,6 +53,9 @@ const initialState = {
     isDocVerificationFinalOverview: false,
     filteredVerificationData: [],
   },
+  documentVerificationFilters: {
+    verificationType: "all",
+  },
   subscriptionDetails: {
     isLoading: false,
     status: "",
@@ -71,6 +75,46 @@ const Reducer = (
   state
 ) => {
   switch (type) {
+    case HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER: {
+      const documentVerificationData = {
+        ...previousState.documentVerificationData,
+      };
+      if (payload?.verificationType) {
+        if (payload?.verificationType === "all")
+          documentVerificationData["filteredVerificationData"] =
+            documentVerificationData?.verificationData;
+        else if (payload?.verificationType === "verifiedDocWithVerifiedOrg")
+          documentVerificationData["filteredVerificationData"] =
+            documentVerificationData?.verificationData?.filter(
+              (item) =>
+                item["Is Verified Document"] === "Yes" &&
+                item["Is Verified Organization"] === "Yes"
+            );
+        else if (payload?.verificationType === "verifiedDocWithUnverifiedOrg")
+          documentVerificationData["filteredVerificationData"] =
+            documentVerificationData?.verificationData?.filter(
+              (item) =>
+                item["Is Verified Document"] === "Yes" &&
+                item["Is Verified Organization"] === "No"
+            );
+        else if (payload?.verificationType === "unverifiedDoc")
+          documentVerificationData["filteredVerificationData"] =
+            documentVerificationData?.verificationData?.filter(
+              (item) => item["Is Verified Document"] === "No"
+            );
+        else
+          documentVerificationData["filteredVerificationData"] =
+            documentVerificationData?.verificationData;
+      }
+      return {
+        ...previousState,
+        documentVerificationFilters: {
+          ...previousState.documentVerificationFilters,
+          ...payload,
+        },
+        documentVerificationData,
+      };
+    }
     case SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR: {
       return {
         ...previousState,

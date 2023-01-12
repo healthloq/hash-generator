@@ -13,7 +13,7 @@ import {
 } from "..";
 import axios from "axios";
 import { MuiLinearProgress } from "../common";
-import { rightIcon, wrongIcon } from "../../assets";
+import { rightIcon, wrongIcon, questionMarkLogo } from "../../assets";
 import { connect } from "react-redux";
 import {
   getFolderOverview,
@@ -284,7 +284,7 @@ function DocumentVerifier({
                       <img src={rightIcon} alt="right-icon" />
                     </Typography>
                     <Typography variant="body2">
-                      No of verified documents with verified organizations
+                      Number of verified documents with verified organizations
                     </Typography>
                   </Box>
                 </Grid>
@@ -296,10 +296,10 @@ function DocumentVerifier({
                           documentVerificationData?.noOfVerifiedDocumentsWithUnVerifiedOrg
                         )
                       )}
-                      <img src={rightIcon} alt="right-icon" />
+                      <img src={questionMarkLogo} alt="right-icon" />
                     </Typography>
                     <Typography variant="body2">
-                      No of verified documents with unverified organizations
+                      Number of verified documents with unverified organizations
                     </Typography>
                   </Box>
                 </Grid>
@@ -314,7 +314,7 @@ function DocumentVerifier({
                       <img src={wrongIcon} alt="wrong-icon" />
                     </Typography>
                     <Typography variant="body2">
-                      No of unverified documents
+                      Number of unverified documents
                     </Typography>
                   </Box>
                 </Grid>
@@ -323,7 +323,7 @@ function DocumentVerifier({
                 <EnhancedTable
                   tableTitle="Document Verification Overview"
                   headCells={verifiedDocumentsHeaders}
-                  rows={documentVerificationData?.verificationData?.map(
+                  rows={documentVerificationData?.filteredVerificationData?.map(
                     (item) => ({
                       organization_name: item["Organization Name"],
                       is_verified_organization:
@@ -338,7 +338,7 @@ function DocumentVerifier({
                       error_message: item["Error Message"],
                     })
                   )}
-                  tableId=""
+                  tableId="documentVerificationOverviewFilter"
                   isLoading={false}
                 />
               </Box>

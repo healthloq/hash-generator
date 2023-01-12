@@ -1,88 +1,106 @@
 import React from "react";
 import {
-  ClickAwayListener,
-  Grow,
-  Paper,
-  Popper,
-  TextField,
   Box,
-  InputAdornment,
+  Select,
+  MenuItem,
+  Typography,
+  InputLabel,
+  Menu,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-import { handleSyncedFilter } from "../../redux/actions";
+import { handleDocumentVerificationDataFilter } from "../../redux/actions";
 import { connect } from "react-redux";
-import { Search } from "@mui/icons-material";
 
 const useStyle = makeStyles((theme) => ({
   filterContainer: {
     padding: 20,
     backgroundColor: theme.palette.common.white,
   },
-  searchTextfield: {},
 }));
+
+let docVerificationTypes = [
+  {
+    value: "all",
+    label: "All",
+  },
+  {
+    value: "verifiedDocWithVerifiedOrg",
+    label: "Verified documents with verified organization",
+  },
+  {
+    value: "verifiedDocWithUnverifiedOrg",
+    label: "Verified documents with unverified organization",
+  },
+  {
+    value: "unverifiedDoc",
+    label: "Unverified documents",
+  },
+];
 
 export function VerificationDocumentsOverviewFilter({
   anchorRef,
   handleClose,
-  placement = "bottom-end",
-  handleSyncedFilter,
-  syncedFilesFilter,
+  documentVerificationFilters,
+  handleDocumentVerificationDataFilter,
 }) {
   const classes = useStyle();
 
   return (
-    <Popper
+    <Menu
       open={Boolean(anchorRef)}
       anchorEl={anchorRef}
-      role={undefined}
-      transition
-      disablePortal
-      placement={placement}
+      onClose={handleClose}
+      anchorOrigin={{
+        vertical: "bottom",
+        horizontal: "right",
+      }}
+      transformOrigin={{
+        vertical: "top",
+        horizontal: "right",
+      }}
     >
-      {({ TransitionProps }) => (
-        <Grow {...TransitionProps}>
-          <Paper>
-            <ClickAwayListener onClickAway={handleClose}>
-              <Box className={classes.filterContainer}>
-                <TextField
-                  label="Search files by fileName"
-                  value={syncedFilesFilter?.searchText}
-                  onChange={(e) =>
-                    handleSyncedFilter({
-                      searchText: e.target.value.trim(),
-                      isFilterData: e.target.value?.trim() === "",
-                    })
-                  }
-                  variant="standard"
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Search
-                          sx={{ cursor: "pointer" }}
-                          onClick={() =>
-                            handleSyncedFilter({ isFilterData: true })
-                          }
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                  className={classes.searchTextfield}
-                />
-              </Box>
-            </ClickAwayListener>
-          </Paper>
-        </Grow>
-      )}
-    </Popper>
+      <Box className={classes.filterContainer}>
+        <InputLabel sx={{ mb: 0.5 }}>Filter Documents</InputLabel>
+        <Select
+          label="Select"
+          variant="standard"
+          onChange={(e) => {
+            if (e.target.value)
+              handleDocumentVerificationDataFilter({
+                verificationType: e.target.value,
+              });
+          }}
+          value={documentVerificationFilters?.verificationType}
+          disableUnderline
+          sx={{ typography: "body2", minWidth: 250 }}
+          MenuProps={{
+            anchorOrigin: {
+              vertical: "top",
+              horizontal: "right",
+            },
+            transformOrigin: {
+              vertical: "top",
+              horizontal: "right",
+            },
+          }}
+        >
+          {docVerificationTypes?.map((item, key) => (
+            <MenuItem value={item?.value} key={key}>
+              <Typography variant="body2">{item?.label}</Typography>
+            </MenuItem>
+          ))}
+        </Select>
+      </Box>
+    </Menu>
   );
 }
 
-const mapStateToProps = ({ reducer: { syncedFilesFilter } }) => ({
-  syncedFilesFilter,
+const mapStateToProps = ({ reducer: { documentVerificationFilters } }) => ({
+  documentVerificationFilters,
 });
 
 const mapDispatchToProps = {
-  handleSyncedFilter,
+  handleDocumentVerificationDataFilter,
 };
 
 export default connect(

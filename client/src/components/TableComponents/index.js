@@ -20,6 +20,7 @@ import { FilterList } from "@mui/icons-material";
 import { visuallyHidden } from "@mui/utils";
 import { makeStyles } from "@mui/styles";
 import SyncedFilesFilter from "./SyncedFilesFilter";
+import VerificationDocumentsOverviewFilter from "./VerificationDocumentsOverviewFilter";
 
 const useStyle = makeStyles((theme) => ({
   tableHeadCell: {
@@ -108,6 +109,8 @@ function EnhancedTableToolbar(props) {
   const getFilterComponent = () => {
     if (tableId === "syncedFilesFilter")
       return <SyncedFilesFilter {...params} />;
+    else if (tableId === "documentVerificationOverviewFilter")
+      return <VerificationDocumentsOverviewFilter {...params} />;
   };
 
   return (
