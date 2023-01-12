@@ -7,8 +7,17 @@ import {
   SET_INITIALSTATE,
   GET_SUBSCRIPTION_OVERVIEW,
   SET_APIFLAGS_INITIALSTATE,
+  HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
 } from "../actionTypes";
 import { API } from "../apis";
+
+export const handleDocumentVerificationDataFilter =
+  (params) => async (dispatch) => {
+    dispatch({
+      type: HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
+      payload: params,
+    });
+  };
 
 export const getDashboardOverviewData = (params) => async (dispatch) => {
   try {
