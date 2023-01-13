@@ -2,3 +2,4 @@ node_modules/
 yarn.lock
 scratch/
 documents/
+public/exports/
