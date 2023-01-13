@@ -12,6 +12,9 @@ export const theme = () => {
       text: {
         primary: "#444",
       },
+      borderColor: "rgba(0,0,0,0.1)",
+      lightBlackColor: "#6c757d",
+      lightGray: "#999",
     },
     typography: {
       fontWeightBold: 700,
@@ -240,7 +243,7 @@ export const theme = () => {
         {
           props: { variant: "standard" },
           style: ({ ownerState, theme }) => ({
-            border: `2px solid ${theme.palette.primary.main}`,
+            border: `1px solid ${theme.palette.primary.main}`,
             height: "max-content",
             borderRadius: 5,
           }),
@@ -251,8 +254,12 @@ export const theme = () => {
           padding: "5px 15px ",
           minHeight: "unset",
           textTransform: "capitalize",
+          width: "100%",
           "&>p": {
             textTransform: "capitalize",
+            textOverflow: "ellipsis",
+            width: "100%",
+            overflow: "hidden",
           },
           "&:focus": {
             backgroundColor: "transparent",

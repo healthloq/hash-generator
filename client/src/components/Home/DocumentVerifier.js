@@ -10,9 +10,15 @@ import {
   MenuItem,
   Checkbox,
   Grid,
+  IconButton,
+  Tooltip,
 } from "..";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import axios from "axios";
-import { MuiLinearProgress } from "../common";
+import {
+  MuiLinearProgress,
+  DocumentVerificationDetailOverview,
+} from "../common";
 import { rightIcon, wrongIcon, questionMarkLogo } from "../../assets";
 import { connect } from "react-redux";
 import {
@@ -32,28 +38,31 @@ const useStyle = makeStyles((theme) => ({
     "&>div:not(:last-child)": {
       marginTop: 10,
     },
-  },
-  exportBtn: {
-    textDecoration: "none",
-    color: "unset",
-    "&:hover": {
-      textDecoration: "none",
-    },
-  },
-  documentVerificationOutput: {
-    "&>h6": {
-      margin: "5px 0",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "flex-start",
-      "&>img": {
-        marginLeft: 10,
-        width: 25,
-        height: 25,
+    "&>form": {
+      "&>div": {
+        "&>button": {
+          marginLeft: 10,
+        },
       },
     },
-    "&>p": {
-      color: theme.palette.error.main,
+    [theme.breakpoints.down("md")]: {
+      "&>form": {
+        "&>div": {
+          flexDirection: "column",
+          "&>*": {
+            "&:not(:first-child)": {
+              marginTop: 10,
+            },
+            "&:first-child": {
+              width: "100%",
+              marginRight: 0,
+            },
+          },
+          "&>button": {
+            marginLeft: "0 !important",
+          },
+        },
+      },
     },
   },
   docVerificationOverviewBox: {
@@ -84,6 +93,9 @@ const useStyle = makeStyles((theme) => ({
     maxWidth: "35%",
     minWidth: "35%",
     marginRight: 10,
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "100%",
+    },
   },
 }));
 
@@ -100,6 +112,10 @@ function DocumentVerifier({
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState("");
   const [organizationIds, setOrganizationIds] = useState([]);
+  const [
+    documentDetailOverviewDialogData,
+    setDocumentDetailOverviewDialogData,
+  ] = useState(null);
   const handleSubmit = (e) => {
     e.preventDefault();
     if (folderPath?.trim() && organizationIds?.length) {
@@ -234,7 +250,6 @@ function DocumentVerifier({
             />
             <Button
               variant="contained"
-              sx={{ ml: 1 }}
               disabled={Boolean(
                 documentVerificationData.isLoading ||
                   folderOverview.isLoading ||
@@ -273,7 +288,7 @@ function DocumentVerifier({
           documentVerificationData?.isDocVerificationFinalOverview && (
             <>
               <Grid container spacing={1}>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={12} md={4}>
                   <Box className={classes.docVerificationOverviewBox}>
                     <Typography variant="body1">
                       {numberWithCommas(
@@ -288,7 +303,7 @@ function DocumentVerifier({
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={12} md={4}>
                   <Box className={classes.docVerificationOverviewBox}>
                     <Typography variant="body1">
                       {numberWithCommas(
@@ -303,7 +318,7 @@ function DocumentVerifier({
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={12} md={4}>
                   <Box className={classes.docVerificationOverviewBox}>
                     <Typography variant="body1">
                       {numberWithCommas(
@@ -324,19 +339,43 @@ function DocumentVerifier({
                   tableTitle="Document Verification Overview"
                   headCells={verifiedDocumentsHeaders}
                   rows={documentVerificationData?.filteredVerificationData?.map(
-                    (item) => ({
-                      organization_name: item["Organization Name"],
-                      is_verified_organization:
-                        item["Is Verified Organization"],
-                      file_name: item["File Name"],
-                      file_path: item["File Path"],
-                      is_verified_document: item["Is Verified Document"],
-                      created: item["Created"]
-                        ? moment(item["Created"]).format("MM/DD/YYYY hh:mm A")
-                        : "",
-                      message: item["Message"],
-                      error_message: item["Error Message"],
-                    })
+                    (item) => {
+                      const data = {
+                        organization_name: item["Organization Name"],
+                        is_verified_organization:
+                          item["Is Verified Organization"],
+                        file_name: item["File Name"],
+                        file_path: item["File Path"],
+                        is_verified_document: item["Is Verified Document"],
+                        created: item["Created"]
+                          ? moment(item["Created"]).format("MM/DD/YYYY hh:mm A")
+                          : "",
+                        message: item["Message"],
+                        error_message: item["Error Message"],
+                      };
+                      return {
+                        ...data,
+                        action: (
+                          <Tooltip arrow title="View More">
+                            <IconButton
+                              color="primary"
+                              onClick={() =>
+                                setDocumentDetailOverviewDialogData({
+                                  ...item,
+                                  Created: item["Created"]
+                                    ? moment(item["Created"]).format(
+                                        "MM/DD/YYYY hh:mm A"
+                                      )
+                                    : "",
+                                })
+                              }
+                            >
+                              <VisibilityIcon />
+                            </IconButton>
+                          </Tooltip>
+                        ),
+                      };
+                    }
                   )}
                   tableId="documentVerificationOverviewFilter"
                   isLoading={false}
@@ -344,32 +383,12 @@ function DocumentVerifier({
               </Box>
             </>
           )}
-        {/* <Box
-              display="flex"
-              flexDirection="column"
-              className={classes.documentVerificationOutput}
-            >
-              <Typography variant="h6">
-                No of verified documents:&nbsp;
-                {numberWithCommas(
-                  parseInt(documentVerificationData?.noOfVerifiedDocuments)
-                )}
-                <img src={rightIcon} alt="right-icon" />
-              </Typography>
-              <Typography variant="h6">
-                No of unverified documents:&nbsp;
-                {numberWithCommas(
-                  parseInt(documentVerificationData?.noOfUnverifiedDocuments)
-                )}
-                <img src={wrongIcon} alt="wrong-icon" />
-              </Typography>
-              {documentVerificationData?.errorMsg && (
-                <Typography variant="body1" sx={{ my: 1 }}>
-                  {documentVerificationData?.errorMsg}
-                </Typography>
-              )}
-            </Box> */}
       </Box>
+      <DocumentVerificationDetailOverview
+        open={Boolean(documentDetailOverviewDialogData)}
+        handleClose={() => setDocumentDetailOverviewDialogData(null)}
+        data={documentDetailOverviewDialogData || {}}
+      />
     </Box>
   );
 }
