@@ -11,12 +11,9 @@ import {
   TableSortLabel,
   Typography,
   Paper,
-  Tooltip,
   Toolbar,
-  IconButton,
   CircularProgress,
 } from "@mui/material";
-import { FilterList } from "@mui/icons-material";
 import { visuallyHidden } from "@mui/utils";
 import { makeStyles } from "@mui/styles";
 import SyncedFilesFilter from "./SyncedFilesFilter";
@@ -25,6 +22,22 @@ import VerificationDocumentsOverviewFilter from "./VerificationDocumentsOverview
 const useStyle = makeStyles((theme) => ({
   tableHeadCell: {
     fontWeight: theme.typography.fontWeightBold,
+  },
+  tableHeadingContainer: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    [theme.breakpoints.down("sm")]: {
+      flexDirection: "column",
+      justifyContent: "center",
+      "&>div:first-child": {
+        margin: "20px 0",
+      },
+    },
+  },
+  tableCell: {
+    lineBreak: "anywhere",
   },
 }));
 
@@ -80,6 +93,7 @@ function EnhancedTableHead(props) {
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : "asc"}
               onClick={createSortHandler(headCell.id)}
+              disabled={headCell.id === "action"}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -97,20 +111,11 @@ function EnhancedTableHead(props) {
 
 function EnhancedTableToolbar(props) {
   const { tableTitle, tableId } = props;
-  const [openTableFilter, setOpenTableFilter] = React.useState(null);
-  const handleClose = () => {
-    setOpenTableFilter(null);
-  };
-  const params = {
-    handleClose,
-    anchorRef: openTableFilter,
-  };
-
+  const classes = useStyle();
   const getFilterComponent = () => {
-    if (tableId === "syncedFilesFilter")
-      return <SyncedFilesFilter {...params} />;
+    if (tableId === "syncedFilesFilter") return <SyncedFilesFilter />;
     else if (tableId === "documentVerificationOverviewFilter")
-      return <VerificationDocumentsOverviewFilter {...params} />;
+      return <VerificationDocumentsOverviewFilter />;
   };
 
   return (
@@ -121,19 +126,13 @@ function EnhancedTableToolbar(props) {
           pr: { xs: 1, sm: 1 },
         }}
       >
-        <Typography sx={{ flex: "1 1 100%" }} variant="h4" component="div">
-          {tableTitle}
-        </Typography>
-
-        {tableId && (
-          <Tooltip title="Filter list">
-            <IconButton onClick={(e) => setOpenTableFilter(e.currentTarget)}>
-              <FilterList />
-            </IconButton>
-          </Tooltip>
-        )}
+        <Box className={classes.tableHeadingContainer}>
+          <Typography variant="h4" component="div">
+            {tableTitle}
+          </Typography>
+          {getFilterComponent()}
+        </Box>
       </Toolbar>
-      {getFilterComponent()}
     </React.Fragment>
   );
 }
@@ -149,6 +148,8 @@ export default function EnhancedTable({
   const [orderBy, setOrderBy] = React.useState("calories");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const classes = useStyle();
+  const headerKeys = headCells?.map((headerObj) => headerObj?.id);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -192,12 +193,15 @@ export default function EnhancedTable({
                     height: 53,
                   }}
                 >
-                  <TableCell
-                    colSpan={headCells.length}
-                    sx={{ display: "flex", alignItems: "center" }}
-                  >
-                    Loading...
-                    <CircularProgress size={20} sx={{ ml: 1 }} />
+                  <TableCell colSpan={headCells.length}>
+                    <Box
+                      display={"flex"}
+                      alignItems="center"
+                      justifyContent={"center"}
+                    >
+                      Loading...
+                      <CircularProgress size={20} sx={{ ml: 1 }} />
+                    </Box>
                   </TableCell>
                 </TableRow>
               )}
@@ -208,22 +212,39 @@ export default function EnhancedTable({
                 .map((row, index) => {
                   return (
                     <TableRow hover tabIndex={-1} key={index}>
-                      {Object.entries(row).map(([key, value], cellIndex) => {
-                        const headCell = headCells?.filter(
-                          (item) => item?.id === key
-                        )[0];
-                        return (
-                          <TableCell
-                            align={headCell?.numeric ? "right" : "left"}
-                            key={cellIndex}
-                          >
-                            {value}
-                          </TableCell>
-                        );
-                      })}
+                      {Object.entries(row)
+                        ?.filter(([key, value]) => headerKeys?.includes(key))
+                        .map(([key, value], cellIndex) => {
+                          const headCell = headCells?.filter(
+                            (item) => item?.id === key
+                          )[0];
+                          return (
+                            <TableCell
+                              align={headCell?.numeric ? "right" : "left"}
+                              key={cellIndex}
+                              className={classes.tableCell}
+                            >
+                              {value}
+                            </TableCell>
+                          );
+                        })}
                     </TableRow>
                   );
                 })}
+              {rows?.length === 0 && (
+                <TableRow
+                  style={{
+                    height: 53,
+                  }}
+                >
+                  <TableCell
+                    colSpan={headCells.length}
+                    sx={{ textAlign: "center" }}
+                  >
+                    Data not available.
+                  </TableCell>
+                </TableRow>
+              )}
               {emptyRows > 0 && (
                 <TableRow
                   style={{

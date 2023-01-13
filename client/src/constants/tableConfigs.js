@@ -38,11 +38,6 @@ export const verifiedDocumentsHeaders = [
     label: "Is Verified Organization",
   },
   {
-    id: "file_name",
-    numeric: false,
-    label: "File Name",
-  },
-  {
     id: "file_path",
     numeric: false,
     label: "File Path",
@@ -53,18 +48,28 @@ export const verifiedDocumentsHeaders = [
     label: "Is Verified Document",
   },
   {
-    id: "created",
-    numeric: false,
-    label: "Created",
-  },
-  {
     id: "message",
     numeric: false,
     label: "Message",
   },
   {
-    id: "error_message",
+    id: "action",
     numeric: false,
-    label: "Error Message",
+    label: "Action",
   },
 ];
+// {
+//   id: "file_name",
+//   numeric: false,
+//   label: "File Name",
+// },
+// {
+//   id: "created",
+//   numeric: false,
+//   label: "Created",
+// },
+// {
+//   id: "error_message",
+//   numeric: false,
+//   label: "Error Message",
+// },
