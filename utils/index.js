@@ -285,10 +285,7 @@ exports.getSyncData = async () => {
   if (hashLimit && todayHashLimit) {
     hashLimit = parseInt(hashLimit);
     todayHashLimit = parseInt(todayHashLimit);
-    if (
-      todayHashLimit - deletedHashList?.length + hashList?.length <=
-      hashLimit
-    ) {
+    if (todayHashLimit + hashList?.length <= hashLimit) {
       let newData = syncedData
         ?.filter((item) => {
           deletedHashList?.includes(item?.hash) &&
@@ -309,11 +306,10 @@ exports.getSyncData = async () => {
       return {
         deletedHashList,
         hashList,
-        hashCount: newData?.length,
+        hashCount: todayHashLimit + hashList?.length,
       };
     } else {
-      const extraDocLength =
-        todayHashLimit - deletedHashList?.length + hashList?.length - hashLimit;
+      const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
       hashList = hashList?.slice(0, hashList?.length - extraDocLength);
       let newData = syncedData
         ?.filter((item) => {
@@ -334,7 +330,7 @@ exports.getSyncData = async () => {
       return {
         deletedHashList,
         hashList,
-        hashCount: newData?.length,
+        hashCount: todayHashLimit + hashList?.length,
       };
     }
   } else {
