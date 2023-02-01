@@ -1,4 +1,10 @@
-const { sort, getData, getFolderOverview, generateHash } = require("../utils");
+const {
+  sort,
+  getData,
+  getFolderOverview,
+  generateHash,
+  filterObj,
+} = require("../utils");
 const {
   verifyDocument,
   getSubscriptionDetail,
@@ -108,6 +114,7 @@ exports.verifyDocuments = async (req, res) => {
                   : null,
                 Message: item?.message,
                 "Error Message": "",
+                documentHashId: item?.documentHashId,
               };
             }),
           ];
@@ -151,6 +158,7 @@ exports.verifyDocuments = async (req, res) => {
                   : null,
                 Message: item?.message,
                 "Error Message": "",
+                documentHashId: item?.documentHashId,
               };
             }),
           ];
@@ -171,6 +179,7 @@ exports.verifyDocuments = async (req, res) => {
                 Created: null,
                 Message: "",
                 "Error Message": `Something went wrong! We are not able to verify the file which located in this location ${item?.path}.`,
+                documentHashId: null,
               };
             }),
           ];
@@ -182,7 +191,9 @@ exports.verifyDocuments = async (req, res) => {
     }
     // Create document verification final csv
     if (finalResult?.length) {
-      const csv = json2csv(finalResult);
+      const csv = json2csv(
+        finalResult?.map((item) => filterObj(item, ["documentHashId"]))
+      );
       try {
         fs.writeFileSync(
           path.join(

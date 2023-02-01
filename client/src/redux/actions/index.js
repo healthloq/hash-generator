@@ -8,8 +8,24 @@ import {
   GET_SUBSCRIPTION_OVERVIEW,
   SET_APIFLAGS_INITIALSTATE,
   HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
+  GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
 } from "../actionTypes";
 import { API } from "../apis";
+
+export const getDocumentHashBlockchainProof = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
+    });
+    const response = await API.getDocumentHashBlockchainProof(params);
+    dispatch({
+      type: GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
+      payload: response,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const handleDocumentVerificationDataFilter =
   (params) => async (dispatch) => {

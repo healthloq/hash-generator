@@ -11,6 +11,7 @@ import {
   SOCKET_DOCUMENT_UPLOAD_LIMIT_EXCEEDED_ERROR,
   SET_APIFLAGS_INITIALSTATE,
   HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
+  GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -67,6 +68,9 @@ const initialState = {
     subscriptionDetailFlag: false,
     downloadVerifierResultCSVFlag: false,
   },
+  documentHashBlockchainProof: {
+    isLoading: false,
+  },
 };
 
 const Reducer = (
@@ -75,6 +79,20 @@ const Reducer = (
   state
 ) => {
   switch (type) {
+    case GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF: {
+      return {
+        ...previousState,
+        documentHashBlockchainProof: {
+          ...previousState.documentHashBlockchainProof,
+          isLoading: !previousState.documentHashBlockchainProof.isLoading,
+          ...payload,
+          isError:
+            Object.keys(payload)?.filter((key) =>
+              ["blockAddress", "data", "result"].includes(key)
+            ).length !== 3,
+        },
+      };
+    }
     case HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER: {
       const documentVerificationData = {
         ...previousState.documentVerificationData,

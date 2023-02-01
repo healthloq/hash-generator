@@ -366,3 +366,8 @@ exports.setDocumentSyncInterval = () => {
     await syncHash(syncData);
   }, 10 * 60 * 1000); // 10 min
 };
+
+exports.filterObj = (obj, keys) =>
+  Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) => !keys.includes(key))
+  );
