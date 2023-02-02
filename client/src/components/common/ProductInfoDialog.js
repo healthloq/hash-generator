@@ -103,7 +103,7 @@ export default function ProductInfoDialog({
               return (
                 <TableRow key={key} className={classes.healthloqWidgetTableRow}>
                   <TableCell>{item[1]}</TableCell>
-                  <TableCell>{data[item[0]]}</TableCell>
+                  <TableCell>{data?.[item?.[0]]}</TableCell>
                 </TableRow>
               );
             })}

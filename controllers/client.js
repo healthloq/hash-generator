@@ -71,7 +71,7 @@ exports.verifyDocuments = async (req, res) => {
       console.log(error);
     }
     // Verify documents
-    const docVerificationLimit = 500; // No of documents verify at a time
+    const docVerificationLimit = 100; // No of documents verify at a time
     let finalResult = [];
     let errorMsg = "";
     const documentHashData = await generateHash(folderPath);
@@ -114,6 +114,8 @@ exports.verifyDocuments = async (req, res) => {
                   : null,
                 Message: item?.message,
                 "Error Message": "",
+                integrantId: item?.integrantId,
+                OrganizationExhibitId: item?.OrganizationExhibitId,
                 documentHashId: item?.documentHashId,
               };
             }),
@@ -158,6 +160,8 @@ exports.verifyDocuments = async (req, res) => {
                   : null,
                 Message: item?.message,
                 "Error Message": "",
+                integrantId: item?.integrantId,
+                OrganizationExhibitId: item?.OrganizationExhibitId,
                 documentHashId: item?.documentHashId,
               };
             }),
@@ -179,6 +183,8 @@ exports.verifyDocuments = async (req, res) => {
                 Created: null,
                 Message: "",
                 "Error Message": `Something went wrong! We are not able to verify the file which located in this location ${item?.path}.`,
+                integrantId: null,
+                OrganizationExhibitId: null,
                 documentHashId: null,
               };
             }),
@@ -192,7 +198,13 @@ exports.verifyDocuments = async (req, res) => {
     // Create document verification final csv
     if (finalResult?.length) {
       const csv = json2csv(
-        finalResult?.map((item) => filterObj(item, ["documentHashId"]))
+        finalResult?.map((item) =>
+          filterObj(item, [
+            "documentHashId",
+            "OrganizationExhibitId",
+            "integrantId",
+          ])
+        )
       );
       try {
         fs.writeFileSync(

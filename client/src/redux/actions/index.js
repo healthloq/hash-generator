@@ -9,8 +9,41 @@ import {
   SET_APIFLAGS_INITIALSTATE,
   HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
   GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
+  GET_EXHIBIT_BLOCKCHAIN_PROOF,
+  GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
 } from "../actionTypes";
 import { API } from "../apis";
+
+export const getExhibitBlockchainProof = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: GET_EXHIBIT_BLOCKCHAIN_PROOF,
+    });
+    const response = await API.getDocumentHashBlockchainProof(params);
+    dispatch({
+      type: GET_EXHIBIT_BLOCKCHAIN_PROOF,
+      payload: response,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getOrganizationExhibitBlockchainProof =
+  (params) => async (dispatch) => {
+    try {
+      dispatch({
+        type: GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
+      });
+      const response = await API.getDocumentHashBlockchainProof(params);
+      dispatch({
+        type: GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
+        payload: response,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
 export const getDocumentHashBlockchainProof = (params) => async (dispatch) => {
   try {

@@ -12,6 +12,8 @@ import {
   SET_APIFLAGS_INITIALSTATE,
   HANDLE_DOCUMENT_VERIFICATION_DATA_FILTER,
   GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
+  GET_EXHIBIT_BLOCKCHAIN_PROOF,
+  GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -71,6 +73,12 @@ const initialState = {
   documentHashBlockchainProof: {
     isLoading: false,
   },
+  exhibitBlockchainProof: {
+    isLoading: false,
+  },
+  organizationExhibitBlockchainProof: {
+    isLoading: false,
+  },
 };
 
 const Reducer = (
@@ -79,6 +87,35 @@ const Reducer = (
   state
 ) => {
   switch (type) {
+    case GET_EXHIBIT_BLOCKCHAIN_PROOF: {
+      return {
+        ...previousState,
+        exhibitBlockchainProof: {
+          ...previousState.exhibitBlockchainProof,
+          isLoading: !previousState.exhibitBlockchainProof.isLoading,
+          ...payload,
+          isError:
+            Object.keys(payload)?.filter((key) =>
+              ["blockAddress", "data", "result"].includes(key)
+            ).length !== 3,
+        },
+      };
+    }
+    case GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF: {
+      return {
+        ...previousState,
+        organizationExhibitBlockchainProof: {
+          ...previousState.organizationExhibitBlockchainProof,
+          isLoading:
+            !previousState.organizationExhibitBlockchainProof.isLoading,
+          ...payload,
+          isError:
+            Object.keys(payload)?.filter((key) =>
+              ["blockAddress", "data", "result"].includes(key)
+            ).length !== 3,
+        },
+      };
+    }
     case GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF: {
       return {
         ...previousState,
