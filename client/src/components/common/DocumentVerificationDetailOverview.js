@@ -100,7 +100,9 @@ export function DocumentVerificationDetailOverview({
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogContent>
-        {data?.documentHashId && (
+        {(data?.documentHashId ||
+          data?.integrantId ||
+          data?.OrganizationExhibitId) && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Document Blockchain Proof

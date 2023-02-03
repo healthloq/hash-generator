@@ -94,10 +94,11 @@ const Reducer = (
           ...previousState.exhibitBlockchainProof,
           isLoading: !previousState.exhibitBlockchainProof.isLoading,
           ...payload,
-          isError:
-            Object.keys(payload)?.filter((key) =>
-              ["blockAddress", "data", "result"].includes(key)
-            ).length !== 3,
+          isError: !!previousState.exhibitBlockchainProof.isLoading
+            ? Object.keys(payload)?.filter((key) =>
+                ["blockAddress", "data", "result"].includes(key)
+              ).length !== 3
+            : false,
         },
       };
     }
@@ -109,10 +110,11 @@ const Reducer = (
           isLoading:
             !previousState.organizationExhibitBlockchainProof.isLoading,
           ...payload,
-          isError:
-            Object.keys(payload)?.filter((key) =>
-              ["blockAddress", "data", "result"].includes(key)
-            ).length !== 3,
+          isError: !!previousState.organizationExhibitBlockchainProof.isLoading
+            ? Object.keys(payload)?.filter((key) =>
+                ["blockAddress", "data", "result"].includes(key)
+              ).length !== 3
+            : false,
         },
       };
     }
@@ -123,10 +125,11 @@ const Reducer = (
           ...previousState.documentHashBlockchainProof,
           isLoading: !previousState.documentHashBlockchainProof.isLoading,
           ...payload,
-          isError:
-            Object.keys(payload)?.filter((key) =>
-              ["blockAddress", "data", "result"].includes(key)
-            ).length !== 3,
+          isError: !!previousState.documentHashBlockchainProof.isLoading
+            ? Object.keys(payload)?.filter((key) =>
+                ["blockAddress", "data", "result"].includes(key)
+              ).length !== 3
+            : false,
         },
       };
     }
