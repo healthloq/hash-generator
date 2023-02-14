@@ -263,7 +263,7 @@ function DocumentVerifier({
                 )
               }
             >
-              Verify
+              {documentVerificationData.isLoading ? "Verifying" : "Verify"}
             </Button>
           </Box>
         </form>
