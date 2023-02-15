@@ -79,11 +79,19 @@ export const DocumentVerification = (props) => {
               setInitialState(["documentVerificationData", "folderOverview"])
             }
           >
-            <Button startIcon={<ArrowBack />} variant="contained">
-              Back
-            </Button>
+            <Button startIcon={<ArrowBack />}>Back</Button>
           </Link>
         )}
+      </Box>
+      <Box>
+        <Button
+          variant="contained"
+          href={`${process.env.REACT_APP_HEALTHLOQ_PRODUCER_APP_BASE_URL}/ingredient-comparision`}
+          target="_blank"
+          color="primary"
+        >
+          Compare Ingredients
+        </Button>
       </Box>
       <Box sx={{ my: 2 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
