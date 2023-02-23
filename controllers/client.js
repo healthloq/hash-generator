@@ -117,6 +117,7 @@ exports.verifyDocuments = async (req, res) => {
                 integrantId: item?.integrantId,
                 OrganizationExhibitId: item?.OrganizationExhibitId,
                 documentHashId: item?.documentHashId,
+                labDocumentHashId: item?.labDocumentHashId,
               };
             }),
           ];
@@ -163,6 +164,7 @@ exports.verifyDocuments = async (req, res) => {
                 integrantId: item?.integrantId,
                 OrganizationExhibitId: item?.OrganizationExhibitId,
                 documentHashId: item?.documentHashId,
+                labDocumentHashId: item?.labDocumentHashId,
               };
             }),
           ];
@@ -186,6 +188,7 @@ exports.verifyDocuments = async (req, res) => {
                 integrantId: null,
                 OrganizationExhibitId: null,
                 documentHashId: null,
+                labDocumentHashId: null,
               };
             }),
           ];
