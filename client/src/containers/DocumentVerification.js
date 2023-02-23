@@ -86,7 +86,7 @@ export const DocumentVerification = (props) => {
       <Box>
         <Button
           variant="contained"
-          href={`${process.env.REACT_APP_HEALTHLOQ_PRODUCER_APP_BASE_URL}/ingredient-comparision`}
+          href={`${process.env.REACT_APP_HEALTHLOQ_ORGANIZATION_APP_BASE_URL}/ingredient-comparision`}
           target="_blank"
           color="primary"
         >

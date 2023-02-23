@@ -228,6 +228,17 @@ export const theme = () => {
         },
         {
           props: {
+            highlightlabel: "true",
+          },
+          style: {
+            "&>span": {
+              fontWeight: theme.typography.fontWeightBold,
+              marginRight: 5,
+            },
+          },
+        },
+        {
+          props: {
             firstLetterCapital: "true", // First letter capital
           },
           style: {

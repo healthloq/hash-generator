@@ -14,6 +14,7 @@ import {
   GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
   GET_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
+  GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -73,6 +74,9 @@ const initialState = {
   documentHashBlockchainProof: {
     isLoading: false,
   },
+  labDocumentHashBlockchainProof: {
+    isLoading: false,
+  },
   exhibitBlockchainProof: {
     isLoading: false,
   },
@@ -126,6 +130,21 @@ const Reducer = (
           isLoading: !previousState.documentHashBlockchainProof.isLoading,
           ...payload,
           isError: !!previousState.documentHashBlockchainProof.isLoading
+            ? Object.keys(payload)?.filter((key) =>
+                ["blockAddress", "data", "result"].includes(key)
+              ).length !== 3
+            : false,
+        },
+      };
+    }
+    case GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF: {
+      return {
+        ...previousState,
+        labDocumentHashBlockchainProof: {
+          ...previousState.labDocumentHashBlockchainProof,
+          isLoading: !previousState.labDocumentHashBlockchainProof.isLoading,
+          ...payload,
+          isError: !!previousState.labDocumentHashBlockchainProof.isLoading
             ? Object.keys(payload)?.filter((key) =>
                 ["blockAddress", "data", "result"].includes(key)
               ).length !== 3

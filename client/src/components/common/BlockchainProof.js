@@ -1,4 +1,4 @@
-import { Box, Button, Grid, Typography } from "@mui/material";
+import { Box, Button, Grid, Link, Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import React, { useState } from "react";
 import ProductInfoDialog from "./ProductInfoDialog";
@@ -40,7 +40,7 @@ export default function BlockchainProof({ blockchainProof }) {
       flexDirection={"column"}
     >
       <Typography variant="h6">Block Location</Typography>
-      <Typography variant="body2" keyfontweight={700}>
+      <Typography variant="body2" keyfontweight={700} highlightlabel="true">
         <span>Block ID:</span>
         {blockchainProof?.blockAddress?.IonText}
       </Typography>
@@ -72,11 +72,19 @@ export default function BlockchainProof({ blockchainProof }) {
           {blockchainProof?.data?.type === "organization_exhibit" ? (
             <Box>
               <Typography variant="h6">Document Information</Typography>
-              <Typography variant="body2" keyfontweight={700}>
+              <Typography
+                variant="body2"
+                keyfontweight={700}
+                highlightlabel="true"
+              >
                 <span>Document Name:</span>
                 {blockchainProof?.data?.title}
               </Typography>
-              <Typography variant="body2" keyfontweight={700}>
+              <Typography
+                variant="body2"
+                keyfontweight={700}
+                highlightlabel="true"
+              >
                 <span>Document ID:</span>
                 {blockchainProof?.data?.id}
               </Typography>
@@ -84,7 +92,11 @@ export default function BlockchainProof({ blockchainProof }) {
           ) : blockchainProof?.data?.type === "document_hash" ? (
             <Box>
               <Typography variant="h6">Document Information</Typography>
-              <Typography variant="body2" keyfontweight={700}>
+              <Typography
+                variant="body2"
+                keyfontweight={700}
+                highlightlabel="true"
+              >
                 <span>Document ID:</span>
                 {blockchainProof?.data?.id}
               </Typography>
@@ -92,11 +104,19 @@ export default function BlockchainProof({ blockchainProof }) {
           ) : (
             <Box>
               <Typography variant="h6">Product Information</Typography>
-              <Typography variant="body2" keyfontweight={700}>
+              <Typography
+                variant="body2"
+                keyfontweight={700}
+                highlightlabel="true"
+              >
                 <span>Product Name:</span>
                 {blockchainProof?.data?.Title}
               </Typography>
-              <Typography variant="body2" keyfontweight={700}>
+              <Typography
+                variant="body2"
+                keyfontweight={700}
+                highlightlabel="true"
+              >
                 <span>Batch ID:</span>
                 {blockchainProof?.data?.ExternalId}
               </Typography>
@@ -104,12 +124,33 @@ export default function BlockchainProof({ blockchainProof }) {
           )}
           <Box>
             <Typography variant="h6">Digitally Signed By</Typography>
-            <Typography variant="body2" keyfontweight={700}>
+            <Typography
+              variant="body2"
+              keyfontweight={700}
+              highlightlabel="true"
+            >
               <span>Organization Name:</span>
-              {blockchainProof?.data?.OrganizationName ||
-                blockchainProof?.data?.organization_name}
+              <Link
+                hyperlink="true"
+                href={`${
+                  process.env.REACT_APP_HEALTHLOQ_CONSUMER_APP_BASE_URL
+                }/organization-detail/${
+                  blockchainProof?.data?.OrganizationId ||
+                  blockchainProof?.data?.organization_id
+                }`}
+                target="_blank"
+                underline="hover"
+                color="primary"
+              >
+                {blockchainProof?.data?.OrganizationName ||
+                  blockchainProof?.data?.organization_name}
+              </Link>
             </Typography>
-            <Typography variant="body2" keyfontweight={700}>
+            <Typography
+              variant="body2"
+              keyfontweight={700}
+              highlightlabel="true"
+            >
               <span>Organization Id:</span>
               {blockchainProof?.data?.OrganizationId ||
                 blockchainProof?.data?.organization_id}

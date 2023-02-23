@@ -11,8 +11,25 @@ import {
   GET_DOCUMENT_HASH_BLOCKCHAIN_PROOF,
   GET_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
+  GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
 } from "../actionTypes";
 import { API } from "../apis";
+
+export const getLabDocumentHashBlockchainProof =
+  (params) => async (dispatch) => {
+    try {
+      dispatch({
+        type: GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
+      });
+      const response = await API.getDocumentHashBlockchainProof(params);
+      dispatch({
+        type: GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
+        payload: response,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
 export const getExhibitBlockchainProof = (params) => async (dispatch) => {
   try {

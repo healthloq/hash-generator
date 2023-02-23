@@ -18,6 +18,7 @@ import {
   getDocumentHashBlockchainProof,
   getExhibitBlockchainProof,
   getOrganizationExhibitBlockchainProof,
+  getLabDocumentHashBlockchainProof,
 } from "../../redux/actions";
 import BlockchainProof from "./BlockchainProof";
 
@@ -73,6 +74,8 @@ export function DocumentVerificationDetailOverview({
   getOrganizationExhibitBlockchainProof,
   exhibitBlockchainProof,
   organizationExhibitBlockchainProof,
+  labDocumentHashBlockchainProof,
+  getLabDocumentHashBlockchainProof,
 }) {
   const classes = useStyle();
   useEffect(() => {
@@ -93,6 +96,12 @@ export function DocumentVerificationDetailOverview({
         getDocumentHashBlockchainProof({
           type: "document_hash",
           id: data?.documentHashId,
+        });
+      }
+      if (data?.labDocumentHashId) {
+        getLabDocumentHashBlockchainProof({
+          type: "document_hash",
+          id: data?.labDocumentHashId,
         });
       }
     }
@@ -167,15 +176,40 @@ export function DocumentVerificationDetailOverview({
                   )
                 )
               ) : null}
+              {data?.labDocumentHashId &&
+              !exhibitBlockchainProof?.isLoading &&
+              !organizationExhibitBlockchainProof?.isLoading &&
+              !documentHashBlockchainProof?.isLoading ? (
+                labDocumentHashBlockchainProof?.isLoading ? (
+                  <Typography
+                    variant="body2"
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent="center"
+                  >
+                    Please wait while we are fetching the lab document detail...
+                    <CircularProgress size={20} sx={{ ml: 0.5 }} />
+                  </Typography>
+                ) : (
+                  !labDocumentHashBlockchainProof?.isError && (
+                    <BlockchainProof
+                      blockchainProof={labDocumentHashBlockchainProof}
+                    />
+                  )
+                )
+              ) : null}
               {!exhibitBlockchainProof?.isLoading &&
                 !organizationExhibitBlockchainProof?.isLoading &&
                 !documentHashBlockchainProof?.isLoading &&
+                !labDocumentHashBlockchainProof?.isLoading &&
                 exhibitBlockchainProof?.isError &&
                 organizationExhibitBlockchainProof?.isError &&
                 documentHashBlockchainProof?.isError &&
+                labDocumentHashBlockchainProof?.isError &&
                 (data?.documentHashId ||
                   data?.integrantId ||
-                  data?.OrganizationExhibitId) && (
+                  data?.OrganizationExhibitId ||
+                  data?.labDocumentHashId) && (
                   <Typography
                     variant="body2"
                     display="flex"
@@ -226,17 +260,20 @@ const mapStateToProps = ({
     documentHashBlockchainProof,
     exhibitBlockchainProof,
     organizationExhibitBlockchainProof,
+    labDocumentHashBlockchainProof,
   },
 }) => ({
   documentHashBlockchainProof,
   exhibitBlockchainProof,
   organizationExhibitBlockchainProof,
+  labDocumentHashBlockchainProof,
 });
 
 const mapDispatchToProps = {
   getDocumentHashBlockchainProof,
   getExhibitBlockchainProof,
   getOrganizationExhibitBlockchainProof,
+  getLabDocumentHashBlockchainProof,
 };
 
 export default connect(
