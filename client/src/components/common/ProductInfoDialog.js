@@ -51,16 +51,16 @@ let orgExhibitInfoLabels = {
   title: "Title",
   description: "Description",
   effective_date: "Effective Date",
-  organization_id: "Organization Id",
-  organization_name: "Organization Name",
+  OrganizationId: "Organization Id",
+  OrganizationName: "Organization Name",
   created_on: "Created On",
 };
 
 let documentHashLabels = {
   id: "Document Id",
   documentHashId: "Document Hash Id",
-  organization_id: "Organization Id",
-  organization_name: "Organization Name",
+  OrganizationId: "Organization Id",
+  OrganizationName: "Organization Name",
   created_on: "Created On",
   updated_on: "Updated On",
 };
