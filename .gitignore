@@ -2,3 +2,4 @@ node_modules/
 yarn.lock
 scratch/
 public/exports/
+package-lock.json
