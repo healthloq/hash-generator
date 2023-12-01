@@ -236,26 +236,26 @@ exports.generateHash = async (
             ?.split(".")
             ?.pop()
             ?.toLowerCase()
-            ?.match(ALLOWED_DOCUMENT_FILE_TYPES) !== null
-        ) {
-          const filePath = path.join(folderPath, item.name);
-          let state = {};
-          try {
-            state = fs.statSync(filePath);
-          } catch (error) {}
-          const fileBuffer = fs.readFileSync(filePath);
-          const hash = crypto
-            .createHash("sha256")
-            .update(fileBuffer)
-            .digest("hex");
-          arr.push({
-            fileName: item.name,
-            hash,
-            path: filePath,
-            state,
-            createdAt: new Date(),
-          });
-        }
+            ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
+        )
+          continue;
+        const filePath = path.join(folderPath, item.name);
+        let state = {};
+        try {
+          state = fs.statSync(filePath);
+        } catch (error) {}
+        const fileBuffer = fs.readFileSync(filePath);
+        const hash = crypto
+          .createHash("sha256")
+          .update(fileBuffer)
+          .digest("hex");
+        arr.push({
+          fileName: item.name,
+          hash,
+          path: filePath,
+          state,
+          createdAt: new Date(),
+        });
       } else {
         await this.generateHash(path.join(folderPath, item.name), arr);
       }
@@ -268,6 +268,16 @@ exports.generateHash = async (
 };
 
 exports.getSyncData = async () => {
+  let subscriptionInfo = await getSubscriptionDetail();
+  global.subscriptionDetail = subscriptionInfo?.data;
+  const subscriptionData =
+    subscriptionInfo?.data?.filter(
+      (item) => item?.subscription_type === "publisher"
+    )[0] || null;
+  if (!subscriptionData || !Object.keys(subscriptionData).length) return;
+  let hashLimit = subscriptionData?.num_daily_hashes;
+  let todayHashLimit = subscriptionData?.current_num_daily_hashes;
+  if (!hashLimit || !todayHashLimit) return;
   const syncedData = await this.getData();
   const latestData = await this.generateHash();
   const syncedhash = syncedData?.map((item) => item?.hash);
@@ -276,69 +286,42 @@ exports.getSyncData = async () => {
     (hash) => !latestHash?.includes(hash)
   );
   let hashList = latestHash?.filter((hash) => !syncedhash?.includes(hash));
-  const subscriptionData =
-    subscriptionDetail?.filter(
-      (item) => item?.subscription_type === "publisher"
-    )[0] || null;
-  let hashLimit = subscriptionData?.num_daily_hashes;
-  let todayHashLimit = subscriptionData?.current_num_daily_hashes;
-  if (hashLimit && todayHashLimit) {
-    hashLimit = parseInt(hashLimit);
-    todayHashLimit = parseInt(todayHashLimit);
-    if (todayHashLimit + hashList?.length <= hashLimit) {
-      let newData = syncedData
-        ?.filter((item) => {
-          deletedHashList?.includes(item?.hash) &&
-            console.log(
-              `=== ${item?.fileName} file deleted from path ${item?.path}`
-            );
-          return !deletedHashList?.includes(item?.hash);
-        })
-        .concat(
-          latestData?.filter((item) => {
-            hashList?.includes(item?.hash) &&
-              console.log(`=== ${item?.fileName} hash generated`);
-            return hashList?.includes(item?.hash);
-          })
+  hashLimit = parseInt(hashLimit);
+  todayHashLimit = parseInt(todayHashLimit);
+  if (todayHashLimit + hashList?.length > hashLimit) {
+    const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
+    hashList = hashList?.slice(0, hashList?.length - extraDocLength);
+  }
+  let hasMoreHash = false;
+  if (hashList?.length > 500) {
+    hashList = hashList?.slice(0, 500);
+    hasMoreHash = true;
+  }
+  let newData = syncedData
+    ?.filter((item) => {
+      deletedHashList?.includes(item?.hash) &&
+        console.log(
+          `=== ${item?.fileName} file deleted from path ${item?.path}`
         );
-      this.setData(newData);
-
-      return {
-        deletedHashList,
-        hashList,
-        hashCount: todayHashLimit + hashList?.length,
-      };
-    } else {
-      const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
-      hashList = hashList?.slice(0, hashList?.length - extraDocLength);
-      let newData = syncedData
-        ?.filter((item) => {
-          deletedHashList?.includes(item?.hash) &&
-            console.log(
-              `=== ${item?.fileName} file deleted from path ${item?.path}`
-            );
-          return !deletedHashList?.includes(item?.hash);
-        })
-        .concat(
-          latestData?.filter((item) => {
-            hashList?.includes(item?.hash) &&
-              console.log(`=== ${item?.fileName} hash generated`);
-            return hashList?.includes(item?.hash);
-          })
-        );
-      this.setData(newData);
-      return {
-        deletedHashList,
-        hashList,
-        hashCount: todayHashLimit + hashList?.length,
-      };
+      return !deletedHashList?.includes(item?.hash);
+    })
+    .concat(
+      latestData?.filter((item) => {
+        hashList?.includes(item?.hash) &&
+          console.log(`=== ${item?.fileName} hash generated`);
+        return hashList?.includes(item?.hash);
+      })
+    );
+  this.setData(newData);
+  if (hashList?.length || deletedHashList?.length) {
+    await syncHash({
+      deletedHashList,
+      hashList,
+      hashCount: todayHashLimit + hashList?.length,
+    });
+    if (hasMoreHash) {
+      this.setDocumentSyncInterval();
     }
-  } else {
-    return {
-      deletedHashList: [],
-      hashList: [],
-      hashCount: 0,
-    };
   }
 };
 
@@ -347,11 +330,8 @@ exports.setDocumentSyncTimeout = () => {
     clearTimeout(global.documentSyncTimeout);
   }
   global.documentSyncTimeout = setTimeout(async () => {
+    await this.getSyncData();
     this.setDocumentSyncInterval();
-    const subscriptionDetail = await getSubscriptionDetail();
-    global.subscriptionDetail = subscriptionDetail?.data;
-    const syncData = await this.getSyncData();
-    await syncHash(syncData);
   }, 0.1 * 60 * 1000); // 10 Sec
 };
 
@@ -360,11 +340,8 @@ exports.setDocumentSyncInterval = () => {
     clearInterval(global.documentSyncInterval);
   }
   global.documentSyncInterval = setInterval(async () => {
-    const subscriptionDetail = await getSubscriptionDetail();
-    global.subscriptionDetail = subscriptionDetail?.data;
-    const syncData = await this.getSyncData();
-    await syncHash(syncData);
-  }, 10 * 60 * 1000); // 10 min
+    await this.getSyncData();
+  }, 5 * 60 * 1000); // 5 min
 };
 
 exports.filterObj = (obj, keys) =>

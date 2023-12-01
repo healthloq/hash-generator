@@ -6,7 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const chokidar = require("chokidar");
 const { LocalStorage } = require("node-localstorage");
-global.localStorage = new LocalStorage("./scratch");
+global.localStorage = new LocalStorage("./scratch", Number.MAX_VALUE);
 const server = require("http").createServer(app);
 
 const {
@@ -14,7 +14,7 @@ const {
   setDocumentSyncTimeout,
   setDocumentSyncInterval,
 } = require("./utils");
-const { syncHash, getSubscriptionDetail } = require("./services/healthloq");
+const { getSubscriptionDetail } = require("./services/healthloq");
 const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
   persistent: true,
 });
@@ -35,8 +35,7 @@ io.on("connection", (socket) => {
       (item) => item?.subscription_type === "publisher"
     )?.length
   ) {
-    const syncData = await getSyncData();
-    await syncHash(syncData);
+    await getSyncData();
     setDocumentSyncInterval();
     watcher.on("all", async (eventName, filePath, state = {}) => {
       if (["add", "unlink", "change"].includes(eventName)) {
