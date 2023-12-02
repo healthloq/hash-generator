@@ -6,7 +6,7 @@ const cors = require("cors");
 const path = require("path");
 const chokidar = require("chokidar");
 const { LocalStorage } = require("node-localstorage");
-global.localStorage = new LocalStorage("./scratch", Number.MAX_VALUE);
+global.localStorage = new LocalStorage("./scratch", Number.MAX_SAFE_INTEGER);
 const server = require("http").createServer(app);
 
 const {
