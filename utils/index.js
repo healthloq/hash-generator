@@ -228,8 +228,8 @@ exports.generateHash = async (
   arr = []
 ) => {
   try {
-    const files = fs.readdirSync(folderPath, { withFileTypes: true });
-    for (let item of files) {
+    const files = fs.opendirSync(path.join(__dirname, folderPath));
+    for await (const item of files) {
       if (item.isFile()) {
         if (
           item?.name
@@ -239,7 +239,7 @@ exports.generateHash = async (
             ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
         )
           continue;
-        const filePath = path.join(folderPath, item.name);
+        const filePath = path.join(__dirname, folderPath, item.name);
         let state = {};
         try {
           state = fs.statSync(filePath);
@@ -252,7 +252,7 @@ exports.generateHash = async (
         arr.push({
           fileName: item.name,
           hash,
-          path: filePath,
+          path: path.join(folderPath, item.name),
           state,
           createdAt: new Date(),
         });
@@ -262,12 +262,14 @@ exports.generateHash = async (
     }
     return arr;
   } catch (error) {
-    fs.mkdirSync(folderPath);
+    console.log("generateHash", error);
+    fs.mkdirSync(path.join(__dirname, folderPath));
     return arr;
   }
 };
 
 exports.getSyncData = async () => {
+  global.isGetSyncDataProcessStart = true;
   let subscriptionInfo = await getSubscriptionDetail();
   global.subscriptionDetail = subscriptionInfo?.data;
   const subscriptionData =
@@ -323,14 +325,20 @@ exports.getSyncData = async () => {
       this.setDocumentSyncInterval();
     }
   }
+  global.isGetSyncDataProcessStart = false;
 };
 
 exports.setDocumentSyncTimeout = () => {
   if (global.documentSyncTimeout) {
     clearTimeout(global.documentSyncTimeout);
+    if (global.documentSyncInterval) {
+      clearInterval(global.documentSyncInterval);
+    }
   }
   global.documentSyncTimeout = setTimeout(async () => {
-    await this.getSyncData();
+    if (!global.isGetSyncDataProcessStart) {
+      await this.getSyncData();
+    }
     this.setDocumentSyncInterval();
   }, 0.1 * 60 * 1000); // 10 Sec
 };
@@ -340,8 +348,10 @@ exports.setDocumentSyncInterval = () => {
     clearInterval(global.documentSyncInterval);
   }
   global.documentSyncInterval = setInterval(async () => {
-    await this.getSyncData();
-  }, 5 * 60 * 1000); // 5 min
+    if (!global.isGetSyncDataProcessStart) {
+      await this.getSyncData();
+    }
+  }, 10 * 60 * 1000); // 5 min
 };
 
 exports.filterObj = (obj, keys) =>
