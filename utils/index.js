@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const path = require("path");
 const { ALLOWED_DOCUMENT_FILE_TYPES } = require("../constants");
 const { syncHash, getSubscriptionDetail } = require("../services/healthloq");
+const moment = require("moment");
 
 /**
  *
@@ -61,14 +62,27 @@ exports.sort = (prop, arr) => {
 };
 
 /**
- *
- * @returns
+ * This function return data in array format
+ * @returns data
  */
 exports.getData = async () => {
   let data = [];
   try {
     let tempData = await JSON.parse(localStorage.getItem("data"));
-    if (tempData?.length) data = tempData;
+    if (tempData) data = Object.values(tempData);
+  } catch (error) {}
+  return data;
+};
+
+/**
+ * This function return data in object format
+ * @returns data
+ */
+exports.getDataInObjectFormat = async () => {
+  let data = {};
+  try {
+    let tempData = await JSON.parse(localStorage.getItem("data"));
+    if (tempData) data = tempData;
   } catch (error) {}
   return data;
 };
@@ -77,7 +91,13 @@ exports.getData = async () => {
  *
  * @param {Array} data
  */
-exports.setData = (data) => localStorage.setItem("data", JSON.stringify(data));
+exports.setData = (data) =>
+  localStorage.setItem(
+    "data",
+    JSON.stringify(
+      Object.fromEntries(data?.map((item) => [item?.state?.ino, item]))
+    )
+  );
 
 /**
  *
@@ -225,11 +245,21 @@ exports.getFolderOverview = async (folderPath, result = {}) => {
 
 exports.generateHash = async (
   folderPath = process.env.ROOT_FOLDER_PATH,
-  arr = []
+  arr = [],
+  type = null
 ) => {
   try {
     const files = fs.opendirSync(path.join(__dirname, folderPath));
+    let oldData = null;
+    if (type === "publisher") {
+      oldData = await this.getDataInObjectFormat();
+    }
+    let hasMoreFiles = false;
     for await (const item of files) {
+      if (type === "publisher" && arr?.length === 500) {
+        hasMoreFiles = true;
+        break;
+      }
       if (item.isFile()) {
         if (
           item?.name
@@ -244,6 +274,16 @@ exports.generateHash = async (
         try {
           state = fs.statSync(filePath);
         } catch (error) {}
+        if (
+          state &&
+          type === "publisher" &&
+          Boolean(oldData) &&
+          Boolean(oldData?.[state?.ino]) &&
+          moment(oldData?.[state?.ino]?.state?.mtime).isSame(
+            moment(state?.mtime)
+          )
+        )
+          continue;
         const fileBuffer = fs.readFileSync(filePath);
         const hash = crypto
           .createHash("sha256")
@@ -257,13 +297,25 @@ exports.generateHash = async (
           createdAt: new Date(),
         });
       } else {
-        await this.generateHash(path.join(folderPath, item.name), arr);
+        await this.generateHash(path.join(folderPath, item.name), arr, type);
       }
+    }
+    if (type === "publisher") {
+      return {
+        data: arr,
+        hasMoreFiles,
+      };
     }
     return arr;
   } catch (error) {
     console.log("generateHash", error);
     fs.mkdirSync(path.join(__dirname, folderPath));
+    if (type === "publisher") {
+      return {
+        data: arr,
+        hasMoreFiles,
+      };
+    }
     return arr;
   }
 };
@@ -281,12 +333,17 @@ exports.getSyncData = async () => {
   let todayHashLimit = subscriptionData?.current_num_daily_hashes;
   if (!hashLimit || !todayHashLimit) return;
   const syncedData = await this.getData();
-  const latestData = await this.generateHash();
+  const { data: latestData, hasMoreFiles } = await this.generateHash(
+    process.env.ROOT_FOLDER_PATH,
+    [],
+    "publisher"
+  );
   const syncedhash = syncedData?.map((item) => item?.hash);
   const latestHash = latestData?.map((item) => item?.hash);
-  const deletedHashList = syncedhash?.filter(
-    (hash) => !latestHash?.includes(hash)
-  );
+  // const deletedHashList = syncedhash?.filter(
+  //   (hash) => !latestHash?.includes(hash)
+  // );
+  const deletedHashList = [];
   let hashList = latestHash?.filter((hash) => !syncedhash?.includes(hash));
   hashLimit = parseInt(hashLimit);
   todayHashLimit = parseInt(todayHashLimit);
@@ -294,19 +351,14 @@ exports.getSyncData = async () => {
     const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
     hashList = hashList?.slice(0, hashList?.length - extraDocLength);
   }
-  let hasMoreHash = false;
-  if (hashList?.length > 500) {
-    hashList = hashList?.slice(0, 500);
-    hasMoreHash = true;
-  }
   let newData = syncedData
-    ?.filter((item) => {
-      deletedHashList?.includes(item?.hash) &&
-        console.log(
-          `=== ${item?.fileName} file deleted from path ${item?.path}`
-        );
-      return !deletedHashList?.includes(item?.hash);
-    })
+    // ?.filter((item) => {
+    //   deletedHashList?.includes(item?.hash) &&
+    //     console.log(
+    //       `=== ${item?.fileName} file deleted from path ${item?.path}`
+    //     );
+    //   return !deletedHashList?.includes(item?.hash);
+    // })
     .concat(
       latestData?.filter((item) => {
         hashList?.includes(item?.hash) &&
@@ -321,9 +373,9 @@ exports.getSyncData = async () => {
       hashList,
       hashCount: todayHashLimit + hashList?.length,
     });
-    if (hasMoreHash) {
-      this.setDocumentSyncInterval();
-    }
+  }
+  if (hasMoreFiles) {
+    this.setDocumentSyncTimeout();
   }
   global.isGetSyncDataProcessStart = false;
 };
@@ -351,7 +403,7 @@ exports.setDocumentSyncInterval = () => {
     if (!global.isGetSyncDataProcessStart) {
       await this.getSyncData();
     }
-  }, 10 * 60 * 1000); // 5 min
+  }, 5 * 60 * 1000); // 5 min
 };
 
 exports.filterObj = (obj, keys) =>
