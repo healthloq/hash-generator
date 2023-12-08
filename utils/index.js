@@ -249,7 +249,7 @@ exports.generateHash = async (
   type = null
 ) => {
   try {
-    const files = fs.opendirSync(path.join(__dirname, folderPath));
+    const files = fs.opendirSync(folderPath);
     let oldData = null;
     if (type === "publisher") {
       oldData = await this.getDataInObjectFormat();
@@ -269,7 +269,7 @@ exports.generateHash = async (
             ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
         )
           continue;
-        const filePath = path.join(__dirname, folderPath, item.name);
+        const filePath = path.join(folderPath, item.name);
         let state = {};
         try {
           state = fs.statSync(filePath);
@@ -292,7 +292,7 @@ exports.generateHash = async (
         arr.push({
           fileName: item.name,
           hash,
-          path: path.join(folderPath, item.name),
+          path: filePath,
           state,
           createdAt: new Date(),
         });
@@ -309,7 +309,7 @@ exports.generateHash = async (
     return arr;
   } catch (error) {
     console.log("generateHash", error);
-    fs.mkdirSync(path.join(__dirname, folderPath));
+    fs.mkdirSync(folderPath);
     if (type === "publisher") {
       return {
         data: arr,

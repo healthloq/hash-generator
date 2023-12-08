@@ -15,9 +15,9 @@ const {
   setDocumentSyncInterval,
 } = require("./utils");
 const { getSubscriptionDetail } = require("./services/healthloq");
-const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
-  persistent: true,
-});
+// const watcher = chokidar.watch(process.env.ROOT_FOLDER_PATH, {
+//   persistent: true,
+// });
 
 module.exports = io = require("socket.io")(server);
 
@@ -37,11 +37,11 @@ io.on("connection", (socket) => {
   ) {
     await getSyncData();
     setDocumentSyncInterval();
-    watcher.on("all", async (eventName, filePath, state = {}) => {
-      if (["add", "unlink", "change"].includes(eventName)) {
-        setDocumentSyncTimeout();
-      }
-    });
+    // watcher.on("all", async (eventName, filePath, state = {}) => {
+    //   if (["add", "unlink", "change"].includes(eventName)) {
+    //     setDocumentSyncTimeout();
+    //   }
+    // });
   }
 })();
 
