@@ -1,10 +1,11 @@
 const { default: axios } = require("axios");
 
 exports.syncHash = async (data) => {
+  let response = null;
   try {
     if (data.hashList.length || data.deletedHashList.length) {
       console.log("Start syncing with healthloq db...");
-      const response = await axios.post(
+      response = await axios.post(
         `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/createOrDelete`,
         data,
         {
@@ -13,9 +14,9 @@ exports.syncHash = async (data) => {
           },
         }
       );
-      if (response.data.status === "1")
+      if (response?.data.status === "1")
         console.log("Hash synced with healthloq successful");
-      else console.log(response.data.message);
+      else console.log(response?.data.message);
       if (response?.data?.status === "2") {
         io.sockets.emit("docUploadLimitExceededError", {
           errorMsg: response?.data?.message,
@@ -25,6 +26,7 @@ exports.syncHash = async (data) => {
   } catch (error) {
     console.log("sync hash with healthloq catch block", error);
   }
+  return response?.data?.status || "0";
 };
 
 exports.verifyDocument = async (params) => {

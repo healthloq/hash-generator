@@ -351,28 +351,30 @@ exports.getSyncData = async () => {
     const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
     hashList = hashList?.slice(0, hashList?.length - extraDocLength);
   }
-  let newData = syncedData
-    // ?.filter((item) => {
-    //   deletedHashList?.includes(item?.hash) &&
-    //     console.log(
-    //       `=== ${item?.fileName} file deleted from path ${item?.path}`
-    //     );
-    //   return !deletedHashList?.includes(item?.hash);
-    // })
-    .concat(
-      latestData?.filter((item) => {
-        hashList?.includes(item?.hash) &&
-          console.log(`=== ${item?.fileName} hash generated`);
-        return hashList?.includes(item?.hash);
-      })
-    );
-  this.setData(newData);
   if (hashList?.length || deletedHashList?.length) {
-    await syncHash({
+    let syncStatus = await syncHash({
       deletedHashList,
       hashList,
       hashCount: todayHashLimit + hashList?.length,
     });
+    if (syncStatus === "1") {
+      let newData = syncedData
+        // ?.filter((item) => {
+        //   deletedHashList?.includes(item?.hash) &&
+        //     console.log(
+        //       `=== ${item?.fileName} file deleted from path ${item?.path}`
+        //     );
+        //   return !deletedHashList?.includes(item?.hash);
+        // })
+        .concat(
+          latestData?.filter((item) => {
+            hashList?.includes(item?.hash) &&
+              console.log(`=== ${item?.fileName} hash generated`);
+            return hashList?.includes(item?.hash);
+          })
+        );
+      this.setData(newData);
+    }
   }
   if (hasMoreFiles) {
     this.setDocumentSyncTimeout();
