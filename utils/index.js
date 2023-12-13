@@ -322,10 +322,8 @@ exports.generateHash = async (
 
 exports.getSyncData = async () => {
   global.isGetSyncDataProcessStart = true;
-  let subscriptionInfo = await getSubscriptionDetail();
-  global.subscriptionDetail = subscriptionInfo?.data;
   const subscriptionData =
-    subscriptionInfo?.data?.filter(
+    subscriptionDetail?.filter(
       (item) => item?.subscription_type === "publisher"
     )[0] || null;
   if (!subscriptionData || !Object.keys(subscriptionData).length) return;
@@ -374,12 +372,25 @@ exports.getSyncData = async () => {
           })
         );
       this.setData(newData);
+      if (hasMoreFiles) {
+        global.subscriptionDetail = subscriptionDetail?.map((item) =>
+          item?.subscription_type === "publisher"
+            ? {
+                ...item,
+                current_num_daily_hashes: String(
+                  todayHashLimit + hashList?.length
+                ),
+              }
+            : item
+        );
+      }
     }
   }
   if (hasMoreFiles) {
-    this.setDocumentSyncTimeout();
+    this.getSyncData();
+  } else {
+    global.isGetSyncDataProcessStart = false;
   }
-  global.isGetSyncDataProcessStart = false;
 };
 
 exports.setDocumentSyncTimeout = () => {
@@ -403,6 +414,8 @@ exports.setDocumentSyncInterval = () => {
   }
   global.documentSyncInterval = setInterval(async () => {
     if (!global.isGetSyncDataProcessStart) {
+      let subscriptionInfo = await getSubscriptionDetail();
+      global.subscriptionDetail = subscriptionInfo?.data;
       await this.getSyncData();
     }
   }, 5 * 60 * 1000); // 5 min
