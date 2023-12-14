@@ -2,7 +2,7 @@ const {
   sort,
   getData,
   getFolderOverview,
-  generateHash,
+  generateHashForVerifier,
   filterObj,
 } = require("../utils");
 const {
@@ -74,7 +74,7 @@ exports.verifyDocuments = async (req, res) => {
     const docVerificationLimit = 100; // No of documents verify at a time
     let finalResult = [];
     let errorMsg = "";
-    const documentHashData = await generateHash(folderPath);
+    const documentHashData = await generateHashForVerifier(folderPath);
     for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
       const arr = documentHashData?.slice(i, i + docVerificationLimit);
       if (arr?.length) {
