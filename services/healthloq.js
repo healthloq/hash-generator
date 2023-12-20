@@ -90,3 +90,27 @@ exports.getSubscriptionDetail = async () => {
     };
   }
 };
+
+exports.syncDocToolLogs = async (data = {}) => {
+  try {
+    if (data?.error) {
+      data.error = JSON.stringify(data?.error);
+    }
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/sync-doc-tool-logs`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log("syncDocToolLogs => ", error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};

@@ -35,7 +35,7 @@ io.on("connection", (socket) => {
       (item) => item?.subscription_type === "publisher"
     )?.length
   ) {
-    await getSyncData();
+    getSyncData();
     setDocumentSyncInterval();
     // watcher.on("all", async (eventName, filePath, state = {}) => {
     //   if (["add", "unlink", "change"].includes(eventName)) {
