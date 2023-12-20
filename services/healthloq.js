@@ -114,3 +114,24 @@ exports.syncDocToolLogs = async (data = {}) => {
     };
   }
 };
+
+exports.publisherScriptIsRunningOrNot = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/publisher-script-is-running-or-not`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log("publisherScriptIsRunningOrNot => ", error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};

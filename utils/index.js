@@ -6,6 +6,7 @@ const {
   syncHash,
   getSubscriptionDetail,
   syncDocToolLogs,
+  publisherScriptIsRunningOrNot,
 } = require("../services/healthloq");
 const moment = require("moment");
 const notifier = require("node-notifier");
@@ -340,7 +341,7 @@ exports.getSyncData = async (syncedData = null) => {
       hashList = hashList?.slice(0, hashList?.length - extraDocLength);
     }
     let newData = [];
-    if (hashList?.length || deletedHashList?.length || true) {
+    if (hashList?.length || deletedHashList?.length) {
       let syncStatus = await syncHash({
         deletedHashList,
         hashList,
@@ -359,12 +360,10 @@ exports.getSyncData = async (syncedData = null) => {
             latestData?.filter((item) => {
               hashList?.includes(item?.hash) &&
                 console.log(`=== ${item?.fileName} hash generated`);
-              // return hashList?.includes(item?.hash);
-              return true;
+              return hashList?.includes(item?.hash);
             })
           );
         this.setData(newData);
-        console.log(newData?.length);
         if (hasMoreFiles) {
           global.subscriptionDetail = subscriptionDetail?.map((item) =>
             item?.subscription_type === "publisher"
@@ -427,6 +426,9 @@ exports.setDocumentSyncInterval = () => {
       global.subscriptionDetail = subscriptionInfo?.data;
       this.getSyncData();
     }
+    publisherScriptIsRunningOrNot({
+      is_running: global.isGetSyncDataProcessStart,
+    });
   }, 5 * 60 * 1000); // 5 min
 };
 
