@@ -364,23 +364,32 @@ exports.getSyncData = async (syncedData = null) => {
             })
           );
         this.setData(newData);
+        global.subscriptionDetail = subscriptionDetail?.map((item) =>
+          item?.subscription_type === "publisher"
+            ? {
+                ...item,
+                current_num_daily_hashes: String(
+                  todayHashLimit + hashList?.length
+                ),
+              }
+            : item
+        );
         if (hasMoreFiles) {
-          global.subscriptionDetail = subscriptionDetail?.map((item) =>
-            item?.subscription_type === "publisher"
-              ? {
-                  ...item,
-                  current_num_daily_hashes: String(
-                    todayHashLimit + hashList?.length
-                  ),
-                }
-              : item
-          );
           localStorage.setItem("lastSyncedFile", newData?.at(-1)?.fileName);
         } else {
           localStorage.removeItem("lastSyncedFile");
         }
       }
     }
+    publisherScriptIsRunningOrNot({
+      is_running: hasMoreFiles,
+      todayHashLimit: todayHashLimit,
+      syncedData: syncedData?.length,
+      hashList: hashList?.length,
+      newData: newData?.length,
+      deletedHashList: deletedHashList?.length,
+      latestData: latestData?.length,
+    });
     if (hasMoreFiles) {
       this.getSyncData(newData);
     } else {
