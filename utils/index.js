@@ -319,18 +319,51 @@ exports.getSyncData = async (syncedData = null) => {
       )[0] || null;
     if (!subscriptionData || !Object.keys(subscriptionData).length) {
       global.isGetSyncDataProcessStart = false;
+      syncDocToolLogs({
+        message: `getSyncData => Something went wrong! Publisher subscription not found.`,
+        error_message:
+          "Something went wrong! Publisher subscription not found.",
+        error: null,
+      });
+      notifier.notify({
+        title: "HealthLOQ - Doc Tool Error",
+        message: `Something went wrong! Publisher subscription not found. Please check whether the subscription is active or not.`,
+        sound: true,
+      });
       return;
     }
     let hashLimit = subscriptionData?.num_daily_hashes;
     let todayHashLimit = subscriptionData?.current_num_daily_hashes;
     if (!hashLimit || !todayHashLimit) {
       global.isGetSyncDataProcessStart = false;
+      syncDocToolLogs({
+        message: `getSyncData => Something went wrong! Invalid subscription information.`,
+        error_message:
+          "Something went wrong! Invalid subscription information.",
+        error: null,
+      });
+      notifier.notify({
+        title: "HealthLOQ - Doc Tool Error",
+        message: `Something went wrong! Invalid Subscription Information.`,
+        sound: true,
+      });
       return;
     }
     hashLimit = parseInt(hashLimit);
     todayHashLimit = parseInt(todayHashLimit);
     if (hashLimit <= todayHashLimit) {
       global.isGetSyncDataProcessStart = false;
+      syncDocToolLogs({
+        message: `getSyncData => Your daily document upload limit is exceeded. So, We will try again by tomorrow after the limit is reset.`,
+        error_message:
+          "Your daily document upload limit is exceeded. So, We will try again by tomorrow after the limit is reset.",
+        error: null,
+      });
+      notifier.notify({
+        title: "HealthLOQ - Doc Tool Error",
+        message: `Your daily document upload limit is exceeded. So, We will try again by tomorrow after the limit is reset.`,
+        sound: true,
+      });
       return;
     }
     if (!syncedData) {
@@ -408,6 +441,12 @@ exports.getSyncData = async (syncedData = null) => {
     } else {
       localStorage.removeItem("lastSyncedFile");
       global.isGetSyncDataProcessStart = false;
+      localStorage.setItem(
+        "staticData",
+        JSON.stringify({
+          lastSyncedDate: new Date(),
+        })
+      );
     }
   } catch (error) {
     console.log("getSyncData => ", error);

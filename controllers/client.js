@@ -17,10 +17,16 @@ const json2csv = require("json2csv").parse;
 
 exports.getDashboardData = async (req, res) => {
   const data = await getData();
+  let staticData = localStorage.getItem("staticData");
+  if (staticData) {
+    staticData = JSON.parse(staticData);
+  }
   res.status(200).json({
     status: "1",
     data: {
-      lastSyncedDate: sort("createdAt", data).reverse()[0]?.createdAt,
+      lastSyncedDate:
+        staticData?.lastSyncedDate ||
+        sort("createdAt", data).reverse()[0]?.createdAt,
       totalFiles: data.length,
       files: sort("createdAt", data).reverse() || [],
     },
