@@ -382,7 +382,6 @@ exports.getSyncData = async (syncedData = null) => {
       hashList = hashList?.slice(0, hashList?.length - extraDocLength);
     }
     let newData = syncedData?.concat(latestData || []);
-    this.setData(newData);
     if (hashList?.length || deletedHashList?.length) {
       let syncStatus = await syncHash({
         deletedHashList,
@@ -402,6 +401,7 @@ exports.getSyncData = async (syncedData = null) => {
             console.log(`=== ${item?.fileName} hash generated`);
           }
         }
+        this.setData(newData);
         global.subscriptionDetail = subscriptionDetail?.map((item) =>
           item?.subscription_type === "publisher"
             ? {
