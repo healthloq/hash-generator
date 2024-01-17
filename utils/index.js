@@ -381,7 +381,8 @@ exports.getSyncData = async (syncedData = null) => {
       const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
       hashList = hashList?.slice(0, hashList?.length - extraDocLength);
     }
-    let newData = syncedData;
+    let newData = syncedData?.concat(latestData || []);
+    this.setData(newData);
     if (hashList?.length || deletedHashList?.length) {
       let syncStatus = await syncHash({
         deletedHashList,
@@ -389,22 +390,18 @@ exports.getSyncData = async (syncedData = null) => {
         hashCount: todayHashLimit + hashList?.length,
       });
       if (syncStatus === "1") {
-        newData = newData
-          // ?.filter((item) => {
-          //   deletedHashList?.includes(item?.hash) &&
-          //     console.log(
-          //       `=== ${item?.fileName} file deleted from path ${item?.path}`
-          //     );
-          //   return !deletedHashList?.includes(item?.hash);
-          // })
-          .concat(
-            latestData?.filter((item) => {
-              hashList?.includes(item?.hash) &&
-                console.log(`=== ${item?.fileName} hash generated`);
-              return hashList?.includes(item?.hash);
-            })
-          );
-        this.setData(newData);
+        // ?.filter((item) => {
+        //   deletedHashList?.includes(item?.hash) &&
+        //     console.log(
+        //       `=== ${item?.fileName} file deleted from path ${item?.path}`
+        //     );
+        //   return !deletedHashList?.includes(item?.hash);
+        // })
+        for (let item of latestData) {
+          if (hashList?.includes(item?.hash)) {
+            console.log(`=== ${item?.fileName} hash generated`);
+          }
+        }
         global.subscriptionDetail = subscriptionDetail?.map((item) =>
           item?.subscription_type === "publisher"
             ? {
