@@ -192,99 +192,95 @@ exports.generateHashFromFileName = (filePath = "", file) => {
 };
 
 exports.generateHashForPublisher = async (
-  folderPath = process.env.ROOT_FOLDER_PATH,
-  arr = []
+  rootFolderPath = process.env.ROOT_FOLDER_PATH
 ) => {
-  let hasMoreFiles = false;
-  let count = 0;
   try {
-    let files = [];
-    try {
-      files = fs.opendirSync(folderPath);
-    } catch (error) {
-      console.log("generateHashForPublisher => ", error);
-      notifier.notify({
-        title: "HealthLOQ - Doc Tool Warning",
-        message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder and reading again after some time.`,
-        sound: true,
-      });
-      syncDocToolLogs({
-        message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
-        error_message: error?.message,
-        error,
-      });
-    }
-    if (Array.isArray(files) && !files?.length) {
-      return {
-        data: arr,
-        hasMoreFiles,
-        count,
-      };
-    }
-    let lastSyncedFile = localStorage.getItem("lastSyncedFile");
+    let arr = [];
+    let count = 0;
     let oldData = await this.getDataInObjectFormat();
-    // let promise = [];
-    for await (const item of files) {
-      if (arr?.length === 500) {
-        hasMoreFiles = true;
-        break;
-      }
-      count++;
-      if (item.isFile()) {
-        if (
-          item?.name
-            ?.split(".")
-            ?.pop()
-            ?.toLowerCase()
-            ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
-        )
-          continue;
-        if (lastSyncedFile) {
-          if (item?.name === lastSyncedFile) lastSyncedFile = null;
-          continue;
-        }
-        const filePath = path.join(folderPath, item.name);
-        let state = fs.statSync(filePath);
-        if (
-          state &&
-          Boolean(oldData) &&
-          Boolean(oldData?.[state?.ino]) &&
-          moment(oldData?.[state?.ino]?.state?.mtime).isSame(
-            moment(state?.mtime)
-          )
-        )
-          continue;
-        // promise.push({
-        //   filePath: path.join(folderPath, item.name),
-        //   file: item,
-        // });
-        const fileBuffer = fs.readFileSync(filePath);
-        const hash = crypto
-          .createHash("sha256")
-          .update(fileBuffer)
-          .digest("hex");
-        arr.push({
-          fileName: item.name,
-          hash,
-          path: filePath,
-          state,
-          createdAt: new Date(),
+    let hasMoreFiles = false;
+    let foldersArr = [rootFolderPath];
+    while (foldersArr?.length > 0 && arr?.length < 500) {
+      let folderPath = foldersArr?.pop();
+      let files = [];
+      try {
+        files = fs.opendirSync(folderPath);
+      } catch (error) {
+        console.log("generateHashForPublisher => ", error);
+        notifier.notify({
+          title: "HealthLOQ - Doc Tool Warning",
+          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder and reading again after some time.`,
+          sound: true,
         });
+        syncDocToolLogs({
+          message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
+          error_message: error?.message,
+          error,
+        });
+      }
+      if (Array.isArray(files) && !files?.length) {
+        notifier.notify({
+          title: "HealthLOQ - Doc Tool Warning",
+          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder and reading again after some time.`,
+          sound: true,
+        });
+        syncDocToolLogs({
+          message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
+          error_message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
+          error: null,
+        });
+      }
+      let lastSyncedFile = localStorage.getItem("lastSyncedFile");
+      for await (const item of files) {
         if (arr?.length === 500) {
-          lastSyncedFile = item?.name;
+          hasMoreFiles = true;
+          break;
         }
-      } else {
-        await this.generateHashForPublisher(
-          path.join(folderPath, item.name),
-          arr
-        );
+        if (item.isFile()) {
+          count++;
+          if (
+            item?.name
+              ?.split(".")
+              ?.pop()
+              ?.toLowerCase()
+              ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
+          )
+            continue;
+          // if (lastSyncedFile) {
+          //   if (item?.name === lastSyncedFile) lastSyncedFile = null;
+          //   continue;
+          // }
+          const filePath = path.join(folderPath, item.name);
+          let state = fs.statSync(filePath);
+          if (
+            state &&
+            Boolean(oldData) &&
+            Boolean(oldData?.[state?.ino]) &&
+            moment(oldData?.[state?.ino]?.state?.mtime).isSame(
+              moment(state?.mtime)
+            )
+          )
+            continue;
+          const fileBuffer = fs.readFileSync(filePath);
+          const hash = crypto
+            .createHash("sha256")
+            .update(fileBuffer)
+            .digest("hex");
+          arr.push({
+            fileName: item.name,
+            hash,
+            path: filePath,
+            state,
+            createdAt: new Date(),
+          });
+          if (arr?.length === 500) {
+            lastSyncedFile = item?.name;
+          }
+        } else {
+          foldersArr.push(path.join(folderPath, item.name));
+        }
       }
     }
-    // arr = await Promise.all(
-    //   promise?.map((item) =>
-    //     this.generateHashFromFileName(item?.filePath, item?.file)
-    //   )
-    // );
     return {
       data: arr,
       hasMoreFiles,
@@ -373,7 +369,7 @@ exports.getSyncData = async (syncedData = null) => {
       data: latestData,
       hasMoreFiles,
       count,
-    } = await this.generateHashForPublisher(process.env.ROOT_FOLDER_PATH, []);
+    } = await this.generateHashForPublisher(process.env.ROOT_FOLDER_PATH);
     const syncedhash = syncedData?.map((item) => item?.hash);
     const latestHash = latestData?.map((item) => item?.hash);
     // const deletedHashList = syncedhash?.filter(
