@@ -10,6 +10,7 @@ const {
 } = require("../services/healthloq");
 const moment = require("moment");
 const notifier = require("node-notifier");
+const packageJson = require("../package.json");
 
 /**
  *
@@ -483,6 +484,7 @@ exports.setDocumentSyncInterval = () => {
     }
     publisherScriptIsRunningOrNot({
       is_running: global.isGetSyncDataProcessStart,
+      doc_tool_version: packageJson.version,
     });
   }, 5 * 60 * 1000); // 5 min
 };
