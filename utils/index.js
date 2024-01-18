@@ -195,14 +195,15 @@ exports.generateHashFromFileName = (filePath = "", file) => {
 exports.generateHashForPublisher = async (
   rootFolderPath = process.env.ROOT_FOLDER_PATH
 ) => {
+  let arr = [];
+  let count = 0;
+  let hasMoreFiles = false;
+  let folderPath = "";
   try {
-    let arr = [];
-    let count = 0;
     let oldData = await this.getDataInObjectFormat();
-    let hasMoreFiles = false;
     let foldersArr = [rootFolderPath];
     while (foldersArr?.length > 0 && arr?.length < 500) {
-      let folderPath = foldersArr?.pop();
+      folderPath = foldersArr?.pop();
       let files = [];
       try {
         files = fs.opendirSync(folderPath);
