@@ -25,7 +25,6 @@ io.on("connection", (socket) => {
   app.socket = socket;
 
   socket.on("disconnect", () => {
-    console.log(socket?.id);
     global.isVerifierScriptRunning = false;
   });
 });

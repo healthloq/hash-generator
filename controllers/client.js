@@ -87,7 +87,6 @@ exports.verifyDocuments = async (req, res) => {
       unreadFolders,
     } = await generateHashForVerifier(folderPath);
     for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
-      console.log(i);
       if (!global.isVerifierScriptRunning) {
         break;
       }
