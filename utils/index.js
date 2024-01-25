@@ -78,92 +78,147 @@ exports.setData = (data) =>
     )
   );
 
-exports.getFolderOverview = async (folderPath, result = {}) => {
-  let files = [];
-  if (!result?.errorMsg) result["errorMsg"] = "";
-  if (!result?.filesCount) result["filesCount"] = 0;
+exports.getFolderOverview = async (rootFolderPath) => {
+  let unreadFolders = [];
+  let unreadFiles = [];
+  let filesCount = 0;
+  let errorMsg = "";
+  let folderPath = "";
   try {
-    files = fs.readdirSync(folderPath, { withFileTypes: true });
+    let foldersArr = [rootFolderPath];
+    while (foldersArr?.length > 0) {
+      folderPath = foldersArr?.pop();
+      let files = [];
+      try {
+        files = fs.opendirSync(folderPath);
+      } catch (error) {
+        unreadFolders.push(folderPath);
+      }
+      if (Array.isArray(files) && !files?.length) {
+        unreadFolders.push(folderPath);
+      }
+      for await (const item of files) {
+        if (item.isFile()) {
+          if (
+            item?.name
+              ?.split(".")
+              ?.pop()
+              ?.toLowerCase()
+              ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
+          )
+            continue;
+          filesCount++;
+        } else {
+          foldersArr.push(path.join(folderPath, item.name));
+        }
+      }
+    }
+    return {
+      errorMsg,
+      filesCount,
+      unreadFiles,
+      unreadFolders,
+    };
   } catch (error) {
-    result[
-      "errorMsg"
-    ] = `Invalid folder name. we are not able to get any folder on ${folderPath} this path.`;
-    return result;
+    unreadFolders.push(folderPath);
+    return {
+      errorMsg,
+      filesCount,
+      unreadFiles,
+      unreadFolders,
+    };
   }
-  for (let item of files) {
-    if (item.isFile()) {
-      result["filesCount"] = result?.filesCount + 1;
-    } else {
-      await this.getFolderOverview(path.join(folderPath, item.name), result);
-    }
-    if (result?.filesCount > 2000) {
-      result["errorMsg"] = `You can't sync more than 2000 files at a time.`;
-      break;
-    }
-  }
-  return result;
 };
 
 exports.generateHashForVerifier = async (
-  folderPath = process.env.ROOT_FOLDER_PATH,
-  arr = []
+  rootFolderPath = process.env.ROOT_FOLDER_PATH
 ) => {
+  let arr = [];
+  let unreadFolders = [];
+  let unreadFiles = [];
+  let folderPath = "";
   try {
-    let files = [];
-    try {
-      files = fs.opendirSync(folderPath);
-    } catch (error) {
-      console.log("generateHashForVerifier => ", error);
-      notifier.notify({
-        title: "HealthLOQ - Doc Tool Warning",
-        message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder.`,
-        sound: true,
-      });
-      syncDocToolLogs({
-        message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
-        error_message: error?.message,
-        error,
-      });
-    }
-    if (Array.isArray(files) && !files?.length) {
-      return arr;
-    }
-    for await (const item of files) {
-      if (item.isFile()) {
-        if (
-          item?.name
-            ?.split(".")
-            ?.pop()
-            ?.toLowerCase()
-            ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
-        )
-          continue;
-        const filePath = path.join(folderPath, item.name);
-        let state = {};
-        try {
-          state = fs.statSync(filePath);
-        } catch (error) {}
-        const fileBuffer = fs.readFileSync(filePath);
-        const hash = crypto
-          .createHash("sha256")
-          .update(fileBuffer)
-          .digest("hex");
-        arr.push({
-          fileName: item.name,
-          hash,
-          path: filePath,
-          state,
-          createdAt: new Date(),
+    let foldersArr = [rootFolderPath];
+    while (foldersArr?.length > 0) {
+      folderPath = foldersArr?.pop();
+      let files = [];
+      try {
+        files = fs.opendirSync(folderPath);
+      } catch (error) {
+        unreadFolders.push(folderPath);
+        console.log("generateHashForVerifier => ", error);
+        notifier.notify({
+          title: "HealthLOQ - Doc Tool Warning",
+          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder.`,
+          sound: true,
         });
-      } else {
-        await this.generateHashForVerifier(
-          path.join(folderPath, item.name),
-          arr
-        );
+        syncDocToolLogs({
+          message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
+          error_message: error?.message,
+          error,
+        });
+      }
+      if (Array.isArray(files) && !files?.length) {
+        unreadFolders.push(folderPath);
+        notifier.notify({
+          title: "HealthLOQ - Doc Tool Warning",
+          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder.`,
+          sound: true,
+        });
+        syncDocToolLogs({
+          message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
+          error_message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
+          error: null,
+        });
+      }
+      for await (const item of files) {
+        if (item.isFile()) {
+          if (
+            item?.name
+              ?.split(".")
+              ?.pop()
+              ?.toLowerCase()
+              ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
+          )
+            continue;
+          const filePath = path.join(folderPath, item.name);
+          let state = null;
+          try {
+            state = fs.statSync(filePath);
+          } catch (error) {
+            unreadFiles.push(filePath);
+            continue;
+          }
+          let fileBuffer = null;
+          try {
+            fileBuffer = fs.readFileSync(filePath);
+          } catch (error) {
+            unreadFiles.push(filePath);
+            continue;
+          }
+          const hash = crypto
+            .createHash("sha256")
+            .update(fileBuffer)
+            .digest("hex");
+          arr.push({
+            fileName: item.name,
+            hash,
+            path: filePath,
+            state,
+            createdAt: new Date(),
+          });
+        } else {
+          foldersArr.push(path.join(folderPath, item.name));
+        }
       }
     }
-    return arr;
+    return {
+      data: arr,
+      unreadFiles,
+      unreadFolders,
+    };
   } catch (error) {
+    unreadFolders.push(folderPath);
     console.log("generateHashForVerifier => ", error);
     notifier.notify({
       title: "HealthLOQ - Doc Tool Error",
@@ -171,11 +226,15 @@ exports.generateHashForVerifier = async (
       sound: true,
     });
     syncDocToolLogs({
-      message: `generateHashForVerifier => We are trying to read directory ${folderPath}`,
+      message: `generateHashForVerifier => Something went wrong! We are trying to read directory ${folderPath}`,
       error_message: error?.message,
       error,
     });
-    return arr;
+    return {
+      data: arr,
+      unreadFiles,
+      unreadFolders,
+    };
   }
 };
 

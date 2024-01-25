@@ -63,6 +63,7 @@ exports.verifyDocuments = async (req, res) => {
       status: "1",
       data: [],
     });
+    global.isVerifierScriptRunning = true;
     const organizationIds = selectedOrganizations?.map((item) => item?.id);
     // Verify document organizations
     let docOrgVerificationData = [];
@@ -80,8 +81,16 @@ exports.verifyDocuments = async (req, res) => {
     const docVerificationLimit = 100; // No of documents verify at a time
     let finalResult = [];
     let errorMsg = "";
-    const documentHashData = await generateHashForVerifier(folderPath);
+    const {
+      data: documentHashData,
+      unreadFiles,
+      unreadFolders,
+    } = await generateHashForVerifier(folderPath);
     for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
+      console.log(i);
+      if (!global.isVerifierScriptRunning) {
+        break;
+      }
       const arr = documentHashData?.slice(i, i + docVerificationLimit);
       if (arr?.length) {
         // verify documents in blockchain
@@ -204,52 +213,58 @@ exports.verifyDocuments = async (req, res) => {
         }
       }
     }
-    // Create document verification final csv
-    if (finalResult?.length) {
-      const csv = json2csv(
-        finalResult?.map((item) =>
-          filterObj(item, [
-            "documentHashId",
-            "OrganizationExhibitId",
-            "integrantId",
-          ])
-        )
-      );
-      try {
-        fs.writeFileSync(
-          path.join(
-            __dirname,
-            "../public/exports/document-verification-overview.csv"
-          ),
-          csv
+    if (global.isVerifierScriptRunning) {
+      // Create document verification final csv
+      if (finalResult?.length) {
+        const csv = json2csv(
+          finalResult?.map((item) =>
+            filterObj(item, [
+              "documentHashId",
+              "OrganizationExhibitId",
+              "integrantId",
+            ])
+          )
         );
-      } catch (error) {
-        console.log(error);
+        try {
+          fs.writeFileSync(
+            path.join(
+              __dirname,
+              "../public/exports/document-verification-overview.csv"
+            ),
+            csv
+          );
+        } catch (error) {
+          console.log(error);
+        }
       }
+      // Send final socket for document verfication quick overview and send csv url to export final result
+      io.sockets.emit("documentVerificationResult", {
+        noOfVerifiedDocumentsWithVerifiedOrg: finalResult?.filter(
+          (item) =>
+            item["Is Verified Organization"] === "Yes" &&
+            item["Is Verified Document"] === "Yes"
+        )?.length,
+        noOfVerifiedDocumentsWithUnVerifiedOrg: finalResult?.filter(
+          (item) =>
+            item["Is Verified Organization"] === "No" &&
+            item["Is Verified Document"] === "Yes"
+        )?.length,
+        noOfUnverifiedDocuments: finalResult?.filter(
+          (item) => item["Is Verified Document"] === "No"
+        )?.length,
+        verificationData: finalResult,
+        errorMsg,
+        url: finalResult?.length
+          ? `${process.env.REACT_APP_API_BASE_URL}/public/exports/document-verification-overview.csv`
+          : null,
+        isDocVerificationFinalOverview: true,
+        unreadFiles,
+        unreadFolders,
+      });
     }
-    // Send final socket for document verfication quick overview and send csv url to export final result
-    io.sockets.emit("documentVerificationResult", {
-      noOfVerifiedDocumentsWithVerifiedOrg: finalResult?.filter(
-        (item) =>
-          item["Is Verified Organization"] === "Yes" &&
-          item["Is Verified Document"] === "Yes"
-      )?.length,
-      noOfVerifiedDocumentsWithUnVerifiedOrg: finalResult?.filter(
-        (item) =>
-          item["Is Verified Organization"] === "No" &&
-          item["Is Verified Document"] === "Yes"
-      )?.length,
-      noOfUnverifiedDocuments: finalResult?.filter(
-        (item) => item["Is Verified Document"] === "No"
-      )?.length,
-      verificationData: finalResult,
-      errorMsg,
-      url: finalResult?.length
-        ? `${process.env.REACT_APP_API_BASE_URL}/public/exports/document-verification-overview.csv`
-        : null,
-      isDocVerificationFinalOverview: true,
-    });
+    global.isVerifierScriptRunning = false;
   } catch (error) {
     console.log(error);
+    global.isVerifierScriptRunning = false;
   }
 };
