@@ -47,11 +47,11 @@ export const DocumentVerification = (props) => {
       if (verifierData)
         setLinearProgressData({
           label: `${numberWithCommas(
-            parseInt(verifierData.current_num_daily_hashes)
-          )}/${abbrNum(parseInt(verifierData.num_daily_hashes))}`,
+            parseInt(verifierData.current_num_monthly_hashes || "0")
+          )}/${abbrNum(parseInt(verifierData.num_monthly_hashes || "0"))}`,
           value:
-            (parseInt(verifierData.current_num_daily_hashes) * 100) /
-            parseInt(verifierData.num_daily_hashes),
+            (parseInt(verifierData.current_num_monthly_hashes || "0") * 100) /
+            parseInt(verifierData.num_monthly_hashes || "0"),
         });
     }
   }, [subscriptionDetails]);
@@ -95,7 +95,7 @@ export const DocumentVerification = (props) => {
       </Box>
       <Box sx={{ my: 2 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
-          Your today's document verification limit overview
+          Your current month document verification limit overview
         </Typography>
         <MuiLinearProgress
           {...{

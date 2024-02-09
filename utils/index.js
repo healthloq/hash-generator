@@ -389,8 +389,8 @@ exports.getSyncData = async (syncedData = null) => {
       });
       return;
     }
-    let hashLimit = subscriptionData?.num_daily_hashes;
-    let todayHashLimit = subscriptionData?.current_num_daily_hashes;
+    let hashLimit = subscriptionData?.num_monthly_hashes || "0";
+    let todayHashLimit = subscriptionData?.current_num_monthly_hashes || "0";
     if (!hashLimit || !todayHashLimit) {
       global.isGetSyncDataProcessStart = false;
       syncDocToolLogs({
@@ -411,14 +411,14 @@ exports.getSyncData = async (syncedData = null) => {
     if (hashLimit <= todayHashLimit) {
       global.isGetSyncDataProcessStart = false;
       syncDocToolLogs({
-        message: `getSyncData => Your daily document upload limit is exceeded. So, We will try again by tomorrow after the limit is reset.`,
+        message: `getSyncData => Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
         error_message:
-          "Your daily document upload limit is exceeded. So, We will try again by tomorrow after the limit is reset.",
+          "Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.",
         error: null,
       });
       notifier.notify({
         title: "HealthLOQ - Doc Tool Error",
-        message: `Your daily document upload limit is exceeded. So, We will try again by tomorrow after the limit is reset.`,
+        message: `Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
         sound: true,
       });
       return;
@@ -467,7 +467,7 @@ exports.getSyncData = async (syncedData = null) => {
           item?.subscription_type === "publisher"
             ? {
                 ...item,
-                current_num_daily_hashes: String(
+                current_num_monthly_hashes: String(
                   todayHashLimit + hashList?.length
                 ),
               }

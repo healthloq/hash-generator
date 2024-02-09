@@ -59,11 +59,11 @@ export function Home({
       if (publisherData)
         setLinearProgressData({
           label: `${abbrNum(
-            parseInt(publisherData.current_num_daily_hashes)
-          )}/${abbrNum(parseInt(publisherData.num_daily_hashes))}`,
+            parseInt(publisherData.current_num_monthly_hashes || "0")
+          )}/${abbrNum(parseInt(publisherData.num_monthly_hashes || "0"))}`,
           value:
-            (parseInt(publisherData.current_num_daily_hashes) * 100) /
-            parseInt(publisherData.num_daily_hashes),
+            (parseInt(publisherData.current_num_monthly_hashes || "0") * 100) /
+            parseInt(publisherData.num_monthly_hashes || "0"),
         });
     }
   }, [subscriptionDetails]);
@@ -108,7 +108,7 @@ export function Home({
       </Box>
       <Box sx={{ my: 2 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
-          Your today's document publish limit overview
+          Your current month document publish limit overview
         </Typography>
         <MuiLinearProgress
           {...{
