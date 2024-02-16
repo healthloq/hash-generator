@@ -443,8 +443,9 @@ exports.getSyncData = async (syncedData = null) => {
       hashList = hashList?.slice(0, hashList?.length - extraDocLength);
     }
     let newData = syncedData?.concat(latestData || []);
+    let syncStatus = null;
     if (hashList?.length || deletedHashList?.length) {
-      let syncStatus = await syncHash({
+      syncStatus = await syncHash({
         deletedHashList,
         hashList,
         hashCount: todayHashLimit + hashList?.length,
@@ -486,7 +487,7 @@ exports.getSyncData = async (syncedData = null) => {
       lastSyncedFile: latestData?.[latestData?.length - 1]?.fileName,
       count,
     });
-    if (hasMoreFiles) {
+    if (hasMoreFiles && syncStatus !== "0") {
       localStorage.setItem(
         "lastSyncedFile",
         latestData?.[latestData?.length - 1]?.fileName

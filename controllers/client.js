@@ -97,6 +97,10 @@ exports.verifyDocuments = async (req, res) => {
           hashList: arr?.map((item) => item?.hash),
           organizationIds,
         });
+        if (response?.status === "0") {
+          errorMsg = response?.message;
+          break;
+        }
         if (response?.status === "1") {
           finalResult = [
             ...finalResult,

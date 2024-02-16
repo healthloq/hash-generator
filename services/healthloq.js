@@ -22,6 +22,12 @@ exports.syncHash = async (data) => {
           errorMsg: response?.data?.message,
         });
       }
+      if (response?.data?.message === "0") {
+        this.publisherScriptIsRunningOrNot({
+          is_running: false,
+          error_msg: response?.data?.message,
+        });
+      }
     }
   } catch (error) {
     console.log("sync hash with healthloq catch block", error);
