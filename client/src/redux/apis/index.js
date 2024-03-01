@@ -12,4 +12,6 @@ export const API = {
     await get("/api/client/get-subscription-overview"),
   getDocumentHashBlockchainProof: async (params) =>
     await healthloqPost("/client-app/verify", params),
+  updateDocumentEffectiveDate: async (params) =>
+    await post("/api/client/update-document-effective-date", params),
 };

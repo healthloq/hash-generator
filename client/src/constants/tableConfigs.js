@@ -15,6 +15,11 @@ export const syncedFilesHeaders = [
     label: "File Path",
   },
   {
+    id: "effective_date",
+    numeric: false,
+    label: "Effective Date",
+  },
+  {
     id: "created",
     numeric: false,
     label: "Created",

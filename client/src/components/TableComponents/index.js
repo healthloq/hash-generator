@@ -13,6 +13,8 @@ import {
   Paper,
   Toolbar,
   CircularProgress,
+  Checkbox,
+  lighten,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import { makeStyles } from "@mui/styles";
@@ -22,6 +24,13 @@ import VerificationDocumentsOverviewFilter from "./VerificationDocumentsOverview
 const useStyle = makeStyles((theme) => ({
   tableHeadCell: {
     fontWeight: theme.typography.fontWeightBold,
+  },
+  toolbarRoot: {
+    backgroundColor: "#FBFBFB",
+  },
+  toolbarActive: {
+    color: "#008F2B",
+    backgroundColor: lighten("#008F2B", 0.85),
   },
   tableHeadingContainer: {
     display: "flex",
@@ -38,6 +47,12 @@ const useStyle = makeStyles((theme) => ({
   },
   tableCell: {
     lineBreak: "anywhere",
+  },
+  checkboxColor: {
+    color: "#008F2B !important",
+  },
+  rowSelected: {
+    backgroundColor: `${lighten("#008F2B", 0.85)} !important`,
   },
 }));
 
@@ -72,7 +87,16 @@ function stableSort(array, comparator) {
 }
 
 function EnhancedTableHead(props) {
-  const { order, orderBy, onRequestSort, headCells } = props;
+  const {
+    order,
+    orderBy,
+    onRequestSort,
+    headCells,
+    showCheckbox = false,
+    numSelected = 0,
+    rowCount = 0,
+    onSelectAllClick = () => {},
+  } = props;
   const classes = useStyle();
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
@@ -81,6 +105,17 @@ function EnhancedTableHead(props) {
   return (
     <TableHead>
       <TableRow>
+        {showCheckbox && (
+          <TableCell padding="checkbox">
+            <Checkbox
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={onSelectAllClick}
+              inputProps={{ "aria-label": "select all desserts" }}
+              classes={{ colorSecondary: classes.checkboxColor }}
+            />
+          </TableCell>
+        )}
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
@@ -110,7 +145,7 @@ function EnhancedTableHead(props) {
 }
 
 function EnhancedTableToolbar(props) {
-  const { tableTitle, tableId } = props;
+  const { tableTitle, tableId, numSelected, getBulkActionInfo = null } = props;
   const classes = useStyle();
   const getFilterComponent = () => {
     if (tableId === "syncedFilesFilter") return <SyncedFilesFilter />;
@@ -125,12 +160,30 @@ function EnhancedTableToolbar(props) {
           pl: { sm: 2 },
           pr: { xs: 1, sm: 1 },
         }}
+        className={`${classes.toolbarRoot} ${
+          numSelected > 0 ? classes.toolbarActive : ""
+        }`}
       >
         <Box className={classes.tableHeadingContainer}>
-          <Typography variant="h4" component="div">
-            {tableTitle}
-          </Typography>
-          {getFilterComponent()}
+          {numSelected > 0 ? (
+            <Typography
+              className={classes.title}
+              color="inherit"
+              variant="subtitle1"
+              component="div"
+            >
+              {numSelected} selected
+            </Typography>
+          ) : (
+            <Typography variant="h4" component="div">
+              {tableTitle}
+            </Typography>
+          )}
+          {numSelected > 0 ? (
+            <Box className={classes.bulkActionRoot}>{getBulkActionInfo}</Box>
+          ) : (
+            getFilterComponent()
+          )}
         </Box>
       </Toolbar>
     </React.Fragment>
@@ -143,18 +196,30 @@ export default function EnhancedTable({
   isLoading = false,
   rows = [],
   tableId = "",
+  showCheckbox = false,
+  setSelected = () => [],
+  selected = [],
+  getBulkActionInfo = null,
 }) {
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("calories");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const classes = useStyle();
-  const headerKeys = headCells?.map((headerObj) => headerObj?.id);
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
+  };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelecteds = rows.map((n) => n.id);
+      setSelected(newSelecteds);
+      return;
+    }
+    setSelected([]);
   };
 
   const handleChangePage = (event, newPage) => {
@@ -166,6 +231,28 @@ export default function EnhancedTable({
     setPage(0);
   };
 
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1)
+      );
+    }
+
+    setSelected(newSelected);
+  };
+
+  const isSelected = (id) => selected.indexOf(id) !== -1;
+
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
@@ -173,7 +260,12 @@ export default function EnhancedTable({
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
-        <EnhancedTableToolbar tableTitle={tableTitle} tableId={tableId} />
+        <EnhancedTableToolbar
+          tableTitle={tableTitle}
+          tableId={tableId}
+          numSelected={selected.length}
+          getBulkActionInfo={getBulkActionInfo}
+        />
         <TableContainer>
           <Table
             sx={{ minWidth: 750 }}
@@ -185,6 +277,10 @@ export default function EnhancedTable({
               orderBy={orderBy}
               onRequestSort={handleRequestSort}
               headCells={headCells}
+              showCheckbox
+              numSelected={selected.length}
+              rowCount={rows.length}
+              onSelectAllClick={handleSelectAllClick}
             />
             <TableBody>
               {isLoading && (
@@ -193,7 +289,9 @@ export default function EnhancedTable({
                     height: 53,
                   }}
                 >
-                  <TableCell colSpan={headCells.length}>
+                  <TableCell
+                    colSpan={headCells.length + (showCheckbox ? 1 : 0)}
+                  >
                     <Box
                       display={"flex"}
                       alignItems="center"
@@ -210,24 +308,43 @@ export default function EnhancedTable({
               {stableSort(rows, getComparator(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((row, index) => {
+                  const isItemSelected = isSelected(row.id);
+                  const labelId = `enhanced-table-checkbox-${index}`;
                   return (
-                    <TableRow hover tabIndex={-1} key={index}>
-                      {Object.entries(row)
-                        ?.filter(([key, value]) => headerKeys?.includes(key))
-                        .map(([key, value], cellIndex) => {
-                          const headCell = headCells?.filter(
-                            (item) => item?.id === key
-                          )[0];
-                          return (
-                            <TableCell
-                              align={headCell?.numeric ? "right" : "left"}
-                              key={cellIndex}
-                              className={classes.tableCell}
-                            >
-                              {value}
-                            </TableCell>
-                          );
-                        })}
+                    <TableRow
+                      hover
+                      tabIndex={-1}
+                      key={index}
+                      selected={isItemSelected}
+                      classes={{ selected: classes.rowSelected }}
+                    >
+                      {showCheckbox && (
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            checked={isItemSelected}
+                            onClick={(event) => handleClick(event, row.id)}
+                            inputProps={{ "aria-labelledby": labelId }}
+                            classes={{ colorSecondary: classes.checkboxColor }}
+                          />
+                        </TableCell>
+                      )}
+                      {headCells?.map((column, key) => {
+                        return (
+                          <TableCell
+                            className={classes.tableCell}
+                            key={key}
+                            align={
+                              column?.id === "action"
+                                ? "center"
+                                : column?.numeric
+                                ? "right"
+                                : "left"
+                            }
+                          >
+                            {row[column?.id]}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   );
                 })}

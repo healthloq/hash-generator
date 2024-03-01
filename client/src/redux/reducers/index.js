@@ -15,6 +15,7 @@ import {
   GET_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
+  UPDATE_DOCUMENT_EFFECTIVE_DATE,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -83,6 +84,9 @@ const initialState = {
   organizationExhibitBlockchainProof: {
     isLoading: false,
   },
+  updateEffectiveDateData: {
+    isLoading: false,
+  },
 };
 
 const Reducer = (
@@ -91,6 +95,46 @@ const Reducer = (
   state
 ) => {
   switch (type) {
+    case UPDATE_DOCUMENT_EFFECTIVE_DATE: {
+      return {
+        ...previousState,
+        updateEffectiveDateData: payload,
+        ...(Boolean(
+          !payload?.isLoading &&
+            payload?.status === "1" &&
+            payload?.data?.hashList?.length
+        )
+          ? {
+              dashboardOverview: {
+                ...previousState.dashboardOverview,
+                data: {
+                  ...previousState?.dashboardOverview?.data,
+                  files: (
+                    previousState?.dashboardOverview?.data?.files || []
+                  )?.map((item) => {
+                    return payload?.data?.hashList?.includes(item?.hash)
+                      ? {
+                          ...item,
+                          effective_date: payload?.data?.effective_date,
+                        }
+                      : item;
+                  }),
+                },
+                filteredFiles: (
+                  previousState?.dashboardOverview?.filteredFiles || []
+                )?.map((item) => {
+                  return payload?.data?.hashList?.includes(item?.hash)
+                    ? {
+                        ...item,
+                        effective_date: payload?.data?.effective_date,
+                      }
+                    : item;
+                }),
+              },
+            }
+          : {}),
+      };
+    }
     case GET_EXHIBIT_BLOCKCHAIN_PROOF: {
       return {
         ...previousState,

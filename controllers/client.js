@@ -4,11 +4,13 @@ const {
   getFolderOverview,
   generateHashForVerifier,
   filterObj,
+  setData,
 } = require("../utils");
 const {
   verifyDocument,
   getSubscriptionDetail,
   verifyDocumentOrganizations,
+  updateDocumentEffectiveDateIntoHealthLOQ,
 } = require("../services/healthloq");
 const fs = require("fs");
 const path = require("path");
@@ -269,5 +271,35 @@ exports.verifyDocuments = async (req, res) => {
   } catch (error) {
     console.log(error);
     global.isVerifierScriptRunning = false;
+  }
+};
+
+exports.updateDocumentEffectiveDate = async (req, res) => {
+  try {
+    const healthloqRes = await updateDocumentEffectiveDateIntoHealthLOQ(
+      req.body
+    );
+    if (healthloqRes.status !== "1") {
+      return res.status(200).json({
+        status: "0",
+        message: healthloqRes?.message,
+      });
+    }
+    let data = await getData();
+    data = data?.map((item) =>
+      req.body?.hashList?.includes(item?.hash)
+        ? {
+            ...item,
+            effective_date: req.body?.effective_date,
+          }
+        : item
+    );
+    setData(data);
+    res.status(200).json(healthloqRes);
+  } catch (error) {
+    res.status(200).json({
+      status: "0",
+      message: error.message,
+    });
   }
 };

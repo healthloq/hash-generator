@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Body, MuiLinearProgress } from "../components/common";
-import { Typography, Box, Button } from "@mui/material";
+import { Typography, Box, Button, Snackbar, IconButton } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { ArrowForward } from "@mui/icons-material";
 import { Link } from "../components";
@@ -10,6 +10,9 @@ import { getDashboardOverviewData } from "../redux/actions";
 import EnhancedTable from "../components/TableComponents";
 import { syncedFilesHeaders } from "../constants/tableConfigs";
 import { abbrNum } from "../utils";
+import EditIcon from "@mui/icons-material/Edit";
+import CloseIcon from "@mui/icons-material/Close";
+import UpdateDocumentEffectiveDateDialog from "../components/dialogs/UpdateDocumentEffectiveDateDialog";
 
 const useStyle = makeStyles((theme) => ({
   lastsyncedData: {
@@ -41,12 +44,17 @@ export function Home({
   getDashboardOverviewData,
   dashboardOverview,
   subscriptionDetails,
+  updateEffectiveDateData,
 }) {
   const classes = useStyle();
   const [linearProgressData, setLinearProgressData] = useState({
     label: "",
     value: 0,
   });
+  const [selected, setSelected] = useState([]);
+  const [snackbarMsg, setSnackbarMsg] = useState("");
+  const [openUpdateEffectiveDateDialog, setOpenUpdateEffectiveDateDialog] =
+    useState(false);
   useEffect(() => {
     getDashboardOverviewData();
   }, []);
@@ -67,6 +75,15 @@ export function Home({
         });
     }
   }, [subscriptionDetails]);
+
+  useEffect(() => {
+    if (
+      !updateEffectiveDateData.isLoading &&
+      updateEffectiveDateData?.message
+    ) {
+      setSnackbarMsg(updateEffectiveDateData?.message);
+    }
+  }, [updateEffectiveDateData]);
   return (
     <Body>
       <Box
@@ -126,19 +143,64 @@ export function Home({
           filePath: file?.path,
           created: moment(file?.state?.birthtime).format("MM/DD/YYYY hh:mm A"),
           modified: moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A"),
+          effective_date: file?.effective_date
+            ? moment(file?.effective_date).format("MM/DD/YYYY")
+            : "",
+          id: file?.hash,
         }))}
         tableId="syncedFilesFilter"
         isLoading={dashboardOverview?.isLoading}
+        showCheckbox
+        selected={selected}
+        setSelected={setSelected}
+        getBulkActionInfo={
+          <>
+            <Button
+              startIcon={<EditIcon />}
+              variant="contained"
+              onClick={() => setOpenUpdateEffectiveDateDialog(true)}
+            >
+              Edit Effective Date
+            </Button>
+          </>
+        }
+      />
+      <UpdateDocumentEffectiveDateDialog
+        open={openUpdateEffectiveDateDialog}
+        handleClose={() => {
+          setSelected([]);
+          setOpenUpdateEffectiveDateDialog(false);
+        }}
+        selectedDocuments={selected}
+        setSelected={setSelected}
+      />
+      <Snackbar
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        open={Boolean(snackbarMsg)}
+        onClose={() => setSnackbarMsg("")}
+        message={snackbarMsg}
+        autoHideDuration={6000}
+        action={
+          <IconButton
+            size="small"
+            aria-label="close"
+            color="inherit"
+            onClick={() => setSnackbarMsg("")}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        }
       />
     </Body>
   );
 }
 
 const mapStateToProps = ({
-  reducer: { dashboardOverview, subscriptionDetails },
+  reducer: { dashboardOverview, subscriptionDetails, updateEffectiveDateData },
 }) => ({
   dashboardOverview,
   subscriptionDetails,
+  updateEffectiveDateData,
 });
 
 const mapDispatchToProps = {

@@ -12,8 +12,30 @@ import {
   GET_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
+  UPDATE_DOCUMENT_EFFECTIVE_DATE,
 } from "../actionTypes";
 import { API } from "../apis";
+
+export const updateDocumentEffectiveDate = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: UPDATE_DOCUMENT_EFFECTIVE_DATE,
+      payload: {
+        isLoading: true,
+      },
+    });
+    const response = await API.updateDocumentEffectiveDate(params);
+    dispatch({
+      type: UPDATE_DOCUMENT_EFFECTIVE_DATE,
+      payload: {
+        ...response,
+        isLoading: false,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 export const getLabDocumentHashBlockchainProof =
   (params) => async (dispatch) => {

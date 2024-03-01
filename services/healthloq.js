@@ -141,3 +141,24 @@ exports.publisherScriptIsRunningOrNot = async (data = {}) => {
     };
   }
 };
+
+exports.updateDocumentEffectiveDateIntoHealthLOQ = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/update`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log("updateDocumentEffectiveDateIntoHealthLOQ => ", error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
