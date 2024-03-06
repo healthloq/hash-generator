@@ -333,6 +333,7 @@ exports.generateHashForPublisher = async (
             path: filePath,
             state,
             createdAt: new Date(),
+            effective_date: moment("9999-12-31", "YYYY-MM-DD"),
           });
           if (arr?.length === 500) {
             lastSyncedFile = item?.name;
