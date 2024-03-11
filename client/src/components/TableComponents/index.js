@@ -277,7 +277,7 @@ export default function EnhancedTable({
               orderBy={orderBy}
               onRequestSort={handleRequestSort}
               headCells={headCells}
-              showCheckbox
+              showCheckbox={showCheckbox}
               numSelected={selected.length}
               rowCount={rows.length}
               onSelectAllClick={handleSelectAllClick}
