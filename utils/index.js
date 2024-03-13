@@ -44,10 +44,12 @@ exports.sort = (prop, arr) => {
  * This function return data in array format
  * @returns data
  */
-exports.getData = async () => {
+exports.getData = async (fileName) => {
   let data = [];
   try {
-    let tempData = await JSON.parse(localStorage.getItem("data"));
+    let tempData = await JSON.parse(
+      localStorage.getItem(fileName ? fileName : "data")
+    );
     if (tempData) data = Object.values(tempData);
   } catch (error) {}
   return data;
@@ -57,10 +59,12 @@ exports.getData = async () => {
  * This function return data in object format
  * @returns data
  */
-exports.getDataInObjectFormat = async () => {
+exports.getDataInObjectFormat = async (fileName) => {
   let data = {};
   try {
-    let tempData = await JSON.parse(localStorage.getItem("data"));
+    let tempData = await JSON.parse(
+      localStorage.getItem(fileName ? fileName : "data")
+    );
     if (tempData) data = tempData;
   } catch (error) {}
   return data;
@@ -70,9 +74,9 @@ exports.getDataInObjectFormat = async () => {
  *
  * @param {Array} data
  */
-exports.setData = (data) =>
+exports.setData = (data, fileName) =>
   localStorage.setItem(
-    "data",
+    fileName ? fileName : "data",
     JSON.stringify(
       Object.fromEntries(data?.map((item) => [item?.state?.ino, item]))
     )
@@ -82,9 +86,13 @@ exports.getFolderOverview = async (rootFolderPath) => {
   let unreadFolders = [];
   let unreadFiles = [];
   let filesCount = 0;
+  let newFilesCount = 0;
   let errorMsg = "";
   let folderPath = "";
   try {
+    const oldData = await this.getDataInObjectFormat(
+      "documentVerificationData"
+    );
     let foldersArr = [rootFolderPath];
     while (foldersArr?.length > 0) {
       folderPath = foldersArr?.pop();
@@ -97,6 +105,7 @@ exports.getFolderOverview = async (rootFolderPath) => {
       if (Array.isArray(files) && !files?.length) {
         unreadFolders.push(folderPath);
       }
+
       for await (const item of files) {
         if (item.isFile()) {
           if (
@@ -108,6 +117,17 @@ exports.getFolderOverview = async (rootFolderPath) => {
           )
             continue;
           filesCount++;
+          const filePath = path.join(folderPath, item.name);
+          const state = fs.statSync(filePath);
+          if (
+            state &&
+            (!oldData ||
+              (Boolean(oldData) && !Boolean(oldData?.[state?.ino])) ||
+              !moment(oldData?.[state?.ino]?.state?.mtime).isSame(
+                moment(state?.mtime)
+              ))
+          )
+            newFilesCount++;
         } else {
           foldersArr.push(path.join(folderPath, item.name));
         }
@@ -116,6 +136,7 @@ exports.getFolderOverview = async (rootFolderPath) => {
     return {
       errorMsg,
       filesCount,
+      newFilesCount,
       unreadFiles,
       unreadFolders,
     };
@@ -124,6 +145,7 @@ exports.getFolderOverview = async (rootFolderPath) => {
     return {
       errorMsg,
       filesCount,
+      newFilesCount,
       unreadFiles,
       unreadFolders,
     };
@@ -138,6 +160,9 @@ exports.generateHashForVerifier = async (
   let unreadFiles = [];
   let folderPath = "";
   try {
+    const oldData = await this.getDataInObjectFormat(
+      "documentVerificationData"
+    );
     let foldersArr = [rootFolderPath];
     while (foldersArr?.length > 0) {
       folderPath = foldersArr?.pop();
@@ -185,6 +210,15 @@ exports.generateHashForVerifier = async (
           let state = null;
           try {
             state = fs.statSync(filePath);
+            if (
+              state &&
+              Boolean(oldData) &&
+              Boolean(oldData?.[state?.ino]) &&
+              moment(oldData?.[state?.ino]?.state?.mtime).isSame(
+                moment(state?.mtime)
+              )
+            )
+              continue;
           } catch (error) {
             unreadFiles.push(filePath);
             continue;

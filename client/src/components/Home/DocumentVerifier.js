@@ -254,7 +254,8 @@ function DocumentVerifier({
                 documentVerificationData.isLoading ||
                   folderOverview.isLoading ||
                   folderOverview?.errorMsg ||
-                  !folderPath
+                  !folderPath ||
+                  documentVerificationData.newFilesCount < 1
               )}
               type="submit"
               startIcon={
@@ -275,11 +276,11 @@ function DocumentVerifier({
                 label: `${numberWithCommas(
                   parseInt(documentVerificationData?.verifiedFilesCount)
                 )}/${abbrNum(
-                  parseInt(documentVerificationData?.totalFilesCount)
+                  parseInt(documentVerificationData?.newFilesCount)
                 )}`,
                 value:
                   (documentVerificationData?.verifiedFilesCount * 100) /
-                  documentVerificationData?.totalFilesCount,
+                  documentVerificationData?.newFilesCount,
               }}
             />
           </Box>
