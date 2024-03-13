@@ -219,6 +219,14 @@ exports.verifyDocuments = async (req, res) => {
       }
     }
     if (global.isVerifierScriptRunning) {
+      if (documentHashData?.length) {
+        let oldData;
+        oldData = await getData("documentVerificationData");
+        let newData = oldData?.concat(documentHashData);
+        setData(newData, "documentVerificationData");
+      }
+    }
+    if (global.isVerifierScriptRunning) {
       // Create document verification final csv
       if (finalResult?.length) {
         const csv = json2csv(

@@ -57,6 +57,7 @@ const initialState = {
     url: "",
     isDocVerificationFinalOverview: false,
     filteredVerificationData: [],
+    newFilesCount: 0,
   },
   documentVerificationFilters: {
     verificationType: "all",
@@ -312,6 +313,8 @@ const Reducer = (
               ...payload,
               totalFilesCount:
                 previousState.documentVerificationData.totalFilesCount,
+              newFilesCount:
+                previousState.documentVerificationData.newFilesCount,
             }
           : {
               ...previousState.documentVerificationData,
@@ -325,7 +328,9 @@ const Reducer = (
         folderOverview = {
           ...payload,
           successMsg: !payload?.errorMsg
-            ? `Total Files: ${abbrNum(parseInt(payload?.filesCount))}`
+            ? `Total Files: ${abbrNum(
+                parseInt(payload?.filesCount)
+              )}, New Files: ${abbrNum(parseInt(payload?.newFilesCount))}`
             : "",
         };
       } else {
@@ -342,6 +347,9 @@ const Reducer = (
           totalFilesCount: payload?.isLoading
             ? previousState.documentVerificationData.totalFilesCount
             : payload?.filesCount || 0,
+          newFilesCount: payload?.isLoading
+            ? previousState.documentVerificationData.newFilesCount
+            : payload?.newFilesCount || 0,
         },
       };
     }
