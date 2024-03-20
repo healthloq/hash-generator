@@ -320,21 +320,24 @@ function DocumentVerifier({
                       }
                     }}
                   />
-                  <div
-                    style={{
-                      display: "flex",
-                      fontSize: "12px",
-                      gap: "10px",
-                      color: "gray",
-                    }}
-                  >
-                    <p>
-                      Total Files Count:
-                      {filesCount?.totalFile ?? 0}
-                    </p>
 
-                    <p>New Files Count:{filesCount?.newFile ?? 0}</p>
-                  </div>
+                  {documentVerificationData && (
+                    <div
+                      style={{
+                        display: "flex",
+                        fontSize: "12px",
+                        gap: "10px",
+                        color: "gray",
+                      }}
+                    >
+                      <p>
+                        Total Files Count:
+                        {filesCount?.totalFile ?? 0}
+                      </p>
+
+                      <p>New Files Count:{filesCount?.newFile ?? 0}</p>
+                    </div>
+                  )}
                 </div>
               )}
               fullWidth
