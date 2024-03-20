@@ -14,4 +14,5 @@ export const API = {
     await healthloqPost("/client-app/verify", params),
   updateDocumentEffectiveDate: async (params) =>
     await post("/api/client/update-document-effective-date", params),
+  getFolderPath: async () => await get("/api/client/get-folder-path"),
 };

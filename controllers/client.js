@@ -5,6 +5,7 @@ const {
   generateHashForVerifier,
   filterObj,
   setData,
+  setFolderPathToArray,
 } = require("../utils");
 const {
   verifyDocument,
@@ -275,6 +276,10 @@ exports.verifyDocuments = async (req, res) => {
         unreadFolders,
       });
     }
+    if (global.isVerifierScriptRunning) {
+      setFolderPathToArray(folderPath);
+    }
+
     global.isVerifierScriptRunning = false;
   } catch (error) {
     console.log(error);
@@ -304,6 +309,21 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
     );
     setData(data);
     res.status(200).json(healthloqRes);
+  } catch (error) {
+    res.status(200).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getFolderPath = async (req, res) => {
+  try {
+    let data = JSON.parse(localStorage.getItem("folderPath")) || [];
+    res.status(200).json({
+      status: "1",
+      data,
+    });
   } catch (error) {
     res.status(200).json({
       status: "0",

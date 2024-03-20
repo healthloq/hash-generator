@@ -13,6 +13,7 @@ import {
   GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
+  GET_FOLDER_PATH,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -228,4 +229,28 @@ export const setApiFlagsInitialState = (params) => (dispatch) => {
     type: SET_APIFLAGS_INITIALSTATE,
     payload: params,
   });
+};
+
+export const fetchFolderPath = () => async (dispatch) => {
+  try {
+    dispatch({
+      type: GET_FOLDER_PATH,
+      payload: {
+        isLoading: true,
+      },
+    });
+    const response = await API.getFolderPath();
+    dispatch({
+      type: GET_FOLDER_PATH,
+      payload: { ...response, isLoading: false },
+    });
+  } catch (error) {
+    console.log(error);
+    dispatch({
+      type: GET_FOLDER_PATH,
+      payload: {
+        isLoading: false,
+      },
+    });
+  }
 };

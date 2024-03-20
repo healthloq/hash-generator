@@ -589,3 +589,14 @@ exports.filterObj = (obj, keys) =>
   Object.fromEntries(
     Object.entries(obj).filter(([key, value]) => !keys.includes(key))
   );
+
+// function for set folderPath in array
+
+exports.setFolderPathToArray = (folderPath) => {
+  let array = JSON.parse(localStorage.getItem("folderPath")) || [];
+  if (!array.includes(folderPath.trim())) {
+    array.push(folderPath);
+
+    localStorage.setItem("folderPath", JSON.stringify(array));
+  }
+};

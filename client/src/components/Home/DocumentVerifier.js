@@ -12,6 +12,7 @@ import {
   Grid,
   IconButton,
   Tooltip,
+  Autocomplete,
 } from "..";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import axios from "axios";
@@ -26,6 +27,7 @@ import {
   handleDocumentVerification,
   setInitialState,
   setApiFlagsInitialState,
+  fetchFolderPath,
 } from "../../redux/actions";
 import { numberWithCommas, abbrNum } from "../../utils";
 import EnhancedTable from "../TableComponents";
@@ -97,6 +99,22 @@ const useStyle = makeStyles((theme) => ({
       maxWidth: "100%",
     },
   },
+  autoCompleteStyle: {
+    minHeight: 45,
+    width: "35%",
+    maxWidth: "35%",
+    minWidth: "35%",
+    marginRight: 10,
+    [theme.breakpoints.down("sm")]: {
+      maxWidth: "100%",
+    },
+    "&>div": {
+      "&>div": {
+        marginTop: "0px !important",
+        border: "2px solid red",
+      },
+    },
+  },
 }));
 
 function DocumentVerifier({
@@ -108,10 +126,14 @@ function DocumentVerifier({
   setInitialState,
   apiFlags,
   setApiFlagsInitialState,
+  fetchFolderPath,
+  getFolderPathList,
 }) {
   const classes = useStyle();
-  const [folderPath, setFolderPath] = useState("");
+  const [folderPath, setFolderPath] = useState(null);
   const [organizationIds, setOrganizationIds] = useState([]);
+  const [options, setOptions] = useState([]);
+  const [text, setText] = useState(null);
   const [
     documentDetailOverviewDialogData,
     setDocumentDetailOverviewDialogData,
@@ -132,6 +154,16 @@ function DocumentVerifier({
   };
 
   useEffect(() => {
+    fetchFolderPath();
+  }, []);
+
+  useEffect(() => {
+    if (getFolderPathList?.data?.length > 0) {
+      setOptions(getFolderPathList?.data);
+    }
+  }, [getFolderPathList]);
+
+  useEffect(() => {
     const cancelToken = axios.CancelToken.source();
     if (folderPath) {
       getFolderOverview({ folderPath }, { cancelToken: cancelToken.token });
@@ -148,6 +180,13 @@ function DocumentVerifier({
     }
   }, [apiFlags.downloadVerifierResultCSVFlag]);
 
+  // call api for add data into list
+  const handleAdd = (value) => {
+    if (value && !options.includes(value)) {
+      setOptions([...options, value]);
+      setFolderPath(value);
+    }
+  };
   return (
     <Box sx={{ mb: 3 }}>
       <Box className={classes.formRoot}>
@@ -228,25 +267,55 @@ function DocumentVerifier({
                 );
               })}
             </Select>
-            <TextField
-              value={folderPath}
-              onChange={(e) => {
-                setFolderPath(e.target.value?.trim());
+            <Autocomplete
+              onChange={(event, newValue) => {
+                setFolderPath(newValue);
                 setInitialState(["folderOverview", "documentVerificationData"]);
               }}
-              type="text"
-              placeholder="Enter folder path"
-              variant="standard"
-              styletype="custom"
-              InputProps={{ disableUnderline: true }}
-              required
-              error={Boolean(folderOverview?.errorMsg)}
-              helperText={
-                folderOverview?.isLoading
-                  ? "Please wait we are fetching folder info..."
-                  : folderOverview?.errorMsg || folderOverview?.successMsg
+              value={folderPath}
+              options={options}
+              renderOption={(props, option) => (
+                <li style={{ fontSize: " 18px" }} {...props}>
+                  {option}
+                </li>
+              )}
+              onInputChange={(event) => {
+                setText(event.target.value);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Enter folder path"
+                  variant="standard"
+                  styletype="custom"
+                  InputProps={{ ...params.InputProps, disableUnderline: true }}
+                  required
+                  onChange={(event) => setText(event.target.value)}
+                  error={Boolean(folderOverview?.errorMsg)}
+                  disabled={documentVerificationData.isLoading}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      handleAdd(event.target.value);
+                    }
+                  }}
+                />
+              )}
+              fullWidth
+              noOptionsText={
+                text ? (
+                  <Typography
+                    style={{ cursor: "pointer", fontSize: "18px" }}
+                    onClick={() => handleAdd(text)}
+                  >
+                    Add {text}
+                  </Typography>
+                ) : (
+                  <Typography style={{ fontSize: "18px" }}>
+                    No path found
+                  </Typography>
+                )
               }
-              disabled={documentVerificationData.isLoading}
+              className={classes.selectBox}
             />
             <Button
               variant="contained"
@@ -400,12 +469,14 @@ const mapStateToProps = ({
     folderOverview,
     documentVerificationData,
     apiFlags,
+    getFolderPathList,
   },
 }) => ({
   documentVerificationData,
   organizationList,
   folderOverview,
   apiFlags,
+  getFolderPathList,
 });
 
 const mapDispatchToProps = {
@@ -413,6 +484,7 @@ const mapDispatchToProps = {
   handleDocumentVerification,
   setInitialState,
   setApiFlagsInitialState,
+  fetchFolderPath,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DocumentVerifier);

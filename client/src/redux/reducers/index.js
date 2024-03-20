@@ -16,6 +16,7 @@ import {
   GET_ORGANIZATION_EXHIBIT_BLOCKCHAIN_PROOF,
   GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
+  GET_FOLDER_PATH,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -87,6 +88,10 @@ const initialState = {
   },
   updateEffectiveDateData: {
     isLoading: false,
+  },
+  getFolderPathList: {
+    isLoading: false,
+    data: [],
   },
 };
 
@@ -405,6 +410,15 @@ const Reducer = (
           isFilterData: !payload?.isFilterData,
         },
         dashboardOverview,
+      };
+    }
+    case GET_FOLDER_PATH: {
+      return {
+        ...previousState,
+        getFolderPathList: {
+          ...previousState.getFolderPathList,
+          ...payload,
+        },
       };
     }
     default:
