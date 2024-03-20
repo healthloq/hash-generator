@@ -280,7 +280,10 @@ function DocumentVerifier({
                 </li>
               )}
               onInputChange={(event) => {
-                setText(event.target.value);
+                if (event) {
+                  setText(event.target.value);
+                  setFolderPath(event.target.value);
+                }
               }}
               renderInput={(params) => (
                 <TextField
