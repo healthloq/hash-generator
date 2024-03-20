@@ -155,6 +155,10 @@ function DocumentVerifier({
                 organizationIds?.includes(item?.id)
               ),
       });
+      if (folderPath?.trim() && !options.includes(folderPath?.trim())) {
+        setOptions([...options, folderPath?.trim()]);
+        setFolderPath(folderPath?.trim());
+      }
     }
   };
 
