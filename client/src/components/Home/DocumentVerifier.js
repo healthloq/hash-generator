@@ -134,6 +134,11 @@ function DocumentVerifier({
   const [organizationIds, setOrganizationIds] = useState([]);
   const [options, setOptions] = useState([]);
   const [text, setText] = useState(null);
+  const [filesCount, setFilesCount] = useState({
+    totalFile: 0,
+    newFile: 0,
+  });
+
   const [
     documentDetailOverviewDialogData,
     setDocumentDetailOverviewDialogData,
@@ -156,6 +161,15 @@ function DocumentVerifier({
   useEffect(() => {
     fetchFolderPath();
   }, []);
+
+  useEffect(() => {
+    if (documentVerificationData) {
+      setFilesCount({
+        totalFile: documentVerificationData?.totalFilesCount,
+        newFile: documentVerificationData?.newFilesCount,
+      });
+    }
+  }, [documentVerificationData]);
 
   useEffect(() => {
     if (getFolderPathList?.data?.length > 0) {
@@ -286,22 +300,42 @@ function DocumentVerifier({
                 }
               }}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Enter folder path"
-                  variant="standard"
-                  styletype="custom"
-                  InputProps={{ ...params.InputProps, disableUnderline: true }}
-                  required
-                  onChange={(event) => setText(event.target.value)}
-                  error={Boolean(folderOverview?.errorMsg)}
-                  disabled={documentVerificationData.isLoading}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      handleAdd(event.target.value);
-                    }
-                  }}
-                />
+                <div>
+                  <TextField
+                    {...params}
+                    placeholder="Enter folder path"
+                    variant="standard"
+                    styletype="custom"
+                    InputProps={{
+                      ...params.InputProps,
+                      disableUnderline: true,
+                    }}
+                    required
+                    onChange={(event) => setText(event.target.value)}
+                    error={Boolean(folderOverview?.errorMsg)}
+                    disabled={documentVerificationData.isLoading}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        handleAdd(event.target.value);
+                      }
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      fontSize: "12px",
+                      gap: "10px",
+                      color: "gray",
+                    }}
+                  >
+                    <p>
+                      Total Files Count:
+                      {filesCount?.totalFile ?? 0}
+                    </p>
+
+                    <p>New Files Count:{filesCount?.newFile ?? 0}</p>
+                  </div>
+                </div>
               )}
               fullWidth
               noOptionsText={
@@ -320,6 +354,7 @@ function DocumentVerifier({
               }
               className={classes.selectBox}
             />
+
             <Button
               variant="contained"
               disabled={Boolean(
@@ -340,6 +375,7 @@ function DocumentVerifier({
             </Button>
           </Box>
         </form>
+
         {documentVerificationData?.isLoading && (
           <Box display="flex" flexDirection={"column"} sx={{ my: 1 }}>
             <MuiLinearProgress
