@@ -354,20 +354,33 @@ exports.getVerifyDocumentCount = async (req, res) => {
     const data = {};
     const docData = await getData("documentVerificationData");
     const { path } = req?.query;
-    let newData = null;
+
+    let newData = [];
 
     if (path) {
-      newData = docData.filter((doc) => doc.path.includes(path));
+      docData.filter((doc) => {
+        if (doc.path.includes(path)) {
+          const lastSlashIndex = doc.path.lastIndexOf("/");
+          const normalizedPath =
+            lastSlashIndex !== -1
+              ? doc.path.substring(0, lastSlashIndex)
+              : doc.path;
+          if (normalizedPath === path) {
+            newData.push(doc);
+          }
+        }
+      });
     }
 
     (data.noOfVerifiedDocumentsWithVerifiedOrg = newData?.filter(
       (item) => item["is_vrf_org"] === "Yes" && item["is_vrf_doc"] === "Yes"
     )?.length),
       (data.noOfVerifiedDocumentsWithUnVerifiedOrg = newData?.filter((item) => {
-        item["is_vrf_doc"] === "No" && item["is_vrf_doc"] === "Yes";
+        (item["is_vrf_org"] === "No" || item["is_vrf_org"] === "") &&
+          item["is_vrf_doc"] === "Yes";
       })?.length),
       (data.noOfUnverifiedDocuments = newData?.filter(
-        (item) => item["is_vrf_doc"] === "No"
+        (item) => item["is_vrf_org"] === "No" || item["is_vrf_org"] === ""
       )?.length),
       res.status(200).json({
         status: "1",
