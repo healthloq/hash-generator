@@ -380,7 +380,7 @@ exports.getVerifyDocumentCount = async (req, res) => {
           item["is_vrf_doc"] === "Yes";
       })?.length),
       (data.noOfUnverifiedDocuments = newData?.filter(
-        (item) => item["is_vrf_org"] === "No" || item["is_vrf_org"] === ""
+        (item) => item["is_vrf_doc"] === "No"
       )?.length),
       res.status(200).json({
         status: "1",
