@@ -17,6 +17,7 @@ import {
   GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
   GET_FOLDER_PATH,
+  GET_VERIFY_DOCUMENT_COUNT,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -92,6 +93,14 @@ const initialState = {
   getFolderPathList: {
     isLoading: false,
     data: [],
+  },
+  getVerifyDocumentCount: {
+    isLoading: false,
+    data: {
+      noOfVerifiedDocumentsWithVerifiedOrg: 0,
+      noOfVerifiedDocumentsWithUnVerifiedOrg: 0,
+      noOfUnverifiedDocuments: 0,
+    },
   },
 };
 
@@ -417,6 +426,16 @@ const Reducer = (
         ...previousState,
         getFolderPathList: {
           ...previousState.getFolderPathList,
+          ...payload,
+        },
+      };
+    }
+
+    case GET_VERIFY_DOCUMENT_COUNT: {
+      return {
+        ...previousState,
+        getVerifyDocumentCount: {
+          ...previousState.getVerifyDocumentCount,
           ...payload,
         },
       };

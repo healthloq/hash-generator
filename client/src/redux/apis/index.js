@@ -15,4 +15,9 @@ export const API = {
   updateDocumentEffectiveDate: async (params) =>
     await post("/api/client/update-document-effective-date", params),
   getFolderPath: async () => await get("/api/client/get-folder-path"),
+  getVerifyDocumentCount: async (params) => {
+    return await get(
+      `/api/client/get-verify-document-counts?path=${params?.path}`
+    );
+  },
 };

@@ -14,6 +14,7 @@ import {
   GET_LAB_EXHIBIT_BLOCKCHAIN_PROOF,
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
   GET_FOLDER_PATH,
+  GET_VERIFY_DOCUMENT_COUNT,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -248,6 +249,30 @@ export const fetchFolderPath = () => async (dispatch) => {
     console.log(error);
     dispatch({
       type: GET_FOLDER_PATH,
+      payload: {
+        isLoading: false,
+      },
+    });
+  }
+};
+
+export const fetchVerifyDocumentCount = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: GET_VERIFY_DOCUMENT_COUNT,
+      payload: {
+        isLoading: true,
+      },
+    });
+    const response = await API.getVerifyDocumentCount(params);
+    dispatch({
+      type: GET_VERIFY_DOCUMENT_COUNT,
+      payload: { ...response, isLoading: false },
+    });
+  } catch (error) {
+    console.log(error);
+    dispatch({
+      type: GET_VERIFY_DOCUMENT_COUNT,
       payload: {
         isLoading: false,
       },

@@ -28,6 +28,7 @@ import {
   setInitialState,
   setApiFlagsInitialState,
   fetchFolderPath,
+  fetchVerifyDocumentCount,
 } from "../../redux/actions";
 import { numberWithCommas, abbrNum } from "../../utils";
 import EnhancedTable from "../TableComponents";
@@ -128,6 +129,8 @@ function DocumentVerifier({
   setApiFlagsInitialState,
   fetchFolderPath,
   getFolderPathList,
+  getVerifyDocumentCount,
+  fetchVerifyDocumentCount,
 }) {
   const classes = useStyle();
   const [folderPath, setFolderPath] = useState(null);
@@ -182,6 +185,12 @@ function DocumentVerifier({
   }, [getFolderPathList]);
 
   useEffect(() => {
+    if (documentVerificationData?.isDocVerificationFinalOverview) {
+      fetchVerifyDocumentCount({ path: folderPath?.trim() });
+    }
+  }, [documentVerificationData, folderPath]);
+
+  useEffect(() => {
     const cancelToken = axios.CancelToken.source();
     if (folderPath) {
       getFolderOverview({ folderPath }, { cancelToken: cancelToken.token });
@@ -205,6 +214,7 @@ function DocumentVerifier({
       setFolderPath(value);
     }
   };
+
   return (
     <Box sx={{ mb: 3 }}>
       <Box className={classes.formRoot}>
@@ -335,11 +345,11 @@ function DocumentVerifier({
                       }}
                     >
                       <p>
-                        Total Files Count:
+                        Total Files:
                         {filesCount?.totalFile ?? 0}
                       </p>
 
-                      <p>New Files Count:{filesCount?.newFile ?? 0}</p>
+                      <p>New Files:{filesCount?.newFile ?? 0}</p>
                     </div>
                   )}
                 </div>
@@ -409,7 +419,8 @@ function DocumentVerifier({
                     <Typography variant="body1">
                       {numberWithCommas(
                         parseInt(
-                          documentVerificationData?.noOfVerifiedDocumentsWithVerifiedOrg
+                          getVerifyDocumentCount?.data
+                            ?.noOfVerifiedDocumentsWithVerifiedOrg
                         )
                       )}
                       <img src={rightIcon} alt="right-icon" />
@@ -424,7 +435,8 @@ function DocumentVerifier({
                     <Typography variant="body1">
                       {numberWithCommas(
                         parseInt(
-                          documentVerificationData?.noOfVerifiedDocumentsWithUnVerifiedOrg
+                          getVerifyDocumentCount?.data
+                            ?.noOfVerifiedDocumentsWithUnVerifiedOrg
                         )
                       )}
                       <img src={questionMarkLogo} alt="right-icon" />
@@ -439,7 +451,7 @@ function DocumentVerifier({
                     <Typography variant="body1">
                       {numberWithCommas(
                         parseInt(
-                          documentVerificationData?.noOfUnverifiedDocuments
+                          getVerifyDocumentCount?.data?.noOfUnverifiedDocuments
                         )
                       )}
                       <img src={wrongIcon} alt="wrong-icon" />
@@ -516,6 +528,7 @@ const mapStateToProps = ({
     documentVerificationData,
     apiFlags,
     getFolderPathList,
+    getVerifyDocumentCount,
   },
 }) => ({
   documentVerificationData,
@@ -523,6 +536,7 @@ const mapStateToProps = ({
   folderOverview,
   apiFlags,
   getFolderPathList,
+  getVerifyDocumentCount,
 });
 
 const mapDispatchToProps = {
@@ -531,6 +545,7 @@ const mapDispatchToProps = {
   setInitialState,
   setApiFlagsInitialState,
   fetchFolderPath,
+  fetchVerifyDocumentCount,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(DocumentVerifier);

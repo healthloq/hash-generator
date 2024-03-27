@@ -220,13 +220,30 @@ exports.verifyDocuments = async (req, res) => {
       }
     }
     if (global.isVerifierScriptRunning) {
-      if (documentHashData?.length) {
-        let oldData;
-        oldData = await getData("documentVerificationData");
-        let newData = oldData?.concat(documentHashData);
-        setData(newData, "documentVerificationData");
+      const mergeData = [];
+      for (let resultItem of finalResult) {
+        const docVerificationObj = {};
+        for (let hashDataItem of documentHashData) {
+          if (resultItem["File Path"] === hashDataItem.path) {
+            docVerificationObj["fileName"] = hashDataItem.fileName;
+            docVerificationObj["path"] = hashDataItem.path;
+            docVerificationObj["hash"] = hashDataItem.hash;
+            docVerificationObj["state"] = hashDataItem.state;
+            docVerificationObj["createdAt"] = hashDataItem.createdAt;
+            docVerificationObj["is_vrf_org"] =
+              resultItem["Is Verified Organization"];
+            docVerificationObj["is_vrf_doc"] =
+              resultItem["Is Verified Document"];
+          }
+          mergeData.push(docVerificationObj);
+        }
       }
+      let oldData;
+      oldData = await getData("documentVerificationData");
+      let newData = oldData?.concat(mergeData);
+      setData(newData, "documentVerificationData");
     }
+
     if (global.isVerifierScriptRunning) {
       // Create document verification final csv
       if (finalResult?.length) {
@@ -324,6 +341,38 @@ exports.getFolderPath = async (req, res) => {
       status: "1",
       data,
     });
+  } catch (error) {
+    res.status(200).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getVerifyDocumentCount = async (req, res) => {
+  try {
+    const data = {};
+    const docData = await getData("documentVerificationData");
+    const { path } = req?.query;
+    let newData = null;
+
+    if (path) {
+      newData = docData.filter((doc) => doc.path.includes(path));
+    }
+
+    (data.noOfVerifiedDocumentsWithVerifiedOrg = newData?.filter(
+      (item) => item["is_vrf_org"] === "Yes" && item["is_vrf_doc"] === "Yes"
+    )?.length),
+      (data.noOfVerifiedDocumentsWithUnVerifiedOrg = newData?.filter((item) => {
+        item["is_vrf_doc"] === "No" && item["is_vrf_doc"] === "Yes";
+      })?.length),
+      (data.noOfUnverifiedDocuments = newData?.filter(
+        (item) => item["is_vrf_doc"] === "No"
+      )?.length),
+      res.status(200).json({
+        status: "1",
+        data,
+      });
   } catch (error) {
     res.status(200).json({
       status: "0",
