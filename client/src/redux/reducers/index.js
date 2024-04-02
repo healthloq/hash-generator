@@ -43,6 +43,8 @@ const initialState = {
     errorMsg: "",
     successMsg: "",
     filesCount: 0,
+    doc: [],
+    count: {},
   },
   documentVerificationData: {
     isLoading: false,
@@ -364,6 +366,8 @@ const Reducer = (
           newFilesCount: payload?.isLoading
             ? previousState.documentVerificationData.newFilesCount
             : payload?.newFilesCount || 0,
+          doc: payload?.doc,
+          count: payload.count,
         },
       };
     }

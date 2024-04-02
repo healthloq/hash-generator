@@ -38,10 +38,55 @@ exports.getDashboardData = async (req, res) => {
 
 exports.getFolderOverviewData = async (req, res) => {
   const { folderPath } = req.body;
+  const docData = await getData("documentVerificationData");
+  let newData = [];
+  if (folderPath) {
+    docData.filter((doc) => {
+      if (doc.path.includes(folderPath)) {
+        const lastSlashIndex = doc.path.lastIndexOf("/");
+        const normalizedPath =
+          lastSlashIndex !== -1
+            ? doc.path.substring(0, lastSlashIndex)
+            : doc.path;
+        if (normalizedPath === folderPath) {
+          newData.push(doc);
+        }
+      }
+    });
+  }
+
+  const dataCount = {};
+  const previousData = newData.map((doc) => ({
+    "Organization Name": doc?.org_name,
+    Message: doc?.message,
+    "Error Message": doc?.err_message,
+    "Is Verified Organization": doc.is_vrf_org,
+    "File Name": doc.fileName,
+    "File Path": doc.path,
+    "Is Verified Document": doc.is_vrf_doc,
+    Created: doc.createdAt,
+  }));
+
+  dataCount["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
+    (item) => item["is_vrf_org"] === "Yes" && item["is_vrf_doc"] === "Yes"
+  )?.length;
+
+  dataCount["noOfVerifiedDocumentsWithUnVerifiedOrg"] = newData?.filter(
+    (item) =>
+      (item["is_vrf_org"] === "No" || item["is_vrf_org"] === "") &&
+      item["is_vrf_doc"] === "Yes"
+  )?.length;
+
+  dataCount["noOfUnverifiedDocuments"] = newData?.filter(
+    (item) => item["is_vrf_doc"] === "No"
+  )?.length;
+
   const folderOverview = await getFolderOverview(folderPath);
   res.status(200).json({
     status: "1",
     data: folderOverview,
+    count: dataCount,
+    doc: previousData,
   });
 };
 
@@ -226,6 +271,9 @@ exports.verifyDocuments = async (req, res) => {
         for (let hashDataItem of documentHashData) {
           if (resultItem["File Path"] === hashDataItem.path) {
             docVerificationObj["fileName"] = hashDataItem.fileName;
+            docVerificationObj["org_name"] = resultItem["Organization Name"];
+            docVerificationObj["err_message"] = resultItem["Error Message"];
+            docVerificationObj["message"] = resultItem["Message"];
             docVerificationObj["path"] = hashDataItem.path;
             docVerificationObj["hash"] = hashDataItem.hash;
             docVerificationObj["state"] = hashDataItem.state;
@@ -371,21 +419,36 @@ exports.getVerifyDocumentCount = async (req, res) => {
         }
       });
     }
+    const previousData = newData.map((doc) => ({
+      "Organization Name": doc?.org_name,
+      Message: doc?.message,
+      "Error Message": doc?.err_message,
+      "Is Verified Organization": doc.is_vrf_org,
+      "File Name": doc.fileName,
+      "File Path": doc.path,
+      "Is Verified Document": doc.is_vrf_doc,
+      Created: doc.createdAt,
+    }));
 
-    (data.noOfVerifiedDocumentsWithVerifiedOrg = newData?.filter(
+    data["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
       (item) => item["is_vrf_org"] === "Yes" && item["is_vrf_doc"] === "Yes"
-    )?.length),
-      (data.noOfVerifiedDocumentsWithUnVerifiedOrg = newData?.filter((item) => {
+    )?.length;
+
+    data["noOfVerifiedDocumentsWithUnVerifiedOrg"] = newData?.filter(
+      (item) =>
         (item["is_vrf_org"] === "No" || item["is_vrf_org"] === "") &&
-          item["is_vrf_doc"] === "Yes";
-      })?.length),
-      (data.noOfUnverifiedDocuments = newData?.filter(
-        (item) => item["is_vrf_doc"] === "No"
-      )?.length),
-      res.status(200).json({
-        status: "1",
-        data,
-      });
+        item["is_vrf_doc"] === "Yes"
+    )?.length;
+
+    data["noOfUnverifiedDocuments"] = newData?.filter(
+      (item) => item["is_vrf_doc"] === "No"
+    )?.length;
+
+    res.status(200).json({
+      status: "1",
+      data,
+      doc: previousData,
+    });
   } catch (error) {
     res.status(200).json({
       status: "0",

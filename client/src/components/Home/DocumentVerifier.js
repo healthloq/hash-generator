@@ -410,107 +410,113 @@ function DocumentVerifier({
             />
           </Box>
         )}
-        {!documentVerificationData?.isLoading &&
-          documentVerificationData?.isDocVerificationFinalOverview && (
-            <>
-              <Grid container spacing={1}>
-                <Grid item xs={12} sm={12} md={4}>
-                  <Box className={classes.docVerificationOverviewBox}>
-                    <Typography variant="body1">
-                      {numberWithCommas(
-                        parseInt(
-                          getVerifyDocumentCount?.data
+        {((!documentVerificationData?.isLoading &&
+          documentVerificationData?.isDocVerificationFinalOverview) ||
+          folderOverview?.doc?.length > 0) && (
+          <>
+            <Grid container spacing={1}>
+              <Grid item xs={12} sm={12} md={4}>
+                <Box className={classes.docVerificationOverviewBox}>
+                  <Typography variant="body1">
+                    {numberWithCommas(
+                      parseInt(
+                        getVerifyDocumentCount?.data
+                          ?.noOfVerifiedDocumentsWithVerifiedOrg ||
+                          folderOverview?.count
                             ?.noOfVerifiedDocumentsWithVerifiedOrg
-                        )
-                      )}
-                      <img src={rightIcon} alt="right-icon" />
-                    </Typography>
-                    <Typography variant="body2">
-                      Number of verified documents with verified organizations
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={12} md={4}>
-                  <Box className={classes.docVerificationOverviewBox}>
-                    <Typography variant="body1">
-                      {numberWithCommas(
-                        parseInt(
-                          getVerifyDocumentCount?.data
-                            ?.noOfVerifiedDocumentsWithUnVerifiedOrg
-                        )
-                      )}
-                      <img src={questionMarkLogo} alt="right-icon" />
-                    </Typography>
-                    <Typography variant="body2">
-                      Number of verified documents with unverified organizations
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={12} md={4}>
-                  <Box className={classes.docVerificationOverviewBox}>
-                    <Typography variant="body1">
-                      {numberWithCommas(
-                        parseInt(
-                          getVerifyDocumentCount?.data?.noOfUnverifiedDocuments
-                        )
-                      )}
-                      <img src={wrongIcon} alt="wrong-icon" />
-                    </Typography>
-                    <Typography variant="body2">
-                      Number of unverified documents
-                    </Typography>
-                  </Box>
-                </Grid>
+                      )
+                    )}
+                    <img src={rightIcon} alt="right-icon" />
+                  </Typography>
+                  <Typography variant="body2">
+                    Number of verified documents with verified organizations
+                  </Typography>
+                </Box>
               </Grid>
-              <Box sx={{ mt: 2 }}>
-                <EnhancedTable
-                  tableTitle="Document Verification Overview"
-                  headCells={verifiedDocumentsHeaders}
-                  rows={documentVerificationData?.filteredVerificationData?.map(
-                    (item) => {
-                      const data = {
-                        organization_name: item["Organization Name"],
-                        is_verified_organization:
-                          item["Is Verified Organization"],
-                        file_name: item["File Name"],
-                        file_path: item["File Path"],
-                        is_verified_document: item["Is Verified Document"],
-                        created: item["Created"]
-                          ? moment(item["Created"]).format("MM/DD/YYYY hh:mm A")
-                          : "",
-                        message: item["Message"],
-                        error_message: item["Error Message"],
-                      };
-                      return {
-                        ...data,
-                        action: (
-                          <Tooltip arrow title="View More">
-                            <IconButton
-                              color="primary"
-                              onClick={() =>
-                                setDocumentDetailOverviewDialogData({
-                                  ...item,
-                                  Created: item["Created"]
-                                    ? moment(item["Created"]).format(
-                                        "MM/DD/YYYY hh:mm A"
-                                      )
-                                    : "",
-                                })
-                              }
-                            >
-                              <VisibilityIcon />
-                            </IconButton>
-                          </Tooltip>
-                        ),
-                      };
-                    }
-                  )}
-                  tableId="documentVerificationOverviewFilter"
-                  isLoading={false}
-                />
-              </Box>
-            </>
-          )}
+              <Grid item xs={12} sm={12} md={4}>
+                <Box className={classes.docVerificationOverviewBox}>
+                  <Typography variant="body1">
+                    {numberWithCommas(
+                      parseInt(
+                        getVerifyDocumentCount?.data
+                          ?.noOfVerifiedDocumentsWithUnVerifiedOrg ||
+                          folderOverview?.count
+                            ?.noOfVerifiedDocumentsWithUnVerifiedOrg
+                      )
+                    )}
+                    <img src={questionMarkLogo} alt="right-icon" />
+                  </Typography>
+                  <Typography variant="body2">
+                    Number of verified documents with unverified organizations
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={12} md={4}>
+                <Box className={classes.docVerificationOverviewBox}>
+                  <Typography variant="body1">
+                    {numberWithCommas(
+                      parseInt(
+                        getVerifyDocumentCount?.data?.noOfUnverifiedDocuments ||
+                          folderOverview?.count?.noOfUnverifiedDocuments
+                      )
+                    )}
+                    <img src={wrongIcon} alt="wrong-icon" />
+                  </Typography>
+                  <Typography variant="body2">
+                    Number of unverified documents
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+            <Box sx={{ mt: 2 }}>
+              <EnhancedTable
+                tableTitle="Document Verification Overview"
+                headCells={verifiedDocumentsHeaders}
+                rows={(getVerifyDocumentCount?.doc || folderOverview?.doc)?.map(
+                  (item) => {
+                    const data = {
+                      organization_name: item["Organization Name"],
+                      is_verified_organization:
+                        item["Is Verified Organization"],
+                      file_name: item["File Name"],
+                      file_path: item["File Path"],
+                      is_verified_document: item["Is Verified Document"],
+                      created: item["Created"]
+                        ? moment(item["Created"]).format("MM/DD/YYYY hh:mm A")
+                        : "",
+                      message: item["Message"],
+                      error_message: item["Error Message"],
+                    };
+                    return {
+                      ...data,
+                      action: (
+                        <Tooltip arrow title="View More">
+                          <IconButton
+                            color="primary"
+                            onClick={() =>
+                              setDocumentDetailOverviewDialogData({
+                                ...item,
+                                Created: item["Created"]
+                                  ? moment(item["Created"]).format(
+                                      "MM/DD/YYYY hh:mm A"
+                                    )
+                                  : "",
+                              })
+                            }
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </Tooltip>
+                      ),
+                    };
+                  }
+                )}
+                tableId="documentVerificationOverviewFilter"
+                isLoading={false}
+              />
+            </Box>
+          </>
+        )}
       </Box>
       <DocumentVerificationDetailOverview
         open={Boolean(documentDetailOverviewDialogData)}
