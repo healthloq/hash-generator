@@ -475,9 +475,12 @@ function DocumentVerifier({
                 rows={(getVerifyDocumentCount?.doc || folderOverview?.doc)?.map(
                   (item) => {
                     const data = {
-                      organization_name: item["Organization Name"],
-                      is_verified_organization:
-                        item["Is Verified Organization"],
+                      organization_name: item["Organization Name"]
+                        ? item["Organization Name"]
+                        : "-",
+                      is_verified_organization: item["Is Verified Organization"]
+                        ? item["Is Verified Organization"]
+                        : "No",
                       file_name: item["File Name"],
                       file_path: item["File Path"],
                       is_verified_document: item["Is Verified Document"],
