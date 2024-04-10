@@ -134,37 +134,56 @@ export function Home({
           }}
         />
       </Box>
-      <EnhancedTable
-        tableTitle="Synced Files"
-        headCells={syncedFilesHeaders}
-        rows={dashboardOverview?.filteredFiles?.map((file) => ({
-          fileName: file?.fileName,
-          fileSize: file?.state?.size,
-          filePath: file?.path,
-          created: moment(file?.state?.birthtime).format("MM/DD/YYYY hh:mm A"),
-          modified: moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A"),
-          effective_date: file?.effective_date
-            ? moment(file?.effective_date).format("MM/DD/YYYY")
-            : "",
-          id: file?.hash,
-        }))}
-        tableId="syncedFilesFilter"
-        isLoading={dashboardOverview?.isLoading}
-        showCheckbox
-        selected={selected}
-        setSelected={setSelected}
-        getBulkActionInfo={
-          <>
-            <Button
-              startIcon={<EditIcon />}
-              variant="contained"
-              onClick={() => setOpenUpdateEffectiveDateDialog(true)}
-            >
-              Edit Effective Date
-            </Button>
-          </>
-        }
-      />
+      <Box
+        minHeight={"calc(100vh - 320px)"}
+        display={"flex"}
+        justifyContent={"space-between"}
+        flexDirection={"column"}
+      >
+        <EnhancedTable
+          tableTitle="Synced Files"
+          headCells={syncedFilesHeaders}
+          rows={dashboardOverview?.filteredFiles?.map((file) => ({
+            fileName: file?.fileName,
+            fileSize: file?.state?.size,
+            filePath: file?.path,
+            created: moment(file?.state?.birthtime).format(
+              "MM/DD/YYYY hh:mm A"
+            ),
+            modified: moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A"),
+            effective_date: file?.effective_date
+              ? moment(file?.effective_date).format("MM/DD/YYYY")
+              : "",
+            id: file?.hash,
+          }))}
+          tableId="syncedFilesFilter"
+          isLoading={dashboardOverview?.isLoading}
+          showCheckbox
+          selected={selected}
+          setSelected={setSelected}
+          getBulkActionInfo={
+            <>
+              <Button
+                startIcon={<EditIcon />}
+                variant="contained"
+                onClick={() => setOpenUpdateEffectiveDateDialog(true)}
+              >
+                Edit Effective Date
+              </Button>
+            </>
+          }
+        />
+        <a
+          style={{
+            justifyContent: "center",
+            display: "flex",
+          }}
+          href={`${process.env.REACT_APP_HEALTHLOQ_ORGANIZATION_APP_BASE_URL}/plans?tab=1`}
+          target="_blank"
+        >
+          Want to protect your documents?
+        </a>
+      </Box>
       <UpdateDocumentEffectiveDateDialog
         open={openUpdateEffectiveDateDialog}
         handleClose={() => {
