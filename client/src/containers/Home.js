@@ -55,6 +55,7 @@ export function Home({
   const [snackbarMsg, setSnackbarMsg] = useState("");
   const [openUpdateEffectiveDateDialog, setOpenUpdateEffectiveDateDialog] =
     useState(false);
+  const [publisherDataDashboard, setPublisherDataDashboard] = useState({});
   useEffect(() => {
     getDashboardOverviewData();
   }, []);
@@ -64,6 +65,7 @@ export function Home({
         subscriptionDetails?.data?.filter(
           (item) => item?.subscription_type === "publisher"
         )[0] || null;
+      setPublisherDataDashboard(publisherData);
       if (publisherData)
         setLinearProgressData({
           label: `${abbrNum(
@@ -123,17 +125,20 @@ export function Home({
           </Typography>
         </Box>
       </Box>
-      <Box sx={{ my: 2 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          Your current month document publish limit overview
-        </Typography>
-        <MuiLinearProgress
-          {...{
-            loading: subscriptionDetails?.isLoading,
-            ...linearProgressData,
-          }}
-        />
-      </Box>
+      {(!publisherDataDashboard?.organization?.ignore_threshold ||
+        publisherDataDashboard?.organization?.ignore_threshold === 0) && (
+        <Box sx={{ my: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Your current month document publish limit overview
+          </Typography>
+          <MuiLinearProgress
+            {...{
+              loading: subscriptionDetails?.isLoading,
+              ...linearProgressData,
+            }}
+          />
+        </Box>
+      )}
       <Box
         minHeight={"calc(100vh - 320px)"}
         display={"flex"}

@@ -426,37 +426,46 @@ exports.getSyncData = async (syncedData = null) => {
     }
     let hashLimit = subscriptionData?.num_monthly_hashes || "0";
     let todayHashLimit = subscriptionData?.current_num_monthly_hashes || "0";
-    if (!hashLimit || !todayHashLimit) {
-      global.isGetSyncDataProcessStart = false;
-      syncDocToolLogs({
-        message: `getSyncData => Something went wrong! Invalid subscription information.`,
-        error_message:
-          "Something went wrong! Invalid subscription information.",
-        error: null,
-      });
-      notifier.notify({
-        title: "HealthLOQ - Doc Tool Error",
-        message: `Something went wrong! Invalid Subscription Information.`,
-        sound: true,
-      });
-      return;
-    }
-    hashLimit = parseInt(hashLimit);
-    todayHashLimit = parseInt(todayHashLimit);
-    if (hashLimit <= todayHashLimit) {
-      global.isGetSyncDataProcessStart = false;
-      syncDocToolLogs({
-        message: `getSyncData => Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
-        error_message:
-          "Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.",
-        error: null,
-      });
-      notifier.notify({
-        title: "HealthLOQ - Doc Tool Error",
-        message: `Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
-        sound: true,
-      });
-      return;
+    // bypass if admin set ignore_threshold value
+    if (
+      !(
+        subscriptionData &&
+        subscriptionData?.organization &&
+        subscriptionData?.organization?.ignore_threshold > 0
+      )
+    ) {
+      if (!hashLimit || !todayHashLimit) {
+        global.isGetSyncDataProcessStart = false;
+        syncDocToolLogs({
+          message: `getSyncData => Something went wrong! Invalid subscription information.`,
+          error_message:
+            "Something went wrong! Invalid subscription information.",
+          error: null,
+        });
+        notifier.notify({
+          title: "HealthLOQ - Doc Tool Error",
+          message: `Something went wrong! Invalid Subscription Information.`,
+          sound: true,
+        });
+        return;
+      }
+      hashLimit = parseInt(hashLimit);
+      todayHashLimit = parseInt(todayHashLimit);
+      if (hashLimit <= todayHashLimit) {
+        global.isGetSyncDataProcessStart = false;
+        syncDocToolLogs({
+          message: `getSyncData => Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
+          error_message:
+            "Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.",
+          error: null,
+        });
+        notifier.notify({
+          title: "HealthLOQ - Doc Tool Error",
+          message: `Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
+          sound: true,
+        });
+        return;
+      }
     }
     if (!syncedData) {
       syncedData = await this.getData();
@@ -473,9 +482,14 @@ exports.getSyncData = async (syncedData = null) => {
     // );
     const deletedHashList = [];
     let hashList = latestHash?.filter((hash) => !syncedhash?.includes(hash));
-    if (todayHashLimit + hashList?.length > hashLimit) {
-      const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
-      hashList = hashList?.slice(0, hashList?.length - extraDocLength);
+    if (
+      subscriptionData?.organization?.ignore_threshold === 0 ||
+      !subscriptionData?.organization?.ignore_threshold
+    ) {
+      if (todayHashLimit + hashList?.length > hashLimit) {
+        const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
+        hashList = hashList?.slice(0, hashList?.length - extraDocLength);
+      }
     }
     let newData = syncedData?.concat(latestData || []);
     let syncStatus = null;
