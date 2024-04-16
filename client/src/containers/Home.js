@@ -178,16 +178,14 @@ export function Home({
             </>
           }
         />
-        <a
-          style={{
-            justifyContent: "center",
-            display: "flex",
-          }}
-          href={`${process.env.REACT_APP_HEALTHLOQ_ORGANIZATION_APP_BASE_URL}/plans?tab=1`}
-          target="_blank"
-        >
-          Want to protect your documents?
-        </a>
+        <div style={{ justifyContent: "center", display: "flex" }}>
+            To sign up to protect your own documents,&nbsp;
+            <a href={`${process.env.REACT_APP_HEALTHLOQ_ORGANIZATION_APP_BASE_URL}/plans?tab=1`}
+            target="_blank"
+            >
+            click Here
+            </a>
+        </div>
       </Box>
       <UpdateDocumentEffectiveDateDialog
         open={openUpdateEffectiveDateDialog}
