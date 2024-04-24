@@ -139,54 +139,37 @@ export function Home({
           />
         </Box>
       )}
-      <Box
-        minHeight={"calc(100vh - 320px)"}
-        display={"flex"}
-        justifyContent={"space-between"}
-        flexDirection={"column"}
-      >
-        <EnhancedTable
-          tableTitle="Synced Files"
-          headCells={syncedFilesHeaders}
-          rows={dashboardOverview?.filteredFiles?.map((file) => ({
-            fileName: file?.fileName,
-            fileSize: file?.state?.size,
-            filePath: file?.path,
-            created: moment(file?.state?.birthtime).format(
-              "MM/DD/YYYY hh:mm A"
-            ),
-            modified: moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A"),
-            effective_date: file?.effective_date
-              ? moment(file?.effective_date).format("MM/DD/YYYY")
-              : "",
-            id: file?.hash,
-          }))}
-          tableId="syncedFilesFilter"
-          isLoading={dashboardOverview?.isLoading}
-          showCheckbox
-          selected={selected}
-          setSelected={setSelected}
-          getBulkActionInfo={
-            <>
-              <Button
-                startIcon={<EditIcon />}
-                variant="contained"
-                onClick={() => setOpenUpdateEffectiveDateDialog(true)}
-              >
-                Edit Effective Date
-              </Button>
-            </>
-          }
-        />
-        <div style={{ justifyContent: "center", display: "flex" }}>
-            To sign up to protect your own documents,&nbsp;
-            <a href={`${process.env.REACT_APP_HEALTHLOQ_ORGANIZATION_APP_BASE_URL}/plans?tab=1`}
-            target="_blank"
+      <EnhancedTable
+        tableTitle="Synced Files"
+        headCells={syncedFilesHeaders}
+        rows={dashboardOverview?.filteredFiles?.map((file) => ({
+          fileName: file?.fileName,
+          fileSize: file?.state?.size,
+          filePath: file?.path,
+          created: moment(file?.state?.birthtime).format("MM/DD/YYYY hh:mm A"),
+          modified: moment(file?.state?.mtime).format("MM/DD/YYYY hh:mm A"),
+          effective_date: file?.effective_date
+            ? moment(file?.effective_date).format("MM/DD/YYYY")
+            : "",
+          id: file?.hash,
+        }))}
+        tableId="syncedFilesFilter"
+        isLoading={dashboardOverview?.isLoading}
+        showCheckbox
+        selected={selected}
+        setSelected={setSelected}
+        getBulkActionInfo={
+          <>
+            <Button
+              startIcon={<EditIcon />}
+              variant="contained"
+              onClick={() => setOpenUpdateEffectiveDateDialog(true)}
             >
-            click Here
-            </a>
-        </div>
-      </Box>
+              Edit Effective Date
+            </Button>
+          </>
+        }
+      />
       <UpdateDocumentEffectiveDateDialog
         open={openUpdateEffectiveDateDialog}
         handleClose={() => {
