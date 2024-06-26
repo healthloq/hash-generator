@@ -48,7 +48,11 @@ exports.getFolderOverviewData = async (req, res) => {
           lastSlashIndex !== -1
             ? doc.path.substring(0, lastSlashIndex)
             : doc.path;
-        if (normalizedPath === folderPath.endsWith("/") ? folderPath.slice(0, -1) : folderPath) {
+        if (
+          normalizedPath === folderPath.endsWith("/")
+            ? folderPath.slice(0, -1)
+            : folderPath
+        ) {
           newData.push(doc);
         }
       }
@@ -144,6 +148,10 @@ exports.verifyDocuments = async (req, res) => {
         const response = await verifyDocument({
           hashList: arr?.map((item) => item?.hash),
           organizationIds,
+          otherData: arr.map((data) => ({
+            hash: data.hash,
+            data: data.openAiResult,
+          })),
         });
         if (response?.status === "0") {
           errorMsg = response?.message;
@@ -205,8 +213,8 @@ exports.verifyDocuments = async (req, res) => {
               )[0];
               const orgInfo = item?.organization_id
                 ? selectedOrganizations?.filter(
-                  (a) => a?.id === item?.organization_id
-                )[0]
+                    (a) => a?.id === item?.organization_id
+                  )[0]
                 : null;
               const orgVerificationInfo =
                 docOrgVerificationData?.filter(
@@ -413,7 +421,9 @@ exports.getVerifyDocumentCount = async (req, res) => {
             lastSlashIndex !== -1
               ? doc.path.substring(0, lastSlashIndex)
               : doc.path;
-          if (normalizedPath === path.endsWith("/") ? path.slice(0, -1) : path) {
+          if (
+            normalizedPath === path.endsWith("/") ? path.slice(0, -1) : path
+          ) {
             newData.push(doc);
           }
         }

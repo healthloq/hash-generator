@@ -1,16 +1,19 @@
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
+const os = require("os");
 const { ALLOWED_DOCUMENT_FILE_TYPES } = require("../constants");
 const {
   syncHash,
   getSubscriptionDetail,
   syncDocToolLogs,
   publisherScriptIsRunningOrNot,
+  // verifyDocumentFromAI,
 } = require("../services/healthloq");
 const moment = require("moment");
 const notifier = require("node-notifier");
 const packageJson = require("../package.json");
+const OpenAI = require("openai");
 
 /**
  *
@@ -152,6 +155,122 @@ exports.getFolderOverview = async (rootFolderPath) => {
   }
 };
 
+exports.verifyDocumentFromAI = async (file) => {
+  try {
+    const openaiClient = new OpenAI({
+      apiKey: process.env.OPEN_AI_API_KEY || "",
+    });
+    const assistant = await openaiClient.beta.assistants.create({
+      name: "Document Analyst Assistant",
+      instructions:
+        "You are exprt in analyzing the testing document from labs. Use your knowledge base to answer your question about document ",
+      model: "gpt-4o",
+      tools: [{ type: "file_search" }],
+    });
+
+    let file_buffer = Buffer.from(file.data);
+
+    const temp_file_path = path.join(os.tmpdir(), "temp.pdf");
+    fs.writeFileSync(temp_file_path, file_buffer);
+
+    const aap110k = await openaiClient.files.create({
+      file: fs.createReadStream(temp_file_path),
+      purpose: "assistants",
+    });
+
+    const thread = await openaiClient.beta.threads.create({
+      messages: [
+        {
+          role: "user",
+          content: "Here is the document to analyze",
+          attachments: [
+            { file_id: aap110k.id, tools: [{ type: "file_search" }] },
+          ],
+        },
+        {
+          role: "assistant",
+          content:
+            "Extract an array of objects containing only the 'name' and 'status' for all substances that have a status indicating success or failure. Ensure the result is a single array, Return single array only",
+        },
+      ],
+    });
+
+    const run = await openaiClient.beta.threads.runs.createAndPoll(thread.id, {
+      assistant_id: assistant.id,
+    });
+
+    const messages = await openaiClient.beta.threads.messages.list(thread.id, {
+      run_id: run.id,
+    });
+
+    const message = messages.data.pop();
+    let jsonString = null;
+    if (message?.content[0].type === "text") {
+      const { text } = message.content[0];
+      const { value } = text;
+      try {
+        jsonString = (value ?? "").match(/\[.*\]/s)?.[0];
+      } catch (error) {
+        jsonString = value;
+      }
+      if (jsonString === undefined || jsonString === null) {
+        jsonString = value;
+      } else {
+        jsonString = JSON.parse(jsonString);
+      }
+    }
+    const allContent = [
+      "sildenafil",
+      "tadalafil",
+      "sibutramine",
+      "phenolphthalein",
+      "fluoxetine",
+      "steroids",
+      "dmaa",
+      "ephedrine",
+      "arsenic",
+      "cadmium",
+      "lead",
+      "mercury",
+      "chromium",
+      "bile-tolerant gram-negative bacteria",
+      "escherichia coli",
+      "salmonella",
+      "pseudomonas aeruginosa",
+      "staphylococcus aureus",
+      "clostridia",
+      "candida albicans",
+      "arsenic (as)",
+      "cadmium (cd)",
+      "lead (pb)",
+      "mercury (methyl mercury)",
+      "mercury (hg)",
+      "chromium (chromium vi)",
+      "dmaa (1,3-dimethylamylamine)",
+      "ephedrine, or sarms (selective androgen receptor modulators)",
+    ];
+
+    let finalArr = [];
+    if (Array.isArray(jsonString)) {
+      jsonString
+        .filter((data) => data.status.toLowerCase() !== "passed")
+        .map((substance) => {
+          if (allContent.includes(substance.name.trim().toLowerCase())) {
+            finalArr.push(substance.name);
+          }
+        });
+    }
+
+    return {
+      status: 1,
+      finalArr,
+    };
+  } catch (error) {
+    console.log("error", error);
+    throw new Error("Something went wrong");
+  }
+};
+
 exports.generateHashForVerifier = async (
   rootFolderPath = process.env.ROOT_FOLDER_PATH
 ) => {
@@ -234,9 +353,22 @@ exports.generateHashForVerifier = async (
             .createHash("sha256")
             .update(fileBuffer)
             .digest("hex");
+          let openAiResult = null;
+          if (process.env.OPEN_AI_API_KEY) {
+            try {
+              const temp = await this.verifyDocumentFromAI({
+                data: fileBuffer,
+              });
+              openAiResult = temp.finalArr;
+            } catch (error) {
+              openAiResult = ["Not able to read data"];
+              console.log("error", error);
+            }
+          }
           arr.push({
             fileName: item.name,
             hash,
+            openAiResult,
             path: filePath,
             state,
             createdAt: new Date(),

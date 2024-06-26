@@ -162,3 +162,24 @@ exports.updateDocumentEffectiveDateIntoHealthLOQ = async (data = {}) => {
     };
   }
 };
+
+exports.verifyDocumentFromAI = async (data) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-ai/verify-document-with-ai`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log("verifyDocumentFromAI => ", error);
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
