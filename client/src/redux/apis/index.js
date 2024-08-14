@@ -4,6 +4,9 @@ export const API = {
   getDashboardOverviewData: async () => await get("/api/client/overview-data"),
   verifyDocuments: async (params) =>
     await post("/api/client/verify-documents", params),
+  forbiddenDocumnetList: async (params) => {
+    return await healthloqPost("document-ai/forbidden-document-list", params);
+  },
   getFolderOverview: async (params, config) =>
     await post("/api/client/get-folder-overview", params, config),
   getOrganizationList: async () =>

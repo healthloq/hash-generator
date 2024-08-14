@@ -116,6 +116,7 @@ exports.verifyDocuments = async (req, res) => {
       data: [],
     });
     global.isVerifierScriptRunning = true;
+    console.log("req ===>>>>", req);
     const organizationIds = selectedOrganizations?.map((item) => item?.id);
     // Verify document organizations
     let docOrgVerificationData = [];

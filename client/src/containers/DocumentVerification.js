@@ -92,6 +92,16 @@ export const DocumentVerification = (props) => {
         >
           Compare Ingredients
         </Button>
+        <Link to="/forbidden-data-list" underline="none">
+          <Button
+            variant="text"
+            target="_blank"
+            color="primary"
+            style={{ marginLeft: "15px" }}
+          >
+            Dashboard
+          </Button>
+        </Link>
       </Box>
       <Box sx={{ my: 2 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>

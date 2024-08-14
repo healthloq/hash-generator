@@ -18,6 +18,7 @@ import {
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
+  GET_FORBIDDEN_LIST,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -103,6 +104,10 @@ const initialState = {
       noOfVerifiedDocumentsWithUnVerifiedOrg: 0,
       noOfUnverifiedDocuments: 0,
     },
+  },
+  forbidden_list: {
+    is_loading: false,
+    data: [],
   },
 };
 
@@ -265,7 +270,7 @@ const Reducer = (
     case GET_SUBSCRIPTION_OVERVIEW: {
       const subscriptionDetails = {
         ...previousState.subscriptionDetails,
-        isLoading: !previousState.subscriptionDetails.isLoading,
+        isLoading: !previousState?.subscriptionDetails?.isLoading,
         ...payload,
       };
       if (!subscriptionDetails?.isLoading) {
@@ -440,6 +445,15 @@ const Reducer = (
         ...previousState,
         getVerifyDocumentCount: {
           ...previousState.getVerifyDocumentCount,
+          ...payload,
+        },
+      };
+    }
+
+    case GET_FORBIDDEN_LIST: {
+      return {
+        forbidden_list: {
+          ...previousState.forbidden_list,
           ...payload,
         },
       };

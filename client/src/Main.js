@@ -6,6 +6,7 @@ import PageTitle from "./components/common/PageTitle";
 // import Socket from "./components/socket/Socket";
 import DocumentVerification from "./containers/DocumentVerification";
 import { getSubscriptionOverview } from "./redux/actions";
+import ForbiddenDataPage from "./containers/ForbiddenDataPage";
 const Home = lazy(() => import("./containers/Home"));
 
 export const Main = (props) => {
@@ -24,6 +25,10 @@ export const Main = (props) => {
       {
         path: "/document-verification",
         element: <DocumentVerification />,
+      },
+      {
+        path: "/forbidden-data-list",
+        element: <ForbiddenDataPage />,
       },
     ];
   } else if (subscriptionDetails?.subscriptionList?.includes("publisher")) {

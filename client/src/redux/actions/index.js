@@ -1,3 +1,4 @@
+import { healthloqPost } from "../../Api";
 import {
   GET_DASHBOARD_OVERVIEW_DATA,
   GET_FOLDER_OVERVIEW,
@@ -15,6 +16,7 @@ import {
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
+  GET_FORBIDDEN_LIST,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -275,6 +277,34 @@ export const fetchVerifyDocumentCount = (params) => async (dispatch) => {
       type: GET_VERIFY_DOCUMENT_COUNT,
       payload: {
         isLoading: false,
+      },
+    });
+  }
+};
+
+export const fetchForbiddenList = () => async (dispatch) => {
+  try {
+    dispatch({
+      type: GET_FORBIDDEN_LIST,
+      payload: {
+        is_loading: true,
+      },
+    });
+    const response = await API.forbiddenDocumnetList();
+    console.log("response",response)
+    dispatch({
+      type: GET_FORBIDDEN_LIST,
+      payload: {
+        ...response?.data,
+        is_loading: false,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    dispatch({
+      type: GET_FORBIDDEN_LIST,
+      payload: {
+        is_loading: false,
       },
     });
   }
