@@ -4,12 +4,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  styled,
   Table,
   TableBody,
   TableCell,
   TableRow,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import React from "react";
 
 const productInfoLables = {
@@ -65,23 +65,19 @@ let documentHashLabels = {
   updated_on: "Updated On",
 };
 
-const useStyle = makeStyles((theme) => ({
-  healthloqWidgetTableRow: {
-    "&>td": {
-      border: `1px solid ${theme.palette.borderColor}`,
-    },
-    "&:nth-child(even)": {
-      backgroundColor: theme.palette.action.hover,
-    },
+const PrimaryTableRow = styled(TableRow)(({ theme }) => ({
+  "&>td": {
+    border: `1px solid ${theme.palette.borderColor}`,
   },
-}));
-
+  "&:nth-child(even)": {
+    backgroundColor: theme.palette.action.hover,
+  },
+}))
 export default function ProductInfoDialog({
   open = false,
-  handleClose = () => {},
+  handleClose = () => { },
   data,
 }) {
-  const classes = useStyle();
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogTitle>
@@ -97,14 +93,14 @@ export default function ProductInfoDialog({
               data?.type === "organization_exhibit"
                 ? orgExhibitInfoLabels
                 : data?.type === "document_hash"
-                ? documentHashLabels
-                : productInfoLables
+                  ? documentHashLabels
+                  : productInfoLables
             ).map((item, key) => {
               return (
-                <TableRow key={key} className={classes.healthloqWidgetTableRow}>
+                <PrimaryTableRow key={key}>
                   <TableCell>{item[1]}</TableCell>
                   <TableCell>{data?.[item?.[0]]}</TableCell>
-                </TableRow>
+                </PrimaryTableRow>
               );
             })}
           </TableBody>

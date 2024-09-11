@@ -7,55 +7,33 @@ import {
   TextField,
   Button,
   CircularProgress,
+  styled,
 } from "@mui/material";
 import { updateDocumentEffectiveDate } from "../../redux/actions";
 import { connect } from "react-redux";
-import { makeStyles } from "@mui/styles";
 
-const useStyle = makeStyles((theme) => ({
-  dialogContent: {
-    "&>div": {
-      padding: "20px 0",
-    },
+const PrimaryDialogContent = styled(DialogContent)(({ theme }) => ({
+  "&>div": {
+    padding: "20px 0",
   },
-  fileDiv: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    "&>img": {
-      maxHeight: 150,
-    },
-    "&>label": {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "flex-start",
-    },
-  },
-  inputLabelRoot: {
-    marginBottom: 5,
-  },
-  datePickerRoot: {
-    zIndex: 1301,
-  },
-  dateTextField: {
-    maxWidth: 400,
-    width: "100%",
-    "&>div": {
-      minHeight: 40,
-      padding: "0 15px",
-    },
-  },
-}));
+}))
 
+const DateTextField = styled(TextField)(({ theme }) => ({
+  maxWidth: 400,
+  width: "100%",
+  "&>div": {
+    minHeight: 40,
+    padding: "0 15px",
+  },
+}))
 const UpdateDocumentEffectiveDateDialog = ({
   open = false,
-  handleClose = () => {},
+  handleClose = () => { },
   selectedDocuments = [],
-  setSelected = () => {},
+  setSelected = () => { },
   updateDocumentEffectiveDate,
   updateEffectiveDateData,
 }) => {
-  const classes = useStyle();
   const [effectiveDate, setEffectiveDate] = useState("");
 
   const handleSubmit = async () => {
@@ -78,9 +56,9 @@ const UpdateDocumentEffectiveDateDialog = ({
       <DialogTitle className="dialog-title">
         Update Document Effective Date
       </DialogTitle>
-      <DialogContent className={classes.dialogContent}>
+      <PrimaryDialogContent>
         <div>
-          <TextField
+          <DateTextField
             id="date"
             label="Effective Date"
             type="date"
@@ -90,10 +68,9 @@ const UpdateDocumentEffectiveDateDialog = ({
             }}
             value={effectiveDate}
             onChange={(e) => setEffectiveDate(e.target.value)}
-            className={classes.dateTextField}
           />
         </div>
-      </DialogContent>
+      </PrimaryDialogContent>
       <DialogActions className="dialog-actions">
         <Button
           variant="outlined"

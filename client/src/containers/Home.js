@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Body, MuiLinearProgress } from "../components/common";
-import { Typography, Box, Button, Snackbar, IconButton } from "@mui/material";
-import { makeStyles } from "@mui/styles";
+import { Typography, Box, Button, Snackbar, IconButton, styled } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { Link } from "../components";
 import moment from "moment";
@@ -14,39 +13,20 @@ import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import UpdateDocumentEffectiveDateDialog from "../components/dialogs/UpdateDocumentEffectiveDateDialog";
 
-const useStyle = makeStyles((theme) => ({
-  lastsyncedData: {
-    marginBottom: 30,
-    "&>div": {
-      "&>h6": {
-        marginRight: 5,
-      },
+const LastSyncedDataList = styled(Box)(({ theme }) => ({
+  marginBottom: 30,
+  "&>div": {
+    "&>h6": {
+      marginRight: 5,
     },
   },
-  filesList: {
-    "&>div": {
-      padding: 20,
-      borderRadius: 10,
-      border: `2px solid ${theme.palette.primary.main}`,
-      marginBottom: 20,
-      "&>div": {
-        margin: "5px 0",
-        "&>h6": {
-          marginRight: 5,
-        },
-        "&>p": {},
-      },
-    },
-  },
-}));
-
+}))
 export function Home({
   getDashboardOverviewData,
   dashboardOverview,
   subscriptionDetails,
   updateEffectiveDateData,
 }) {
-  const classes = useStyle();
   const [linearProgressData, setLinearProgressData] = useState({
     label: "",
     value: 0,
@@ -105,10 +85,9 @@ export function Home({
           </Link>
         )}
       </Box>
-      <Box
+      <LastSyncedDataList
         display={"flex"}
         flexDirection="column"
-        className={classes.lastsyncedData}
       >
         <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
           <Typography variant="h6">Last synced:</Typography>
@@ -124,21 +103,21 @@ export function Home({
             {dashboardOverview?.data?.totalFiles}
           </Typography>
         </Box>
-      </Box>
+      </LastSyncedDataList>
       {(!publisherDataDashboard?.organization?.ignore_threshold ||
         publisherDataDashboard?.organization?.ignore_threshold === 0) && (
-        <Box sx={{ my: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Your current month document publish limit overview
-          </Typography>
-          <MuiLinearProgress
-            {...{
-              loading: subscriptionDetails?.isLoading,
-              ...linearProgressData,
-            }}
-          />
-        </Box>
-      )}
+          <Box sx={{ my: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Your current month document publish limit overview
+            </Typography>
+            <MuiLinearProgress
+              {...{
+                loading: subscriptionDetails?.isLoading,
+                ...linearProgressData,
+              }}
+            />
+          </Box>
+        )}
       <EnhancedTable
         tableTitle="Synced Files"
         headCells={syncedFilesHeaders}

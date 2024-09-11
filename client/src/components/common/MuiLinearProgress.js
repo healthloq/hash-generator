@@ -1,20 +1,17 @@
 import React from "react";
-import { makeStyles, Box, LinearProgress, Typography } from "../";
+import { Box, LinearProgress, Typography, styled } from "../";
 
-const useStyle = makeStyles((theme) => ({
-  primaryBgColor: {
-    backgroundColor: "#008F2B",
+const LinearProgressBar = styled(LinearProgress)(({ theme }) => ({
+  '& .MuiLinearProgress-barColorPrimary': {
+    backgroundColor: '#008F2B',
   },
-}));
-
+}))
 export default function MuiLinearProgress(props) {
-  const classes = useStyle();
   return props.loading ? (
-    <LinearProgress classes={{ barColorPrimary: classes.primaryBgColor }} />
+    <LinearProgressBar />
   ) : (
     <Box display="flex" alignItems="center" justifyContent={"space-between"}>
-      <LinearProgress
-        classes={{ barColorPrimary: classes.primaryBgColor }}
+      <LinearProgressBar
         style={{ width: "100%", marginRight: 10 }}
         variant="determinate"
         value={props.value}
