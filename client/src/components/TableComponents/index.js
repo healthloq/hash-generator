@@ -15,47 +15,45 @@ import {
   CircularProgress,
   Checkbox,
   lighten,
+  styled,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
-import { makeStyles } from "@mui/styles";
 import SyncedFilesFilter from "./SyncedFilesFilter";
 import VerificationDocumentsOverviewFilter from "./VerificationDocumentsOverviewFilter";
 
-const useStyle = makeStyles((theme) => ({
-  tableHeadCell: {
-    fontWeight: theme.typography.fontWeightBold,
-  },
-  toolbarRoot: {
-    backgroundColor: "#FBFBFB",
-  },
-  toolbarActive: {
-    color: "#008F2B",
-    backgroundColor: lighten("#008F2B", 0.85),
-  },
-  tableHeadingContainer: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      justifyContent: "center",
-      "&>div:first-child": {
-        margin: "20px 0",
-      },
+const TableHeadCell = styled(TableCell)(({ theme }) => ({
+  fontWeight: theme.typography.fontWeightBold
+}))
+
+const TableToolBar = styled(Toolbar)(({ theme }) => ({
+  backgroundColor: "#FBFBFB",
+}))
+
+const TableHeadingContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  width: "100%",
+  [theme.breakpoints.down("sm")]: {
+    flexDirection: "column",
+    justifyContent: "center",
+    "&>div:first-child": {
+      margin: "20px 0",
     },
   },
-  tableCell: {
-    lineBreak: "anywhere",
-  },
-  checkboxColor: {
-    color: "#008F2B !important",
-  },
-  rowSelected: {
-    backgroundColor: `${lighten("#008F2B", 0.85)} !important`,
-  },
-}));
+}))
 
+const TableCheckBox = styled(Checkbox)(({ theme }) => ({
+  "&.MuiCheckbox-colorSecondary": {
+    color: "#008F2B !important",
+  }
+}))
+
+const TableRowStyle = styled(TableRow)(({ theme }) => ({
+  "&.Mui - selected": {
+    backgroundColor: `${lighten("#008F2B", 0.85)} !important`
+  }
+}))
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -95,9 +93,8 @@ function EnhancedTableHead(props) {
     showCheckbox = false,
     numSelected = 0,
     rowCount = 0,
-    onSelectAllClick = () => {},
+    onSelectAllClick = () => { },
   } = props;
-  const classes = useStyle();
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
   };
@@ -107,22 +104,20 @@ function EnhancedTableHead(props) {
       <TableRow>
         {showCheckbox && (
           <TableCell padding="checkbox">
-            <Checkbox
+            <TableCheckBox
               indeterminate={numSelected > 0 && numSelected < rowCount}
               checked={rowCount > 0 && numSelected === rowCount}
               onChange={onSelectAllClick}
               inputProps={{ "aria-label": "select all desserts" }}
-              classes={{ colorSecondary: classes.checkboxColor }}
             />
           </TableCell>
         )}
         {headCells.map((headCell) => (
-          <TableCell
+          <TableHeadCell
             key={headCell.id}
             align={headCell.numeric ? "right" : "left"}
             padding={"normal"}
             sortDirection={orderBy === headCell.id ? order : false}
-            className={classes.tableHeadCell}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -137,7 +132,7 @@ function EnhancedTableHead(props) {
                 </Box>
               ) : null}
             </TableSortLabel>
-          </TableCell>
+          </TableHeadCell>
         ))}
       </TableRow>
     </TableHead>
@@ -146,7 +141,6 @@ function EnhancedTableHead(props) {
 
 function EnhancedTableToolbar(props) {
   const { tableTitle, tableId, numSelected, getBulkActionInfo = null } = props;
-  const classes = useStyle();
   const getFilterComponent = () => {
     if (tableId === "syncedFilesFilter") return <SyncedFilesFilter />;
     else if (tableId === "documentVerificationOverviewFilter")
@@ -155,19 +149,19 @@ function EnhancedTableToolbar(props) {
 
   return (
     <React.Fragment>
-      <Toolbar
+      <TableToolBar
         sx={{
           pl: { sm: 2 },
           pr: { xs: 1, sm: 1 },
         }}
-        className={`${classes.toolbarRoot} ${
-          numSelected > 0 ? classes.toolbarActive : ""
-        }`}
+        style={{
+          color: numSelected > 0 && "#008F2B",
+          backgroundColor: numSelected > 0 && lighten("#008F2B", 0.85)
+        }}
       >
-        <Box className={classes.tableHeadingContainer}>
+        <TableHeadingContainer>
           {numSelected > 0 ? (
             <Typography
-              className={classes.title}
               color="inherit"
               variant="subtitle1"
               component="div"
@@ -180,12 +174,12 @@ function EnhancedTableToolbar(props) {
             </Typography>
           )}
           {numSelected > 0 ? (
-            <Box className={classes.bulkActionRoot}>{getBulkActionInfo}</Box>
+            <Box>{getBulkActionInfo}</Box>
           ) : (
             getFilterComponent()
           )}
-        </Box>
-      </Toolbar>
+        </TableHeadingContainer>
+      </TableToolBar>
     </React.Fragment>
   );
 }
@@ -205,7 +199,6 @@ export default function EnhancedTable({
   const [orderBy, setOrderBy] = React.useState("calories");
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const classes = useStyle();
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -311,41 +304,39 @@ export default function EnhancedTable({
                   const isItemSelected = isSelected(row.id);
                   const labelId = `enhanced-table-checkbox-${index}`;
                   return (
-                    <TableRow
+                    <TableRowStyle
                       hover
                       tabIndex={-1}
                       key={index}
                       selected={isItemSelected}
-                      classes={{ selected: classes.rowSelected }}
                     >
                       {showCheckbox && (
                         <TableCell padding="checkbox">
-                          <Checkbox
+                          <TableCheckBox
                             checked={isItemSelected}
                             onClick={(event) => handleClick(event, row.id)}
                             inputProps={{ "aria-labelledby": labelId }}
-                            classes={{ colorSecondary: classes.checkboxColor }}
                           />
                         </TableCell>
                       )}
                       {headCells?.map((column, key) => {
                         return (
                           <TableCell
-                            className={classes.tableCell}
+                            style={{ lineBreak: "anywhere" }}
                             key={key}
                             align={
                               column?.id === "action"
                                 ? "center"
                                 : column?.numeric
-                                ? "right"
-                                : "left"
+                                  ? "right"
+                                  : "left"
                             }
                           >
                             {row[column?.id]}
                           </TableCell>
                         );
                       })}
-                    </TableRow>
+                    </TableRowStyle>
                   );
                 })}
               {rows?.length === 0 && (

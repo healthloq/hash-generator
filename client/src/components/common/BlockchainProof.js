@@ -1,41 +1,37 @@
-import { Box, Button, Grid, Link, Typography } from "@mui/material";
-import { makeStyles } from "@mui/styles";
+import { Box, Button, Grid, Link, styled, Typography } from "@mui/material";
 import React, { useState } from "react";
 import ProductInfoDialog from "./ProductInfoDialog";
 import { correctIcon, wrongIcon } from "../../assets";
 
-const useStyle = makeStyles((theme) => ({
-  healthloqWidgetBlockchainProofBox: {
-    border: `2px solid ${theme.palette.primary.main}`,
-    borderRadius: 10,
-    padding: 20,
-    "& img": {
-      marginLeft: 5,
-    },
+const HealthloqWidgetBlockchainProofBox = styled(Box)(({ theme }) => ({
+  border: `2px solid ${theme.palette.primary.main}`,
+  borderRadius: 10,
+  padding: 20,
+  "& img": {
+    marginLeft: 5,
   },
-  healthloqWidgetpPoductInfoDiv: {
-    "&>div": {
-      "&:first-child": {
-        "&>*:not(:last-child)": {
-          marginBottom: 20,
-        },
-      },
-      "&>img": {
-        width: "100%",
-        height: "100%",
-        maxWidth: 200,
-        maxHeight: 200,
+}))
+
+const HealthloqWidgetpPoductInfoDiv = styled(Grid)(({ theme }) => ({
+  "&>div": {
+    "&:first-child": {
+      "&>*:not(:last-child)": {
+        marginBottom: 20,
       },
     },
+    "&>img": {
+      width: "100%",
+      height: "100%",
+      maxWidth: 200,
+      maxHeight: 200,
+    },
   },
-}));
+}))
 
 export default function BlockchainProof({ blockchainProof }) {
-  const classes = useStyle();
   const [openShowProofDialog, setOpenShowProofDialog] = useState(false);
   return (
-    <Box
-      className={classes.healthloqWidgetBlockchainProofBox}
+    <HealthloqWidgetBlockchainProofBox
       display="flex"
       flexDirection={"column"}
     >
@@ -58,10 +54,9 @@ export default function BlockchainProof({ blockchainProof }) {
           <img src={wrongIcon} alt="wrong-icon" />
         )}
       </Typography>
-      <Grid
+      <HealthloqWidgetpPoductInfoDiv
         container
         spacing={1}
-        className={classes.healthloqWidgetpPoductInfoDiv}
       >
         <Grid
           item
@@ -132,12 +127,10 @@ export default function BlockchainProof({ blockchainProof }) {
               <span>Organization Name:</span>
               <Link
                 hyperlink="true"
-                href={`${
-                  process.env.REACT_APP_HEALTHLOQ_CONSUMER_APP_BASE_URL
-                }/organization-detail/${
-                  blockchainProof?.data?.OrganizationId ||
+                href={`${process.env.REACT_APP_HEALTHLOQ_CONSUMER_APP_BASE_URL
+                  }/organization-detail/${blockchainProof?.data?.OrganizationId ||
                   blockchainProof?.data?.organization_id
-                }`}
+                  }`}
                 target="_blank"
                 underline="hover"
                 color="primary"
@@ -172,7 +165,7 @@ export default function BlockchainProof({ blockchainProof }) {
             />
           </Grid>
         )}
-      </Grid>
+      </HealthloqWidgetpPoductInfoDiv>
       <Box
         display={"flex"}
         alignItems="center"
@@ -191,6 +184,6 @@ export default function BlockchainProof({ blockchainProof }) {
         handleClose={() => setOpenShowProofDialog(false)}
         data={blockchainProof?.data}
       />
-    </Box>
+    </HealthloqWidgetBlockchainProofBox>
   );
 }
