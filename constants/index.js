@@ -1,3 +1,35 @@
 exports.ALLOWED_DOCUMENT_FILE_TYPES = new RegExp(
   `(csv|pdf|doc|docx|xlsx|xls|pptx|ppt|one|txt|jpg|jpeg|png|apng|avif|gif|jfif|pjpeg|pjp|svg|webp|tiff|tif|ico|bmp|mp4|mov|wmv|avi|mkv|flv|webm)`
 );
+
+exports.ALLOWED_DOCUMENT_FILE_MIME_TYPES = [
+  "text/csv",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-excel",
+  "application/vnd.ms-powerpoint",
+  "application/onenote",
+  "text/plain",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "image/jpeg",
+  "image/png",
+  "image/apng",
+  "image/avif",
+  "image/gif",
+  "image/pjpeg",
+  "image/svg+xml",
+  "image/vnd.microsoft.icon",
+  "image/webp",
+  "image/tiff",
+  "image/x-icon",
+  "image/bmp",
+  "video/mp4",
+  "video/quicktime",
+  "video/x-ms-wmv",
+  "video/x-msvideo",
+  "video/x-matroska",
+  "video/x-flv",
+  "video/webm",
+];
