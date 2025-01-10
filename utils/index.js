@@ -1,7 +1,10 @@
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
-const { ALLOWED_DOCUMENT_FILE_TYPES, ALLOWED_DOCUMENT_FILE_MIME_TYPES } = require("../constants");
+const {
+  ALLOWED_DOCUMENT_FILE_TYPES,
+  ALLOWED_DOCUMENT_FILE_MIME_TYPES,
+} = require("../constants");
 const {
   syncHash,
   getSubscriptionDetail,
@@ -52,7 +55,7 @@ exports.getData = async (fileName) => {
       localStorage.getItem(fileName ? fileName : "data")
     );
     if (tempData) data = Object.values(tempData);
-  } catch (error) { }
+  } catch (error) {}
   return data;
 };
 
@@ -67,7 +70,7 @@ exports.getDataInObjectFormat = async (fileName) => {
       localStorage.getItem(fileName ? fileName : "data")
     );
     if (tempData) data = tempData;
-  } catch (error) { }
+  } catch (error) {}
   return data;
 };
 
@@ -86,7 +89,9 @@ exports.setData = (data, fileName) =>
 function getMimeType(filePath) {
   try {
     // Use the `file` command to get MIME type
-    const output = execSync(`file --mime-type -b "${filePath}"`, { encoding: "utf8" }).trim();
+    const output = execSync(`file --mime-type -b "${filePath}"`, {
+      encoding: "utf8",
+    }).trim();
     return output;
   } catch (error) {
     console.error("Error getting MIME type:", error);
@@ -119,7 +124,7 @@ exports.getFolderOverview = async (rootFolderPath) => {
 
       for await (const item of files) {
         if (item.isFile()) {
-          const mime_type = getMimeType(`${item.path}/${item.name}`)
+          const mime_type = getMimeType(`${item.path}/${item.name}`);
           if (
             !ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mime_type)
             // item?.name
@@ -212,12 +217,9 @@ exports.generateHashForVerifier = async (
       // console.log("files ====>>>>>>", files)
       for await (const item of files) {
         if (item.isFile()) {
-          const pathName = `${item.path}/${item.name}`
+          const pathName = `${item.path}/${item.name}`;
           const mimeType = getMimeType(pathName);
-          if (
-            !ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)
-          )
-            continue;
+          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
           const filePath = path.join(folderPath, item.name);
           let state = null;
           try {
@@ -344,11 +346,10 @@ exports.generateHashForPublisher = async (
           break;
         }
         if (item.isFile()) {
+          const pathName = `${item.path}/${item.name}`;
+          const mimeType = getMimeType(pathName);
           count++;
-          if (
-            !ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mime_type)
-          )
-            continue;
+          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
           // if (lastSyncedFile) {
           //   if (item?.name === lastSyncedFile) lastSyncedFile = null;
           //   continue;
@@ -524,11 +525,11 @@ exports.getSyncData = async (syncedData = null) => {
         global.subscriptionDetail = subscriptionDetail?.map((item) =>
           item?.subscription_type === "publisher"
             ? {
-              ...item,
-              current_num_monthly_hashes: String(
-                todayHashLimit + hashList?.length
-              ),
-            }
+                ...item,
+                current_num_monthly_hashes: String(
+                  todayHashLimit + hashList?.length
+                ),
+              }
             : item
         );
       }
