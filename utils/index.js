@@ -15,6 +15,7 @@ const moment = require("moment");
 const notifier = require("node-notifier");
 const packageJson = require("../package.json");
 const { execSync } = require("child_process");
+const mime = require("mime-types");
 
 /**
  *
@@ -86,15 +87,30 @@ exports.setData = (data, fileName) =>
     )
   );
 
+// function getMimeType(filePath) {
+//   try {
+//     // Use the `file` command to get MIME type
+//     const output = execSync(`file --mime-type -b "${filePath}"`, {
+//       encoding: "utf8",
+//     }).trim();
+//     return output;
+//   } catch (error) {
+//     console.error("Error getting MIME type:", error);
+//     return null;
+//   }
+// }
 function getMimeType(filePath) {
-  try {
-    // Use the `file` command to get MIME type
-    const output = execSync(`file --mime-type -b "${filePath}"`, {
-      encoding: "utf8",
-    }).trim();
-    return output;
-  } catch (error) {
-    console.error("Error getting MIME type:", error);
+  if (fs.existsSync(filePath)) {
+    const mimeType = mime.lookup(filePath);
+    console.log("mimeType",mimeType)
+    if (mimeType) {
+      return mimeType;
+    } else {
+      console.error("Unable to determine MIME type");
+      return null;
+    }
+  } else {
+    console.error("File does not exist:", filePath);
     return null;
   }
 }
