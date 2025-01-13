@@ -102,7 +102,6 @@ exports.setData = (data, fileName) =>
 function getMimeType(filePath) {
   if (fs.existsSync(filePath)) {
     const mimeType = mime.lookup(filePath);
-    console.log("mimeType",mimeType)
     if (mimeType) {
       return mimeType;
     } else {
