@@ -97,7 +97,7 @@ exports.getSubscriptionOverview = async (req, res) => {
       ...subscriptionDetails,
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });
@@ -158,8 +158,8 @@ exports.verifyDocuments = async (req, res) => {
               )[0];
               const orgInfo = item?.organization_id
                 ? selectedOrganizations?.filter(
-                    (a) => a?.id === item?.organization_id
-                  )[0]
+                  (a) => a?.id === item?.organization_id
+                )[0]
                 : null;
               const orgVerificationInfo =
                 docOrgVerificationData?.filter(
@@ -197,43 +197,45 @@ exports.verifyDocuments = async (req, res) => {
           }
         } else if (response?.status === "2") {
           errorMsg = response?.message;
-          finalResult = [
-            ...finalResult,
-            ...response?.data?.data?.map((item) => {
-              const fileInfo = documentHashData?.filter(
-                (a) => a?.hash === item?.hash
-              )[0];
-              const orgInfo = item?.organization_id
-                ? selectedOrganizations?.filter(
-                  (a) => a?.id === item?.organization_id
-                )[0]
-                : null;
-              const orgVerificationInfo =
-                docOrgVerificationData?.filter(
-                  (a) => a?.organization_id === item?.organization_id
-                )[0] || null;
-              return {
-                "Organization Name": orgInfo?.name || "",
-                "Is Verified Organization": orgVerificationInfo
-                  ? orgVerificationInfo?.isVerifiedOrg
-                    ? "Yes"
-                    : "No"
-                  : "",
-                "File Name": fileInfo?.fileName,
-                "File Path": fileInfo?.path,
-                "Is Verified Document": item?.isVerifiedDocument,
-                Created: item?.created_on
-                  ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
-                  : null,
-                Message: item?.message,
-                "Error Message": "",
-                integrantId: item?.integrantId,
-                OrganizationExhibitId: item?.OrganizationExhibitId,
-                documentHashId: item?.documentHashId,
-                labDocumentHashId: item?.labDocumentHashId,
-              };
-            }),
-          ];
+          if (response?.data?.data) {
+            finalResult = [
+              ...finalResult,
+              ...response?.data?.data?.map((item) => {
+                const fileInfo = documentHashData?.filter(
+                  (a) => a?.hash === item?.hash
+                )[0];
+                const orgInfo = item?.organization_id
+                  ? selectedOrganizations?.filter(
+                    (a) => a?.id === item?.organization_id
+                  )[0]
+                  : null;
+                const orgVerificationInfo =
+                  docOrgVerificationData?.filter(
+                    (a) => a?.organization_id === item?.organization_id
+                  )[0] || null;
+                return {
+                  "Organization Name": orgInfo?.name || "",
+                  "Is Verified Organization": orgVerificationInfo
+                    ? orgVerificationInfo?.isVerifiedOrg
+                      ? "Yes"
+                      : "No"
+                    : "",
+                  "File Name": fileInfo?.fileName,
+                  "File Path": fileInfo?.path,
+                  "Is Verified Document": item?.isVerifiedDocument,
+                  Created: item?.created_on
+                    ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                    : null,
+                  Message: item?.message,
+                  "Error Message": "",
+                  integrantId: item?.integrantId,
+                  OrganizationExhibitId: item?.OrganizationExhibitId,
+                  documentHashId: item?.documentHashId,
+                  labDocumentHashId: item?.labDocumentHashId,
+                };
+              }),
+            ]
+          }
           io.sockets.emit("documentVerificationUpdate", {
             verifiedFilesCount: finalResult?.length,
           });
@@ -367,15 +369,15 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
     data = data?.map((item) =>
       req.body?.hashList?.includes(item?.hash)
         ? {
-            ...item,
-            effective_date: req.body?.effective_date,
-          }
+          ...item,
+          effective_date: req.body?.effective_date,
+        }
         : item
     );
     setData(data);
     res.status(200).json(healthloqRes);
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });
@@ -390,7 +392,7 @@ exports.getFolderPath = async (req, res) => {
       data,
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });
@@ -450,7 +452,7 @@ exports.getVerifyDocumentCount = async (req, res) => {
       doc: previousData,
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });

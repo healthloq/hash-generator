@@ -1,7 +1,10 @@
 const fs = require("fs");
 const crypto = require("crypto");
 const path = require("path");
-const { ALLOWED_DOCUMENT_FILE_TYPES } = require("../constants");
+const {
+  ALLOWED_DOCUMENT_FILE_TYPES,
+  ALLOWED_DOCUMENT_FILE_MIME_TYPES,
+} = require("../constants");
 const {
   syncHash,
   getSubscriptionDetail,
@@ -11,6 +14,8 @@ const {
 const moment = require("moment");
 const notifier = require("node-notifier");
 const packageJson = require("../package.json");
+const { execSync } = require("child_process");
+const mime = require("mime-types");
 
 /**
  *
@@ -82,6 +87,32 @@ exports.setData = (data, fileName) =>
     )
   );
 
+// function getMimeType(filePath) {
+//   try {
+//     // Use the `file` command to get MIME type
+//     const output = execSync(`file --mime-type -b "${filePath}"`, {
+//       encoding: "utf8",
+//     }).trim();
+//     return output;
+//   } catch (error) {
+//     console.error("Error getting MIME type:", error);
+//     return null;
+//   }
+// }
+function getMimeType(filePath) {
+  if (fs.existsSync(filePath)) {
+    const mimeType = mime.lookup(filePath);
+    if (mimeType) {
+      return mimeType;
+    } else {
+      console.error("Unable to determine MIME type");
+      return null;
+    }
+  } else {
+    console.error("File does not exist:", filePath);
+    return null;
+  }
+}
 exports.getFolderOverview = async (rootFolderPath) => {
   let unreadFolders = [];
   let unreadFiles = [];
@@ -108,12 +139,14 @@ exports.getFolderOverview = async (rootFolderPath) => {
 
       for await (const item of files) {
         if (item.isFile()) {
+          const mime_type = getMimeType(`${item.path}/${item.name}`);
           if (
-            item?.name
-              ?.split(".")
-              ?.pop()
-              ?.toLowerCase()
-              ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
+            !ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mime_type)
+            // item?.name
+            //   ?.split(".")
+            //   ?.pop()
+            //   ?.toLowerCase()
+            //   ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
           )
             continue;
           filesCount++;
@@ -196,16 +229,12 @@ exports.generateHashForVerifier = async (
           error: null,
         });
       }
+      // console.log("files ====>>>>>>", files)
       for await (const item of files) {
         if (item.isFile()) {
-          if (
-            item?.name
-              ?.split(".")
-              ?.pop()
-              ?.toLowerCase()
-              ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
-          )
-            continue;
+          const pathName = `${item.path}/${item.name}`;
+          const mimeType = getMimeType(pathName);
+          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
           const filePath = path.join(folderPath, item.name);
           let state = null;
           try {
@@ -332,15 +361,10 @@ exports.generateHashForPublisher = async (
           break;
         }
         if (item.isFile()) {
+          const pathName = `${item.path}/${item.name}`;
+          const mimeType = getMimeType(pathName);
           count++;
-          if (
-            item?.name
-              ?.split(".")
-              ?.pop()
-              ?.toLowerCase()
-              ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
-          )
-            continue;
+          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
           // if (lastSyncedFile) {
           //   if (item?.name === lastSyncedFile) lastSyncedFile = null;
           //   continue;

@@ -30,6 +30,9 @@ exports.syncHash = async (data) => {
       }
     }
   } catch (error) {
+    if (error.response) {
+      console.log(`API Error: ${error.response.status} - ${error.response.statusText}`)
+    }
     console.log("sync hash with healthloq catch block", error);
   }
   return response?.data?.status || "0";
@@ -49,6 +52,13 @@ exports.verifyDocument = async (params) => {
     return response?.data;
   } catch (error) {
     console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -70,6 +80,13 @@ exports.verifyDocumentOrganizations = async (params) => {
     return response?.data;
   } catch (error) {
     console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -90,6 +107,13 @@ exports.getSubscriptionDetail = async () => {
     return response?.data;
   } catch (error) {
     console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -114,6 +138,13 @@ exports.syncDocToolLogs = async (data = {}) => {
     return response?.data;
   } catch (error) {
     console.log("syncDocToolLogs => ", error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -135,6 +166,13 @@ exports.publisherScriptIsRunningOrNot = async (data = {}) => {
     return response?.data;
   } catch (error) {
     console.log("publisherScriptIsRunningOrNot => ", error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -156,6 +194,13 @@ exports.updateDocumentEffectiveDateIntoHealthLOQ = async (data = {}) => {
     return response?.data;
   } catch (error) {
     console.log("updateDocumentEffectiveDateIntoHealthLOQ => ", error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
