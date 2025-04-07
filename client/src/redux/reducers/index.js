@@ -18,6 +18,7 @@ import {
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
+  HANDLE_FILTER_VALUE,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -103,6 +104,11 @@ const initialState = {
       noOfVerifiedDocumentsWithUnVerifiedOrg: 0,
       noOfUnverifiedDocuments: 0,
     },
+  },
+  filterValue: {
+    verificationType: "all",
+    date: null,
+    producer: "",
   },
 };
 
@@ -440,6 +446,16 @@ const Reducer = (
         ...previousState,
         getVerifyDocumentCount: {
           ...previousState.getVerifyDocumentCount,
+          ...payload,
+        },
+      };
+    }
+
+    case HANDLE_FILTER_VALUE: {
+      return {
+        ...previousState,
+        filterValue: {
+          ...previousState.filterValue,
           ...payload,
         },
       };

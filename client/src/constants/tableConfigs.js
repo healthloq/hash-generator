@@ -43,9 +43,9 @@ export const verifiedDocumentsHeaders = [
     label: "Is Verified Organization",
   },
   {
-    id: "file_path",
+    id: "file_name",
     numeric: false,
-    label: "File Path",
+    label: "File Name",
   },
   {
     id: "is_verified_document",

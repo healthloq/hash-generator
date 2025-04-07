@@ -16,18 +16,19 @@ import {
   Checkbox,
   lighten,
   styled,
+  Grid,
 } from "@mui/material";
 import { visuallyHidden } from "@mui/utils";
 import SyncedFilesFilter from "./SyncedFilesFilter";
 import VerificationDocumentsOverviewFilter from "./VerificationDocumentsOverviewFilter";
 
 const TableHeadCell = styled(TableCell)(({ theme }) => ({
-  fontWeight: theme.typography.fontWeightBold
-}))
+  fontWeight: theme.typography.fontWeightBold,
+}));
 
 const TableToolBar = styled(Toolbar)(({ theme }) => ({
   backgroundColor: "#FBFBFB",
-}))
+}));
 
 const TableHeadingContainer = styled(Box)(({ theme }) => ({
   display: "flex",
@@ -41,19 +42,19 @@ const TableHeadingContainer = styled(Box)(({ theme }) => ({
       margin: "20px 0",
     },
   },
-}))
+}));
 
 const TableCheckBox = styled(Checkbox)(({ theme }) => ({
   "&.MuiCheckbox-colorSecondary": {
     color: "#008F2B !important",
-  }
-}))
+  },
+}));
 
 const TableRowStyle = styled(TableRow)(({ theme }) => ({
   "&.Mui - selected": {
-    backgroundColor: `${lighten("#008F2B", 0.85)} !important`
-  }
-}))
+    backgroundColor: `${lighten("#008F2B", 0.85)} !important`,
+  },
+}));
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
     return -1;
@@ -93,7 +94,7 @@ function EnhancedTableHead(props) {
     showCheckbox = false,
     numSelected = 0,
     rowCount = 0,
-    onSelectAllClick = () => { },
+    onSelectAllClick = () => {},
   } = props;
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
@@ -101,7 +102,11 @@ function EnhancedTableHead(props) {
 
   return (
     <TableHead>
-      <TableRow>
+      <TableRow
+        sx={(theme) => ({
+          backgroundColor: "#EAF6EC",
+        })}
+      >
         {showCheckbox && (
           <TableCell padding="checkbox">
             <TableCheckBox
@@ -141,11 +146,11 @@ function EnhancedTableHead(props) {
 
 function EnhancedTableToolbar(props) {
   const { tableTitle, tableId, numSelected, getBulkActionInfo = null } = props;
-  const getFilterComponent = () => {
-    if (tableId === "syncedFilesFilter") return <SyncedFilesFilter />;
-    else if (tableId === "documentVerificationOverviewFilter")
-      return <VerificationDocumentsOverviewFilter />;
-  };
+  // const getFilterComponent = () => {
+  //   if (tableId === "syncedFilesFilter") return <SyncedFilesFilter />;
+  //   else if (tableId === "documentVerificationOverviewFilter")
+  //     return <VerificationDocumentsOverviewFilter />;
+  // };
 
   return (
     <React.Fragment>
@@ -156,16 +161,12 @@ function EnhancedTableToolbar(props) {
         }}
         style={{
           color: numSelected > 0 && "#008F2B",
-          backgroundColor: numSelected > 0 && lighten("#008F2B", 0.85)
+          backgroundColor: numSelected > 0 && lighten("#008F2B", 0.85),
         }}
       >
         <TableHeadingContainer>
           {numSelected > 0 ? (
-            <Typography
-              color="inherit"
-              variant="subtitle1"
-              component="div"
-            >
+            <Typography color="inherit" variant="subtitle1" component="div">
               {numSelected} selected
             </Typography>
           ) : (
@@ -176,10 +177,22 @@ function EnhancedTableToolbar(props) {
           {numSelected > 0 ? (
             <Box>{getBulkActionInfo}</Box>
           ) : (
-            getFilterComponent()
+            tableId === "syncedFilesFilter" && <SyncedFilesFilter />
+            // getFilterComponent()
           )}
         </TableHeadingContainer>
       </TableToolBar>
+      <Grid
+        sx={{
+          display: "flex",
+          justifyContent: "end",
+          padding: "15px 10px 0px",
+        }}
+      >
+        {tableId === "documentVerificationOverviewFilter" && (
+          <VerificationDocumentsOverviewFilter />
+        )}
+      </Grid>
     </React.Fragment>
   );
 }
@@ -250,16 +263,27 @@ export default function EnhancedTable({
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
+  const handleOpenFile = (filePath) => {
+    const encodedPath = encodeURIComponent(filePath);
+    const url = `http://localhost:8003/api/client/open-file?path=${encodedPath}`;
+
+    window.open(url, "_blank");
+  };
   return (
     <Box sx={{ width: "100%" }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
+      <Paper sx={{ width: "100%", mb: 2, borderRadius: 4, boxShadow: 5 }}>
         <EnhancedTableToolbar
           tableTitle={tableTitle}
           tableId={tableId}
           numSelected={selected.length}
           getBulkActionInfo={getBulkActionInfo}
         />
-        <TableContainer>
+        <TableContainer
+          sx={{
+            padding: 1,
+            width: "auto",
+          }}
+        >
           <Table
             sx={{ minWidth: 750 }}
             aria-labelledby="tableTitle"
@@ -328,9 +352,20 @@ export default function EnhancedTable({
                               column?.id === "action"
                                 ? "center"
                                 : column?.numeric
-                                  ? "right"
-                                  : "left"
+                                ? "right"
+                                : "left"
                             }
+                            onClick={() => {
+                              if (column?.id === "file_name") {
+                                handleOpenFile(row["file_path"]);
+                              }
+                            }}
+                            sx={{
+                              cursor: column?.id === "file_name" && "pointer",
+                              color: column?.id === "file_name" && "blue",
+                              textDecoration:
+                                column?.id === "file_name" && "underline",
+                            }}
                           >
                             {row[column?.id]}
                           </TableCell>

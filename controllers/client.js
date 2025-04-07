@@ -48,7 +48,11 @@ exports.getFolderOverviewData = async (req, res) => {
           lastSlashIndex !== -1
             ? doc.path.substring(0, lastSlashIndex)
             : doc.path;
-        if (normalizedPath === folderPath.endsWith("/") ? folderPath.slice(0, -1) : folderPath) {
+        if (
+          normalizedPath === folderPath.endsWith("/")
+            ? folderPath.slice(0, -1)
+            : folderPath
+        ) {
           newData.push(doc);
         }
       }
@@ -415,7 +419,9 @@ exports.getVerifyDocumentCount = async (req, res) => {
             lastSlashIndex !== -1
               ? doc.path.substring(0, lastSlashIndex)
               : doc.path;
-          if (normalizedPath === path.endsWith("/") ? path.slice(0, -1) : path) {
+          if (
+            normalizedPath === path.endsWith("/") ? path.slice(0, -1) : path
+          ) {
             newData.push(doc);
           }
         }
@@ -453,6 +459,30 @@ exports.getVerifyDocumentCount = async (req, res) => {
     });
   } catch (error) {
     res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+// View document
+exports.viewFile = (req, res) => {
+  try {
+    const filePath = req.query.path;
+
+    if (!filePath) {
+      return res.status(400).send("File path is required");
+    }
+
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        return res.status(400).send("File not found");
+      }
+
+      res.sendFile(filePath);
+    });
+  } catch (error) {
+    res.status(200).json({
       status: "0",
       message: error.message,
     });

@@ -6,6 +6,7 @@ const {
   updateDocumentEffectiveDate,
   getFolderPath,
   getVerifyDocumentCount,
+  viewFile,
 } = require("../controllers/client");
 const router = require("express").Router();
 
@@ -16,5 +17,6 @@ router.get("/get-subscription-overview", getSubscriptionOverview);
 router.post("/update-document-effective-date", updateDocumentEffectiveDate);
 router.get("/get-folder-path", getFolderPath);
 router.get("/get-verify-document-counts", getVerifyDocumentCount);
+router.get("/open-file", viewFile);
 
 module.exports = router;

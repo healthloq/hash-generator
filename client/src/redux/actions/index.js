@@ -15,6 +15,7 @@ import {
   UPDATE_DOCUMENT_EFFECTIVE_DATE,
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
+  HANDLE_FILTER_VALUE,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -108,6 +109,13 @@ export const handleDocumentVerificationDataFilter =
       payload: params,
     });
   };
+
+export const handleFilterValue = (params) => async (dispatch) => {
+  dispatch({
+    type: HANDLE_FILTER_VALUE,
+    payload: params,
+  });
+};
 
 export const getDashboardOverviewData = (params) => async (dispatch) => {
   try {
