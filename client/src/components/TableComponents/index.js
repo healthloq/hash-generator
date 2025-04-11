@@ -21,6 +21,7 @@ import {
 import { visuallyHidden } from "@mui/utils";
 import SyncedFilesFilter from "./SyncedFilesFilter";
 import VerificationDocumentsOverviewFilter from "./VerificationDocumentsOverviewFilter";
+import DocumentViewerModal from "./DocumentViewModal";
 
 const TableHeadCell = styled(TableCell)(({ theme }) => ({
   fontWeight: theme.typography.fontWeightBold,
@@ -263,12 +264,16 @@ export default function EnhancedTable({
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-  const handleOpenFile = (filePath) => {
+  const [modalUrl, setModalUrl] = React.useState("");
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
+  const handleDocumentViewClick = React.useCallback((filePath) => {
     const encodedPath = encodeURIComponent(filePath);
     const url = `http://localhost:8003/api/client/open-file?path=${encodedPath}`;
+    setModalUrl(url);
+    setIsModalOpen(true);
+  }, []);
 
-    window.open(url, "_blank");
-  };
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2, borderRadius: 4, boxShadow: 5 }}>
@@ -346,7 +351,7 @@ export default function EnhancedTable({
                       {headCells?.map((column, key) => {
                         return (
                           <TableCell
-                            style={{ lineBreak: "anywhere" }}
+                            style={{ wordBreak: "break-word" }}
                             key={key}
                             align={
                               column?.id === "action"
@@ -355,9 +360,10 @@ export default function EnhancedTable({
                                 ? "right"
                                 : "left"
                             }
+                            id={`${column?.id}-${row["file_path"]}`}
                             onClick={() => {
                               if (column?.id === "file_name") {
-                                handleOpenFile(row["file_path"]);
+                                handleDocumentViewClick(row["file_path"]);
                               }
                             }}
                             sx={{
@@ -408,6 +414,12 @@ export default function EnhancedTable({
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+
+        <DocumentViewerModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          fileUrl={modalUrl}
         />
       </Paper>
     </Box>

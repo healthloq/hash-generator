@@ -113,7 +113,7 @@ const DocumentTableView = ({
             action: (
               <Tooltip arrow title="View More">
                 <IconButton
-                  color="primary"
+                  color={data.is_verified_document === "Yes" ? "primary" : "error"}
                   onClick={() =>
                     setDocumentDetailOverviewDialogData({
                       ...item,

@@ -13,14 +13,14 @@ import {
   styled,
 } from "@mui/material";
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
+import BlockchainProof from "./BlockchainProof";
 import {
   getDocumentHashBlockchainProof,
   getExhibitBlockchainProof,
-  getOrganizationExhibitBlockchainProof,
   getLabDocumentHashBlockchainProof,
+  getOrganizationExhibitBlockchainProof,
 } from "../../redux/actions";
-import BlockchainProof from "./BlockchainProof";
 
 const PrimaryTableRow = styled(TableRow)(({ theme }) => ({
   "&>td": {
@@ -29,7 +29,7 @@ const PrimaryTableRow = styled(TableRow)(({ theme }) => ({
   "&:nth-child(even)": {
     backgroundColor: theme.palette.action.hover,
   },
-}))
+}));
 
 const BlockchainProofContainer = styled(Box)(({ theme }) => ({
   "&>div:not(:last-child)": {
@@ -61,46 +61,53 @@ const BlockchainProofContainer = styled(Box)(({ theme }) => ({
       backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='25' viewBox='0 0 20 25' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M16.8664 10.1578H5.26193V6.74505C5.25926 4.39682 7.16921 2.48682 9.5145 2.48414C11.8627 2.48414 13.7727 4.39434 13.7754 6.73965C13.7781 6.98639 13.8779 7.21361 14.0415 7.3745C14.2051 7.53807 14.4269 7.63787 14.6763 7.63787H15.3611C15.86 7.63787 16.262 7.23584 16.262 6.7396H16.2594C16.2566 3.02188 13.2322 -0.00247373 9.51431 1.51829e-06C5.79678 0.00270885 2.77518 3.02733 2.77518 6.74505L2.77789 10.1578H2.31203C1.03401 10.1578 -0.00291464 11.1974 6.15529e-06 12.4754V22.6358C6.15529e-06 23.9139 1.03961 24.9508 2.31763 24.9508L16.728 24.9425C18.006 24.9425 19.043 23.9056 19.04 22.6275V12.4647C19.04 11.2365 18.078 10.2329 16.8665 10.158L16.8664 10.1578Z' fill='white' /%3E%3C/svg%3E")`,
     },
   },
-}))
+}));
 export function DocumentVerificationDetailOverview({
   open = false,
-  handleClose = () => { },
+  handleClose = () => {},
   data = {},
-  getDocumentHashBlockchainProof,
-  documentHashBlockchainProof,
-  getExhibitBlockchainProof,
-  getOrganizationExhibitBlockchainProof,
-  exhibitBlockchainProof,
-  organizationExhibitBlockchainProof,
-  labDocumentHashBlockchainProof,
-  getLabDocumentHashBlockchainProof,
 }) {
+  const dispatch = useDispatch();
+  const {
+    documentHashBlockchainProof,
+    exhibitBlockchainProof,
+    organizationExhibitBlockchainProof,
+    labDocumentHashBlockchainProof,
+  } = useSelector((state) => state.reducer);
 
   useEffect(() => {
     if (open) {
       if (data?.integrantId) {
-        getExhibitBlockchainProof({
-          type: "integrant",
-          id: data?.integrantId,
-        });
+        dispatch(
+          getExhibitBlockchainProof({
+            type: "integrant",
+            id: data?.integrantId,
+          })
+        );
       }
       if (data?.OrganizationExhibitId) {
-        getOrganizationExhibitBlockchainProof({
-          type: "organization_exhibit",
-          id: data?.OrganizationExhibitId,
-        });
+        dispatch(
+          getOrganizationExhibitBlockchainProof({
+            type: "organization_exhibit",
+            id: data?.OrganizationExhibitId,
+          })
+        );
       }
       if (data?.documentHashId) {
-        getDocumentHashBlockchainProof({
-          type: "document_hash",
-          id: data?.documentHashId,
-        });
+        dispatch(
+          getDocumentHashBlockchainProof({
+            type: "document_hash",
+            id: data?.documentHashId,
+          })
+        );
       }
       if (data?.labDocumentHashId) {
-        getLabDocumentHashBlockchainProof({
-          type: "document_hash",
-          id: data?.labDocumentHashId,
-        });
+        dispatch(
+          getLabDocumentHashBlockchainProof({
+            type: "document_hash",
+            id: data?.labDocumentHashId,
+          })
+        );
       }
     }
   }, [open]);
@@ -110,117 +117,117 @@ export function DocumentVerificationDetailOverview({
         {(data?.documentHashId ||
           data?.integrantId ||
           data?.OrganizationExhibitId) && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Document Blockchain Proof
-              </Typography>
-              <BlockchainProofContainer>
-                {data?.integrantId ? (
-                  exhibitBlockchainProof?.isLoading ? (
-                    <Typography
-                      variant="body2"
-                      display="flex"
-                      alignItems={"center"}
-                      justifyContent="center"
-                    >
-                      Please wait while we are fetching the product detail...
-                      <CircularProgress size={20} sx={{ ml: 0.5 }} />
-                    </Typography>
-                  ) : (
-                    !exhibitBlockchainProof?.isError && (
-                      <BlockchainProof blockchainProof={exhibitBlockchainProof} />
-                    )
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              Document Blockchain Proof
+            </Typography>
+            <BlockchainProofContainer>
+              {data?.integrantId ? (
+                exhibitBlockchainProof?.isLoading ? (
+                  <Typography
+                    variant="body2"
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent="center"
+                  >
+                    Please wait while we are fetching the product detail...
+                    <CircularProgress size={20} sx={{ ml: 0.5 }} />
+                  </Typography>
+                ) : (
+                  !exhibitBlockchainProof?.isError && (
+                    <BlockchainProof blockchainProof={exhibitBlockchainProof} />
                   )
-                ) : null}
-                {data?.OrganizationExhibitId &&
-                  !exhibitBlockchainProof?.isLoading ? (
-                  organizationExhibitBlockchainProof?.isLoading ? (
-                    <Typography
-                      variant="body2"
-                      display="flex"
-                      alignItems={"center"}
-                      justifyContent="center"
-                    >
-                      Please wait while we are fetching the organization exhibit
-                      detail...
-                      <CircularProgress size={20} sx={{ ml: 0.5 }} />
-                    </Typography>
-                  ) : (
-                    !organizationExhibitBlockchainProof?.isError && (
-                      <BlockchainProof
-                        blockchainProof={organizationExhibitBlockchainProof}
-                      />
-                    )
+                )
+              ) : null}
+              {data?.OrganizationExhibitId &&
+              !exhibitBlockchainProof?.isLoading ? (
+                organizationExhibitBlockchainProof?.isLoading ? (
+                  <Typography
+                    variant="body2"
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent="center"
+                  >
+                    Please wait while we are fetching the organization exhibit
+                    detail...
+                    <CircularProgress size={20} sx={{ ml: 0.5 }} />
+                  </Typography>
+                ) : (
+                  !organizationExhibitBlockchainProof?.isError && (
+                    <BlockchainProof
+                      blockchainProof={organizationExhibitBlockchainProof}
+                    />
                   )
-                ) : null}
-                {data?.documentHashId &&
-                  !exhibitBlockchainProof?.isLoading &&
-                  !organizationExhibitBlockchainProof?.isLoading ? (
-                  documentHashBlockchainProof?.isLoading ? (
-                    <Typography
-                      variant="body2"
-                      display="flex"
-                      alignItems={"center"}
-                      justifyContent="center"
-                    >
-                      Please wait while we are fetching the document detail...
-                      <CircularProgress size={20} sx={{ ml: 0.5 }} />
-                    </Typography>
-                  ) : (
-                    !documentHashBlockchainProof?.isError && (
-                      <BlockchainProof
-                        blockchainProof={documentHashBlockchainProof}
-                      />
-                    )
+                )
+              ) : null}
+              {data?.documentHashId &&
+              !exhibitBlockchainProof?.isLoading &&
+              !organizationExhibitBlockchainProof?.isLoading ? (
+                documentHashBlockchainProof?.isLoading ? (
+                  <Typography
+                    variant="body2"
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent="center"
+                  >
+                    Please wait while we are fetching the document detail...
+                    <CircularProgress size={20} sx={{ ml: 0.5 }} />
+                  </Typography>
+                ) : (
+                  !documentHashBlockchainProof?.isError && (
+                    <BlockchainProof
+                      blockchainProof={documentHashBlockchainProof}
+                    />
                   )
-                ) : null}
-                {data?.labDocumentHashId &&
-                  !exhibitBlockchainProof?.isLoading &&
-                  !organizationExhibitBlockchainProof?.isLoading &&
-                  !documentHashBlockchainProof?.isLoading ? (
-                  labDocumentHashBlockchainProof?.isLoading ? (
-                    <Typography
-                      variant="body2"
-                      display="flex"
-                      alignItems={"center"}
-                      justifyContent="center"
-                    >
-                      Please wait while we are fetching the lab document detail...
-                      <CircularProgress size={20} sx={{ ml: 0.5 }} />
-                    </Typography>
-                  ) : (
-                    !labDocumentHashBlockchainProof?.isError && (
-                      <BlockchainProof
-                        blockchainProof={labDocumentHashBlockchainProof}
-                      />
-                    )
+                )
+              ) : null}
+              {data?.labDocumentHashId &&
+              !exhibitBlockchainProof?.isLoading &&
+              !organizationExhibitBlockchainProof?.isLoading &&
+              !documentHashBlockchainProof?.isLoading ? (
+                labDocumentHashBlockchainProof?.isLoading ? (
+                  <Typography
+                    variant="body2"
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent="center"
+                  >
+                    Please wait while we are fetching the lab document detail...
+                    <CircularProgress size={20} sx={{ ml: 0.5 }} />
+                  </Typography>
+                ) : (
+                  !labDocumentHashBlockchainProof?.isError && (
+                    <BlockchainProof
+                      blockchainProof={labDocumentHashBlockchainProof}
+                    />
                   )
-                ) : null}
-                {!exhibitBlockchainProof?.isLoading &&
-                  !organizationExhibitBlockchainProof?.isLoading &&
-                  !documentHashBlockchainProof?.isLoading &&
-                  !labDocumentHashBlockchainProof?.isLoading &&
-                  exhibitBlockchainProof?.isError &&
-                  organizationExhibitBlockchainProof?.isError &&
-                  documentHashBlockchainProof?.isError &&
-                  labDocumentHashBlockchainProof?.isError &&
-                  (data?.documentHashId ||
-                    data?.integrantId ||
-                    data?.OrganizationExhibitId ||
-                    data?.labDocumentHashId) && (
-                    <Typography
-                      variant="body2"
-                      display="flex"
-                      alignItems={"center"}
-                      justifyContent="center"
-                    >
-                      Something went wrong! we are not able to get blockchain
-                      proof.
-                    </Typography>
-                  )}
-              </BlockchainProofContainer>
-            </Box>
-          )}
+                )
+              ) : null}
+              {!exhibitBlockchainProof?.isLoading &&
+                !organizationExhibitBlockchainProof?.isLoading &&
+                !documentHashBlockchainProof?.isLoading &&
+                !labDocumentHashBlockchainProof?.isLoading &&
+                exhibitBlockchainProof?.isError &&
+                organizationExhibitBlockchainProof?.isError &&
+                documentHashBlockchainProof?.isError &&
+                labDocumentHashBlockchainProof?.isError &&
+                (data?.documentHashId ||
+                  data?.integrantId ||
+                  data?.OrganizationExhibitId ||
+                  data?.labDocumentHashId) && (
+                  <Typography
+                    variant="body2"
+                    display="flex"
+                    alignItems={"center"}
+                    justifyContent="center"
+                  >
+                    Something went wrong! we are not able to get blockchain
+                    proof.
+                  </Typography>
+                )}
+            </BlockchainProofContainer>
+          </Box>
+        )}
         <Typography variant="h6" sx={{ my: 1 }}>
           Document Verification Details
         </Typography>
@@ -253,26 +260,9 @@ export function DocumentVerificationDetailOverview({
   );
 }
 
-const mapStateToProps = ({
-  reducer: {
-    documentHashBlockchainProof,
-    exhibitBlockchainProof,
-    organizationExhibitBlockchainProof,
-    labDocumentHashBlockchainProof,
-  },
-}) => ({
-  documentHashBlockchainProof,
-  exhibitBlockchainProof,
-  organizationExhibitBlockchainProof,
-  labDocumentHashBlockchainProof,
-});
+const mapStateToProps = ({ reducer: {} }) => ({});
 
-const mapDispatchToProps = {
-  getDocumentHashBlockchainProof,
-  getExhibitBlockchainProof,
-  getOrganizationExhibitBlockchainProof,
-  getLabDocumentHashBlockchainProof,
-};
+const mapDispatchToProps = {};
 
 export default connect(
   mapStateToProps,

@@ -40,7 +40,7 @@ export const verifiedDocumentsHeaders = [
   {
     id: "is_verified_organization",
     numeric: false,
-    label: "Is Verified Organization",
+    label: "Verified Organization",
   },
   {
     id: "file_name",
@@ -50,12 +50,17 @@ export const verifiedDocumentsHeaders = [
   {
     id: "is_verified_document",
     numeric: false,
-    label: "Is Verified Document",
+    label: "Verified Document",
   },
   {
     id: "message",
     numeric: false,
     label: "Message",
+  },
+  {
+    id: "created",
+    numeric: false,
+    label: "Created",
   },
   {
     id: "action",

@@ -69,6 +69,10 @@ exports.getFolderOverviewData = async (req, res) => {
     "File Path": doc.path,
     "Is Verified Document": doc.is_vrf_doc,
     Created: doc.createdAt,
+    labDocumentHashId: doc.labDocumentHashId,
+    documentHashId: doc.documentHashId,
+    OrganizationExhibitId: doc.OrganizationExhibitId,
+    integrantId: doc.integrantId,
   }));
 
   dataCount["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
@@ -162,8 +166,8 @@ exports.verifyDocuments = async (req, res) => {
               )[0];
               const orgInfo = item?.organization_id
                 ? selectedOrganizations?.filter(
-                  (a) => a?.id === item?.organization_id
-                )[0]
+                    (a) => a?.id === item?.organization_id
+                  )[0]
                 : null;
               const orgVerificationInfo =
                 docOrgVerificationData?.filter(
@@ -210,8 +214,8 @@ exports.verifyDocuments = async (req, res) => {
                 )[0];
                 const orgInfo = item?.organization_id
                   ? selectedOrganizations?.filter(
-                    (a) => a?.id === item?.organization_id
-                  )[0]
+                      (a) => a?.id === item?.organization_id
+                    )[0]
                   : null;
                 const orgVerificationInfo =
                   docOrgVerificationData?.filter(
@@ -238,7 +242,7 @@ exports.verifyDocuments = async (req, res) => {
                   labDocumentHashId: item?.labDocumentHashId,
                 };
               }),
-            ]
+            ];
           }
           io.sockets.emit("documentVerificationUpdate", {
             verifiedFilesCount: finalResult?.length,
@@ -288,6 +292,12 @@ exports.verifyDocuments = async (req, res) => {
               resultItem["Is Verified Organization"];
             docVerificationObj["is_vrf_doc"] =
               resultItem["Is Verified Document"];
+            docVerificationObj["labDocumentHashId"] =
+              resultItem["labDocumentHashId"];
+            docVerificationObj["documentHashId"] = resultItem["documentHashId"];
+            docVerificationObj["OrganizationExhibitId"] =
+              resultItem["OrganizationExhibitId"];
+            docVerificationObj["integrantId"] = resultItem["integrantId"];
           }
           mergeData.push(docVerificationObj);
         }
@@ -373,9 +383,9 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
     data = data?.map((item) =>
       req.body?.hashList?.includes(item?.hash)
         ? {
-          ...item,
-          effective_date: req.body?.effective_date,
-        }
+            ...item,
+            effective_date: req.body?.effective_date,
+          }
         : item
     );
     setData(data);
