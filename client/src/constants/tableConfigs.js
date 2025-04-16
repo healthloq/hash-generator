@@ -43,6 +43,11 @@ export const verifiedDocumentsHeaders = [
     label: "Verified Organization",
   },
   {
+    id: "labOrgName",
+    numeric: false,
+    label: "Document Prepared By",
+  },
+  {
     id: "file_name",
     numeric: false,
     label: "File Name",

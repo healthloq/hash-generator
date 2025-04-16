@@ -73,6 +73,7 @@ exports.getFolderOverviewData = async (req, res) => {
     documentHashId: doc.documentHashId,
     OrganizationExhibitId: doc.OrganizationExhibitId,
     integrantId: doc.integrantId,
+    labOrgName: doc.labOrgName,
   }));
 
   dataCount["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
@@ -157,6 +158,7 @@ exports.verifyDocuments = async (req, res) => {
           errorMsg = response?.message;
           break;
         }
+
         if (response?.status === "1") {
           finalResult = [
             ...finalResult,
@@ -192,6 +194,7 @@ exports.verifyDocuments = async (req, res) => {
                 OrganizationExhibitId: item?.OrganizationExhibitId,
                 documentHashId: item?.documentHashId,
                 labDocumentHashId: item?.labDocumentHashId,
+                labOrgName: item.labOrgName,
               };
             }),
           ];
@@ -240,6 +243,7 @@ exports.verifyDocuments = async (req, res) => {
                   OrganizationExhibitId: item?.OrganizationExhibitId,
                   documentHashId: item?.documentHashId,
                   labDocumentHashId: item?.labDocumentHashId,
+                  labOrgName: item.labOrgName,
                 };
               }),
             ];
@@ -265,6 +269,7 @@ exports.verifyDocuments = async (req, res) => {
                 OrganizationExhibitId: null,
                 documentHashId: null,
                 labDocumentHashId: null,
+                labOrgName: null,
               };
             }),
           ];
@@ -298,6 +303,7 @@ exports.verifyDocuments = async (req, res) => {
             docVerificationObj["OrganizationExhibitId"] =
               resultItem["OrganizationExhibitId"];
             docVerificationObj["integrantId"] = resultItem["integrantId"];
+            docVerificationObj["labOrgName"] = resultItem["labOrgName"];
           }
           mergeData.push(docVerificationObj);
         }
@@ -400,7 +406,9 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
 
 exports.getFolderPath = async (req, res) => {
   try {
-    let data = JSON.parse(localStorage.getItem("folderPath")) || [];
+    let data = localStorage.getItem("folderPath")
+      ? JSON.parse(localStorage.getItem("folderPath"))
+      : [];
     res.status(200).json({
       status: "1",
       data,
@@ -437,6 +445,7 @@ exports.getVerifyDocumentCount = async (req, res) => {
         }
       });
     }
+
     const previousData = newData.map((doc) => ({
       "Organization Name": doc?.org_name,
       Message: doc?.message,
@@ -446,6 +455,11 @@ exports.getVerifyDocumentCount = async (req, res) => {
       "File Path": doc.path,
       "Is Verified Document": doc.is_vrf_doc,
       Created: doc.createdAt,
+      labDocumentHashId: doc.labDocumentHashId,
+      documentHashId: doc.documentHashId,
+      OrganizationExhibitId: doc.OrganizationExhibitId,
+      integrantId: doc.integrantId,
+      labOrgName: doc.labOrgName,
     }));
 
     data["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(

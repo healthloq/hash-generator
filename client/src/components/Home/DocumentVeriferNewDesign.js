@@ -31,7 +31,7 @@ function DocumentVerifierNewDesign({
   fetchFolderPath,
   handleDocumentVerification,
 }) {
-  const [organizationIds, setOrganizationIds] = useState([]);
+
   const [folderPath, setFolderPath] = useState(null);
   const [options, setOptions] = useState([]);
   const [text, setText] = useState(null);
@@ -46,21 +46,17 @@ function DocumentVerifierNewDesign({
     }
   };
 
+  // By default sending all producer
   const handleVerifyDoc = (e) => {
-    if (folderPath?.trim() && organizationIds?.length) {
-    handleDocumentVerification({
-      folderPath,
-      selectedOrganizations:
-        organizationIds?.length === organizationList?.data?.length
-          ? organizationList?.data
-          : organizationList?.data?.filter((item) =>
-              organizationIds?.includes(item?.id)
-            ),
-    });
-    if (folderPath?.trim() && !options.includes(folderPath?.trim())) {
-      setOptions([...options, folderPath?.trim()]);
-      setFolderPath(folderPath?.trim());
-    }
+    if (folderPath?.trim()) {
+      handleDocumentVerification({
+        folderPath,
+        selectedOrganizations: organizationList?.data,
+      });
+      if (folderPath?.trim() && !options.includes(folderPath?.trim())) {
+        setOptions([...options, folderPath?.trim()]);
+        setFolderPath(folderPath?.trim());
+      }
     }
   };
 
@@ -100,7 +96,7 @@ function DocumentVerifierNewDesign({
   }, [folderPath]);
   return (
     <Box display="flex" flexDirection="column" gap={2}>
-      <Select
+      {/* <Select
         multiple
         fullWidth
         value={organizationIds}
@@ -174,7 +170,7 @@ function DocumentVerifierNewDesign({
             </MenuItem>
           );
         })}
-      </Select>
+      </Select> */}
       <Autocomplete
         onChange={(event, newValue) => {
           setFolderPath(newValue);

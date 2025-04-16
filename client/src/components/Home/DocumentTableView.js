@@ -107,13 +107,16 @@ const DocumentTableView = ({
               : "",
             message: item["Message"],
             error_message: item["Error Message"],
+            labOrgName: item["labOrgName"] ?? "-",
           };
           return {
             ...data,
             action: (
               <Tooltip arrow title="View More">
                 <IconButton
-                  color={data.is_verified_document === "Yes" ? "primary" : "error"}
+                  color={
+                    data.is_verified_document === "Yes" ? "primary" : "error"
+                  }
                   onClick={() =>
                     setDocumentDetailOverviewDialogData({
                       ...item,

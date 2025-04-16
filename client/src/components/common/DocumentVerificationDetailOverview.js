@@ -240,6 +240,7 @@ export function DocumentVerificationDetailOverview({
                     "documentHashId",
                     "OrganizationExhibitId",
                     "integrantId",
+                    "labDocumentHashId"
                   ].includes(key)
               )
               ?.map(([key, value], i) => (
