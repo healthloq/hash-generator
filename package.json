@@ -4,7 +4,7 @@
   "description": "",
   "main": "healthloqdocverify.js",
   "scripts": {
-    "start": "node healthloqdocverify.js"
+    "start": "node --max-old-space-size=8192 --expose-gc  healthloqdocverify.js"
   },
   "author": "IIHGlobal",
   "license": "ISC",

@@ -20,6 +20,8 @@ import {
 } from "../../redux/actions";
 import axios from "axios";
 import { ReactComponent as VerifyDocumentIcon } from "../../assets/images/submitIcon.svg";
+import { MuiLinearProgress } from "../common";
+import { abbrNum, numberWithCommas } from "../../utils";
 
 function DocumentVerifierNewDesign({
   organizationList,
@@ -31,7 +33,6 @@ function DocumentVerifierNewDesign({
   fetchFolderPath,
   handleDocumentVerification,
 }) {
-
   const [folderPath, setFolderPath] = useState(null);
   const [options, setOptions] = useState([]);
   const [text, setText] = useState(null);
@@ -249,6 +250,21 @@ function DocumentVerifierNewDesign({
           marginRight: 10,
         }}
       />
+      {documentVerificationData?.isLoading && (
+        <Box display="flex" flexDirection={"column"} sx={{ my: 1 }}>
+          <MuiLinearProgress
+            {...{
+              loading: false,
+              label: `${numberWithCommas(
+                parseInt(documentVerificationData?.verifiedFilesCount)
+              )}/${abbrNum(parseInt(documentVerificationData?.newFilesCount))}`,
+              value:
+                (documentVerificationData?.verifiedFilesCount * 100) /
+                documentVerificationData?.newFilesCount,
+            }}
+          />
+        </Box>
+      )}
       <Button
         disabled={Boolean(
           documentVerificationData.isLoading ||
