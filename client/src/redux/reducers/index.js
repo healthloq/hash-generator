@@ -19,6 +19,9 @@ import {
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
   HANDLE_FILTER_VALUE,
+  SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -109,6 +112,10 @@ const initialState = {
     verificationType: "all",
     date: null,
     producer: "",
+  },
+  documentBlockChainProofData: {
+    isLoading: false,
+    data: null,
   },
 };
 
@@ -457,6 +464,32 @@ const Reducer = (
         filterValue: {
           ...previousState.filterValue,
           ...payload,
+        },
+      };
+    }
+
+    case START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT: {
+      return {
+        ...previousState,
+        documentBlockChainProofData: {
+          isLoading: true,
+        },
+      };
+    }
+    case SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT: {
+      return {
+        ...previousState,
+        documentBlockChainProofData: {
+          isLoading: false,
+          data: payload,
+        },
+      };
+    }
+    case ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT: {
+      return {
+        ...previousState,
+        documentBlockChainProofData: {
+          isLoading: false,
         },
       };
     }

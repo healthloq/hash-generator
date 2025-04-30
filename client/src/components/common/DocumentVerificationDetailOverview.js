@@ -16,12 +16,16 @@ import React, { useEffect } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
 import BlockchainProof from "./BlockchainProof";
 import {
+  getBlockChainProofData,
   getDocumentHashBlockchainProof,
   getExhibitBlockchainProof,
   getLabDocumentHashBlockchainProof,
   getOrganizationExhibitBlockchainProof,
 } from "../../redux/actions";
-
+import ExpiredDocument from "../common/BlockchainResults/ExpiredDocument";
+import VerifiedDocumentInfo from "../common/BlockchainResults/VerifiedDocumentInfo";
+import VerifiedOrganizationInfo from "../common/BlockchainResults/VerifiedOrganizationInfo";
+import HashNotVerifiedErrorMsg from "../common/BlockchainResults/HashNotVerifiedErrorMsg";
 const PrimaryTableRow = styled(TableRow)(({ theme }) => ({
   "&>td": {
     border: `1px solid ${theme.palette.borderColor}`,
@@ -62,6 +66,56 @@ const BlockchainProofContainer = styled(Box)(({ theme }) => ({
     },
   },
 }));
+
+const getBlockchainProofs = (data, i = 0) => {
+  if (!data) return <></>;
+  return (
+    <>
+      {data?.loading && (
+        <Typography variant="body2">
+          Please wait while we are verifying the document...
+          <CircularProgress size={20} />
+        </Typography>
+      )}
+      {data?.status === "1" &&
+        !data?.loading &&
+        (data?.isVerifyDocument ? (
+          <>
+            {data?.is_expired ? (
+              <ExpiredDocument {...data} />
+            ) : (
+              <VerifiedDocumentInfo {...data} />
+            )}
+            {!data?.hide_org &&
+              (data?.govEntity?.length ? (
+                <>
+                  <VerifiedOrganizationInfo
+                    {...data}
+                    onOrganizationClick={(a) =>
+                      // verifyOrganizationDocument(a, i)
+                      console.log(a)
+                    }
+                  />
+                  {/* {getBlockchainProofs(
+                    data?.govEntity?.filter(
+                      (a) => a?.id === activeOrgDocuments[i]
+                    )?.[0]?.documentInfo || null,
+                    i + 1
+                  )} */}
+                </>
+              ) : (
+                <HashNotVerifiedErrorMsg hashType="Organization" {...data} />
+              ))}
+          </>
+        ) : (
+          <HashNotVerifiedErrorMsg
+            hashType={data?.isOrganizationDoc ? "Organization" : "Document"}
+            {...data}
+          />
+        ))}
+    </>
+  );
+};
 export function DocumentVerificationDetailOverview({
   open = false,
   handleClose = () => {},
@@ -73,48 +127,52 @@ export function DocumentVerificationDetailOverview({
     exhibitBlockchainProof,
     organizationExhibitBlockchainProof,
     labDocumentHashBlockchainProof,
+    documentBlockChainProofData,
   } = useSelector((state) => state.reducer);
 
   useEffect(() => {
     if (open) {
-      if (data?.integrantId) {
-        dispatch(
-          getExhibitBlockchainProof({
-            type: "integrant",
-            id: data?.integrantId,
-          })
-        );
-      }
-      if (data?.OrganizationExhibitId) {
-        dispatch(
-          getOrganizationExhibitBlockchainProof({
-            type: "organization_exhibit",
-            id: data?.OrganizationExhibitId,
-          })
-        );
-      }
-      if (data?.documentHashId) {
-        dispatch(
-          getDocumentHashBlockchainProof({
-            type: "document_hash",
-            id: data?.documentHashId,
-          })
-        );
-      }
-      if (data?.labDocumentHashId) {
-        dispatch(
-          getLabDocumentHashBlockchainProof({
-            type: "document_hash",
-            id: data?.labDocumentHashId,
-          })
-        );
+      // if (data?.integrantId) {
+      //   dispatch(
+      //     getExhibitBlockchainProof({
+      //       type: "integrant",
+      //       id: data?.integrantId,
+      //     })
+      //   );
+      // }
+      // if (data?.OrganizationExhibitId) {
+      //   dispatch(
+      //     getOrganizationExhibitBlockchainProof({
+      //       type: "organization_exhibit",
+      //       id: data?.OrganizationExhibitId,
+      //     })
+      //   );
+      // }
+      // if (data?.documentHashId) {
+      //   dispatch(
+      //     getDocumentHashBlockchainProof({
+      //       type: "document_hash",
+      //       id: data?.documentHashId,
+      //     })
+      //   );
+      // }
+      // if (data?.labDocumentHashId) {
+      //   dispatch(
+      //     getLabDocumentHashBlockchainProof({
+      //       type: "document_hash",
+      //       id: data?.labDocumentHashId,
+      //     })
+      //   );
+      // }
+      if (data?.hash) {
+        dispatch(getBlockChainProofData({ hash: data?.hash }));
       }
     }
   }, [open]);
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogContent>
-        {(data?.documentHashId ||
+        {/* {(data?.documentHashId ||
           data?.integrantId ||
           data?.OrganizationExhibitId) && (
           <Box sx={{ mb: 2 }}>
@@ -227,6 +285,14 @@ export function DocumentVerificationDetailOverview({
                 )}
             </BlockchainProofContainer>
           </Box>
+        )} */}
+        {documentBlockChainProofData.isLoading ? (
+          <Typography display="flex" justifyContent="center" variant="body2">
+            Please wait while we are verifying the document...
+            <CircularProgress size={20} />
+          </Typography>
+        ) : (
+          getBlockchainProofs(documentBlockChainProofData.data)
         )}
         <Typography variant="h6" sx={{ my: 1 }}>
           Document Verification Details
@@ -240,7 +306,7 @@ export function DocumentVerificationDetailOverview({
                     "documentHashId",
                     "OrganizationExhibitId",
                     "integrantId",
-                    "labDocumentHashId"
+                    "labDocumentHashId",
                   ].includes(key)
               )
               ?.map(([key, value], i) => (

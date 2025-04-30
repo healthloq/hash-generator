@@ -74,6 +74,7 @@ exports.getFolderOverviewData = async (req, res) => {
     OrganizationExhibitId: doc.OrganizationExhibitId,
     integrantId: doc.integrantId,
     labOrgName: doc.labOrgName,
+    hash : doc.hash
   }));
 
   dataCount["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(

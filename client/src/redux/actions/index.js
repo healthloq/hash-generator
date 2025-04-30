@@ -16,6 +16,9 @@ import {
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
   HANDLE_FILTER_VALUE,
+  START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -36,6 +39,26 @@ export const updateDocumentEffectiveDate = (params) => async (dispatch) => {
       },
     });
   } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getBlockChainProofData = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+    });
+
+    const response = await API.getDocumentHashBlockChainProofNew(params);
+
+    dispatch({
+      type: SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+      payload: response,
+    });
+  } catch (error) {
+    dispatch({
+      type: ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+    });
     console.log(error);
   }
 };

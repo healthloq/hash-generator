@@ -20,4 +20,6 @@ export const API = {
       `/api/client/get-verify-document-counts?path=${params?.path}`
     );
   },
+  getDocumentHashBlockChainProofNew: async (params) =>
+    await healthloqPost("/client-app/verify-coa-document-doc-tool",params),
 };
