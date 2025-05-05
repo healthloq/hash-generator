@@ -271,7 +271,8 @@ function DocumentVerifierNewDesign({
             folderOverview.isLoading ||
             folderOverview?.errorMsg ||
             !folderPath ||
-            documentVerificationData.newFilesCount < 1
+            documentVerificationData.newFilesCount < 1 ||
+            organizationList?.isLoading
         )}
         startIcon={
           documentVerificationData.isLoading ? (
