@@ -9,7 +9,7 @@ const expiredColor = "#FFAA1D";
 
 const StyledBox = styled(Box, {
   shouldForwardProp: (prop) => prop !== "isExpired",
-})(({ theme, isExpired }) => ({
+})(({ isExpired }) => ({
   position: "relative",
   width: "100%",
   maxWidth: 700,
@@ -23,7 +23,7 @@ const StyledBox = styled(Box, {
     top: 0,
     left: 0,
     width: "100%",
-    height: 8,
+    height: 0,
     backgroundColor: isExpired ? expiredColor : errorColor,
     zIndex: 1,
   },
@@ -36,30 +36,33 @@ const StyledBox = styled(Box, {
   "& > div:first-of-type": {
     display: "flex",
     alignItems: "center",
-    padding: "5px 20px",
+    padding: "4px 16px",
     borderBottom: `2px solid ${isExpired ? expiredColor : errorColor}`,
     background: isExpired ? "#FFAA1D30" : "#D6513F30",
-    "& > h5": {
+    "& > h6": {
       textAlign: "center",
-      fontWeight: 700,
-      width: "calc(100% - 65px)",
+      fontWeight: 600,
+      width: "calc(100% - 60px)",
+      fontSize: "1rem",
     },
     "& > svg": {
-      width: 50,
-      height: 50,
+      width: 40,
+      height: 40,
       color: isExpired ? expiredColor : errorColor,
-      marginLeft: 15,
+      marginLeft: 12,
     },
   },
 
   "& > div:last-of-type": {
-    padding: 20,
+    padding: 16,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     "& > p": {
       width: "100%",
       textAlign: "center",
+      fontSize: "0.875rem",
+      lineHeight: 1.5,
       "& > span": {
         fontWeight: 700,
       },
@@ -75,11 +78,11 @@ export default function HashNotVerifiedErrorMsg({
   return (
     <StyledBox isExpired={is_expired}>
       <Box>
-        <Typography variant="h5">{hashType} Status: Not Verified</Typography>
+        <Typography variant="subtitle1">{hashType} Status: Not Verified</Typography>
         <CancelOutlinedIcon />
       </Box>
       <Box>
-        <Typography variant="body1">
+        <Typography variant="body2">
           {hashType === "Document" && (
             <>
               This document is <span>not verified</span> as authentic or

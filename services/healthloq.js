@@ -66,6 +66,33 @@ exports.verifyDocument = async (params) => {
   }
 };
 
+exports.verifyDocumentNew = async (params) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/verify-document-doc-tool`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
 exports.verifyDocumentOrganizations = async (params) => {
   try {
     const response = await axios.post(

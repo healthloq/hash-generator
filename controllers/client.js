@@ -12,6 +12,7 @@ const {
   getSubscriptionDetail,
   verifyDocumentOrganizations,
   updateDocumentEffectiveDateIntoHealthLOQ,
+  verifyDocumentNew,
 } = require("../services/healthloq");
 const fs = require("fs");
 const path = require("path");
@@ -74,7 +75,7 @@ exports.getFolderOverviewData = async (req, res) => {
     OrganizationExhibitId: doc.OrganizationExhibitId,
     integrantId: doc.integrantId,
     labOrgName: doc.labOrgName,
-    hash : doc.hash
+    hash: doc.hash,
   }));
 
   dataCount["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
@@ -145,65 +146,140 @@ exports.verifyDocuments = async (req, res) => {
     } = await generateHashForVerifier(folderPath);
 
     for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
-      if (!global.isVerifierScriptRunning) break;
-      const batch = documentHashData.slice(i, i + docVerificationLimit);
-
-      const response = await verifyDocument({
-        hashList: batch.map((item) => item.hash),
-        organizationIds,
-      });
-
-      if (response?.status === "0") {
-        errorMsg = response?.message;
+      if (!global.isVerifierScriptRunning) {
         break;
       }
+      const arr = documentHashData?.slice(i, i + docVerificationLimit);
+      if (arr?.length) {
+        // verify documents in blockchain
+        const response = await verifyDocument({
+          hashList: arr?.map((item) => item?.hash),
+          organizationIds,
+        });
+        if (response?.status === "0") {
+          errorMsg = response?.message;
+          break;
+        }
 
-      const verifiedData = response?.data?.data || [];
-      const mappedResult = verifiedData.map((item) => {
-        const fileInfo = documentHashData.find((a) => a.hash === item.hash);
-        const orgInfo =
-          selectedOrganizations.find((a) => a.id === item.organization_id) ||
-          {};
-        const orgVerificationInfo =
-          docOrgVerificationData.find(
-            (a) => a.organization_id === item.organization_id
-          ) || {};
-
-        return {
-          "Organization Name": orgInfo.name || "",
-          "Is Verified Organization": orgVerificationInfo?.isVerifiedOrg
-            ? "Yes"
-            : "No",
-          "File Name": fileInfo?.fileName,
-          "File Path": fileInfo?.path,
-          "Is Verified Document": item?.isVerifiedDocument,
-          Created: item?.created_on
-            ? moment(item.created_on).format("DD MMMM, YYYY hh:mm A")
-            : null,
-          Message: item.message,
-          "Error Message": "",
-          integrantId: item.integrantId,
-          OrganizationExhibitId: item.OrganizationExhibitId,
-          documentHashId: item.documentHashId,
-          labDocumentHashId: item.labDocumentHashId,
-          labOrgName: item.labOrgName,
-        };
-      });
-
-      finalResult.push(...mappedResult);
-
-      io.sockets.emit("documentVerificationUpdate", {
-        verifiedFilesCount: finalResult.length,
-      });
-
-      if (
-        response?.status === "1" &&
-        !response.data?.userHaveDocVerificationLimit
-      ) {
-        errorMsg = response.data?.errorMsg;
-        break;
+        if (response?.status === "1") {
+          finalResult = [
+            ...finalResult,
+            ...response?.data?.data?.map((item) => {
+              const fileInfo = documentHashData?.filter(
+                (a) => a?.hash === item?.hash
+              )[0];
+              const orgInfo = item?.organization_id
+                ? selectedOrganizations?.filter(
+                    (a) => a?.id === item?.organization_id
+                  )[0]
+                : null;
+              const orgVerificationInfo =
+                docOrgVerificationData?.filter(
+                  (a) => a?.organization_id === item?.organization_id
+                )[0] || null;
+              return {
+                "Organization Name": orgInfo?.name || "",
+                "Is Verified Organization": orgVerificationInfo
+                  ? orgVerificationInfo?.isVerifiedOrg
+                    ? "Yes"
+                    : "No"
+                  : "",
+                "File Name": fileInfo?.fileName,
+                "File Path": fileInfo?.path,
+                "Is Verified Document": item?.isVerifiedDocument,
+                Created: item?.created_on
+                  ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                  : null,
+                Message: item?.message,
+                "Error Message": "",
+                integrantId: item?.integrantId,
+                OrganizationExhibitId: item?.OrganizationExhibitId,
+                documentHashId: item?.documentHashId,
+                labDocumentHashId: item?.labDocumentHashId,
+                labOrgName: item.labOrgName,
+              };
+            }),
+          ];
+          io.sockets.emit("documentVerificationUpdate", {
+            verifiedFilesCount: finalResult?.length,
+          });
+          // Stop document verification if subscription limit
+          if (!response?.data?.userHaveDocVerificationLimit) {
+            errorMsg = response?.data?.errorMsg;
+            break;
+          }
+        } else if (response?.status === "2") {
+          errorMsg = response?.message;
+          if (response?.data?.data) {
+            finalResult = [
+              ...finalResult,
+              ...response?.data?.data?.map((item) => {
+                const fileInfo = documentHashData?.filter(
+                  (a) => a?.hash === item?.hash
+                )[0];
+                const orgInfo = item?.organization_id
+                  ? selectedOrganizations?.filter(
+                      (a) => a?.id === item?.organization_id
+                    )[0]
+                  : null;
+                const orgVerificationInfo =
+                  docOrgVerificationData?.filter(
+                    (a) => a?.organization_id === item?.organization_id
+                  )[0] || null;
+                return {
+                  "Organization Name": orgInfo?.name || "",
+                  "Is Verified Organization": orgVerificationInfo
+                    ? orgVerificationInfo?.isVerifiedOrg
+                      ? "Yes"
+                      : "No"
+                    : "",
+                  "File Name": fileInfo?.fileName,
+                  "File Path": fileInfo?.path,
+                  "Is Verified Document": item?.isVerifiedDocument,
+                  Created: item?.created_on
+                    ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                    : null,
+                  Message: item?.message,
+                  "Error Message": "",
+                  integrantId: item?.integrantId,
+                  OrganizationExhibitId: item?.OrganizationExhibitId,
+                  documentHashId: item?.documentHashId,
+                  labDocumentHashId: item?.labDocumentHashId,
+                  labOrgName: item.labOrgName,
+                };
+              }),
+            ];
+          }
+          io.sockets.emit("documentVerificationUpdate", {
+            verifiedFilesCount: finalResult?.length,
+          });
+          break;
+        } else {
+          finalResult = [
+            ...finalResult,
+            ...arr?.map((item) => {
+              return {
+                "Organization Name": "",
+                "Is Verified Organization": "",
+                "File Name": item?.fileName,
+                "File Path": item?.path,
+                "Is Verified Document": null,
+                Created: null,
+                Message: "",
+                "Error Message": `Something went wrong! We are not able to verify the file which located in this location ${item?.path}.`,
+                integrantId: null,
+                OrganizationExhibitId: null,
+                documentHashId: null,
+                labDocumentHashId: null,
+                labOrgName: null,
+              };
+            }),
+          ];
+          io.sockets.emit("documentVerificationUpdate", {
+            verifiedFilesCount: finalResult?.length,
+          });
+        }
       }
-      if (response?.status === "2") break;
     }
 
     // 3. Merge Data Efficiently
@@ -379,6 +455,7 @@ exports.getVerifyDocumentCount = async (req, res) => {
     const previousData = newData.map((doc) => ({
       "Organization Name": doc?.org_name,
       Message: doc?.message,
+      hash: doc.hash,
       "Error Message": doc?.err_message,
       "Is Verified Organization": doc.is_vrf_org,
       "File Name": doc.fileName,

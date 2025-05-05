@@ -17,6 +17,8 @@ const StyledBox = styled(Box, {
   margin: "0 auto",
   borderRadius: 10,
   border: `2px solid ${isExpired ? errorColor : theme.palette.primary.main}`,
+  fontSize: "0.85rem",
+  lineHeight: 1.4,
 
   ...(govEntityEmpty && {
     "&::before, &::after": {
@@ -44,14 +46,14 @@ const StyledBox = styled(Box, {
       isExpired ? errorColor : theme.palette.primary.main
     }`,
     background: isExpired ? "#FFAA1D30" : "#28A74530",
-    "& > h5": {
+    "& > h6": {
       textAlign: "center",
       fontWeight: 700,
       width: "calc(100% - 65px)",
     },
     "& > svg": {
-      width: 50,
-      height: 50,
+      width: 40,
+      height: 40,
       color: isExpired ? errorColor : theme.palette.primary.main,
       marginLeft: 15,
     },
@@ -64,7 +66,7 @@ const StyledBox = styled(Box, {
     alignItems: "center",
     justifyContent: "center",
     "& > p": {
-      marginBottom: 10,
+      marginBottom: 8,
       textAlign: "center",
       "& > span": {
         fontWeight: 700,
@@ -86,11 +88,12 @@ const StyledBox = styled(Box, {
     justifyContent: "center",
     borderTop: `2px solid ${theme.palette.borderColor}`,
     "& > div:not(:last-of-type)": {
-      marginBottom: 20,
+      marginBottom: 16,
     },
     "& p": {
       textAlign: "center",
       wordBreak: "break-word",
+      margin: "2px 0",
       "&:first-of-type": {
         fontWeight: 700,
       },
@@ -114,19 +117,20 @@ export default function VerifiedDocumentInfo({
   const formattedDate = verified_at
     ? moment(verified_at).format("MM/DD/YYYY")
     : "N/A";
+
   return (
     <StyledBox isExpired={is_expired} govEntityEmpty={!govEntity?.length}>
       <Box>
-        <Typography variant="h5">Document Status: Verified</Typography>
+        <Typography variant="subtitle1">Document Status: Verified</Typography>
         <CheckCircleOutlinedIcon />
       </Box>
 
       <Box>
-        <Typography variant="body1">
+        <Typography variant="body2">
           This document is verified as the original, unaltered document as
           submitted by:
         </Typography>
-        <Typography variant="body1">
+        <Typography variant="body2">
           <span>{organization_name}</span>
           {Boolean(domain_name) && (
             <>
@@ -143,27 +147,32 @@ export default function VerifiedDocumentInfo({
             </>
           )}
         </Typography>
-        <Typography variant="body2">on</Typography>
-        <Typography variant="body1">{formattedDate}</Typography>
+        <Typography variant="caption">on</Typography>
+        <Typography variant="body2">{formattedDate}</Typography>
       </Box>
 
       <Box>
         <Box>
-          <Typography variant="body1">Document Information</Typography>
-          <Typography variant="body1">Document ID: {document_id}</Typography>
+          <Typography variant="body2">Document Information</Typography>
+          <Typography variant="caption">Document ID: {document_id}</Typography>
         </Box>
         <Box>
-          <Typography variant="body1">Digitally Signed By</Typography>
-          <Typography variant="body1">
+          <Typography variant="body2">Digitally Signed By</Typography>
+          <Typography variant="caption">
             Organization Name: {organization_name}
           </Typography>
-          <Typography variant="body1">
+          <Typography variant="caption">
             Organization ID: {organization_id}
           </Typography>
         </Box>
         <Box>
-          <Typography variant="body1">Block Location</Typography>
-          <Typography variant="body1">Block ID: {batch_id?.IonText}</Typography>
+          <Typography variant="body2">Block Location</Typography>
+          <Typography
+            sx={{ display: "flex", textAlign: "center" }}
+            variant="caption"
+          >
+            Block ID: {batch_id?.IonText}
+          </Typography>
         </Box>
       </Box>
     </StyledBox>

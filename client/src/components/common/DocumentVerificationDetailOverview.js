@@ -11,6 +11,7 @@ import {
   CircularProgress,
   Box,
   styled,
+  Grid,
 } from "@mui/material";
 import React, { useEffect } from "react";
 import { connect, useDispatch, useSelector } from "react-redux";
@@ -26,6 +27,8 @@ import ExpiredDocument from "../common/BlockchainResults/ExpiredDocument";
 import VerifiedDocumentInfo from "../common/BlockchainResults/VerifiedDocumentInfo";
 import VerifiedOrganizationInfo from "../common/BlockchainResults/VerifiedOrganizationInfo";
 import HashNotVerifiedErrorMsg from "../common/BlockchainResults/HashNotVerifiedErrorMsg";
+import LockIcon from "@mui/icons-material/Lock";
+
 const PrimaryTableRow = styled(TableRow)(({ theme }) => ({
   "&>td": {
     border: `1px solid ${theme.palette.borderColor}`,
@@ -89,6 +92,40 @@ const getBlockchainProofs = (data, i = 0) => {
             {!data?.hide_org &&
               (data?.govEntity?.length ? (
                 <>
+                  <Grid container direction="column" alignItems="center">
+                    {/* Top line */}
+                    <Box
+                      sx={(theme) => ({
+                        width: "2px",
+                        height: "20px",
+                        backgroundColor: theme.palette.primary.main,
+                      })}
+                    />
+
+                    {/* Icon */}
+                    <Grid
+                      sx={(theme) => ({
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        backgroundColor: theme.palette.primary.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: 1,
+                      })}
+                    >
+                      <LockIcon sx={{ color: "white" }} />
+                    </Grid>
+                    {/* Bottom line */}
+                    <Box
+                      sx={(theme) => ({
+                        width: "2px",
+                        height: "20px",
+                        backgroundColor: theme.palette.primary.main,
+                      })}
+                    />
+                  </Grid>
                   <VerifiedOrganizationInfo
                     {...data}
                     onOrganizationClick={(a) =>
@@ -164,11 +201,13 @@ export function DocumentVerificationDetailOverview({
       //     })
       //   );
       // }
-      if (data?.hash) {
+      console.log(data?.hash && data["Is Verified Document"] === "Yes")
+      if (data?.hash && data["Is Verified Document"] === "Yes") {
         dispatch(getBlockChainProofData({ hash: data?.hash }));
       }
     }
   }, [open]);
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogContent>
@@ -286,14 +325,15 @@ export function DocumentVerificationDetailOverview({
             </BlockchainProofContainer>
           </Box>
         )} */}
-        {documentBlockChainProofData.isLoading ? (
-          <Typography display="flex" justifyContent="center" variant="body2">
-            Please wait while we are verifying the document...
-            <CircularProgress size={20} />
-          </Typography>
-        ) : (
-          getBlockchainProofs(documentBlockChainProofData.data)
-        )}
+        {data["Is Verified Document"] === "Yes" &&
+          (documentBlockChainProofData.isLoading ? (
+            <Typography display="flex" justifyContent="center" variant="body2">
+              Please wait while we are verifying the document...
+              <CircularProgress size={20} />
+            </Typography>
+          ) : (
+            getBlockchainProofs(documentBlockChainProofData.data)
+          ))}
         <Typography variant="h6" sx={{ my: 1 }}>
           Document Verification Details
         </Typography>
