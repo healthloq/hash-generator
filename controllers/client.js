@@ -152,7 +152,7 @@ exports.verifyDocuments = async (req, res) => {
       const arr = documentHashData?.slice(i, i + docVerificationLimit);
       if (arr?.length) {
         // verify documents in blockchain
-        const response = await verifyDocument({
+        const response = await verifyDocumentNew({
           hashList: arr?.map((item) => item?.hash),
           organizationIds,
         });
@@ -179,11 +179,7 @@ exports.verifyDocuments = async (req, res) => {
                 )[0] || null;
               return {
                 "Organization Name": orgInfo?.name || "",
-                "Is Verified Organization": orgVerificationInfo
-                  ? orgVerificationInfo?.isVerifiedOrg
-                    ? "Yes"
-                    : "No"
-                  : "",
+                "Is Verified Organization": item?.isOrganizationVerified,
                 "File Name": fileInfo?.fileName,
                 "File Path": fileInfo?.path,
                 "Is Verified Document": item?.isVerifiedDocument,
@@ -228,11 +224,7 @@ exports.verifyDocuments = async (req, res) => {
                   )[0] || null;
                 return {
                   "Organization Name": orgInfo?.name || "",
-                  "Is Verified Organization": orgVerificationInfo
-                    ? orgVerificationInfo?.isVerifiedOrg
-                      ? "Yes"
-                      : "No"
-                    : "",
+                  "Is Verified Organization": item?.isOrganizationVerified,
                   "File Name": fileInfo?.fileName,
                   "File Path": fileInfo?.path,
                   "Is Verified Document": item?.isVerifiedDocument,
