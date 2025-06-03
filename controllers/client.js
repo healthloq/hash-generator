@@ -13,6 +13,10 @@ const {
   verifyDocumentOrganizations,
   updateDocumentEffectiveDateIntoHealthLOQ,
   verifyDocumentNew,
+  productListForMetaData,
+  organizationListForMetaData,
+  locationListForMetaData,
+  productBatchListForMetaData,
 } = require("../services/healthloq");
 const fs = require("fs");
 const path = require("path");
@@ -506,6 +510,83 @@ exports.viewFile = (req, res) => {
     });
   } catch (error) {
     res.status(200).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getAllOrganization = async (req, res) => {
+  try {
+    const healthloqRes = await organizationListForMetaData(req.body);
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getOrgLocation = async (req, res) => {
+  try {
+    const healthloqRes = await locationListForMetaData(req.body);
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+    
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getProduct = async (req, res) => {
+  try {
+    const healthloqRes = await productListForMetaData(req.body);
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getProductBatch = async (req, res) => {
+  try {
+    const healthloqRes = await productBatchListForMetaData(req.body);
+
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
       status: "0",
       message: error.message,
     });

@@ -22,6 +22,18 @@ import {
   SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
   ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
   START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  START_GET_ORGANIZATION_LIST,
+  SUCCESS_GET_ORGANIZATION_LIST,
+  ERROR_GET_ORGANIZATION_LIST,
+  START_GET_ORGANIZATION_LOCATION_LIST,
+  SUCCESS_GET_ORGANIZATION_LOCATION_LIST,
+  ERROR_GET_ORGANIZATION_LOCATION_LIST,
+  START_GET_PRODUCT_LIST,
+  SUCCESS_GET_PRODUCT_LIST,
+  ERROR_GET_PRODCUT_LIST,
+  START_GET_PRODUCT_BATCH_LIST,
+  SUCCESS_GET_PRODUCT_BATCH_LIST,
+  ERROR_GET_PRODUCT_BATCH_LIST,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -114,6 +126,22 @@ const initialState = {
     producer: "",
   },
   documentBlockChainProofData: {
+    isLoading: false,
+    data: null,
+  },
+  organizationListMetaData: {
+    isLoading: false,
+    data: null,
+  },
+  organizationLocationListMetaData: {
+    isLoading: false,
+    data: null,
+  },
+  productListMetaData: {
+    isLoading: false,
+    data: null,
+  },
+  productBatchListMetaData: {
     isLoading: false,
     data: null,
   },
@@ -489,6 +517,114 @@ const Reducer = (
       return {
         ...previousState,
         documentBlockChainProofData: {
+          isLoading: false,
+        },
+      };
+    }
+
+    // ---------------- ORGANIZATION LIST ----------------
+    case START_GET_ORGANIZATION_LIST: {
+      return {
+        ...previousState,
+        organizationListMetaData: {
+          isLoading: true,
+        },
+      };
+    }
+    case SUCCESS_GET_ORGANIZATION_LIST: {
+      return {
+        ...previousState,
+        organizationListMetaData: {
+          isLoading: false,
+          data: payload.data,
+        },
+      };
+    }
+    case ERROR_GET_ORGANIZATION_LIST: {
+      return {
+        ...previousState,
+        organizationListMetaData: {
+          isLoading: false,
+        },
+      };
+    }
+
+    // ---------- ORGANIZATION LOCATION LIST ----------
+    case START_GET_ORGANIZATION_LOCATION_LIST: {
+      return {
+        ...previousState,
+        organizationLocationListMetaData: {
+          isLoading: true,
+        },
+      };
+    }
+    case SUCCESS_GET_ORGANIZATION_LOCATION_LIST: {
+      return {
+        ...previousState,
+        organizationLocationListMetaData: {
+          isLoading: false,
+          data: payload.data,
+        },
+      };
+    }
+    case ERROR_GET_ORGANIZATION_LOCATION_LIST: {
+      return {
+        ...previousState,
+        organizationLocationListMetaData: {
+          isLoading: false,
+        },
+      };
+    }
+
+    // ---------- PRODUCT LIST ----------
+    case START_GET_PRODUCT_LIST: {
+      return {
+        ...previousState,
+        productListMetaData: {
+          isLoading: true,
+        },
+      };
+    }
+    case SUCCESS_GET_PRODUCT_LIST: {
+      return {
+        ...previousState,
+        productListMetaData: {
+          isLoading: false,
+          data: payload.data,
+        },
+      };
+    }
+    case ERROR_GET_PRODCUT_LIST: {
+      return {
+        ...previousState,
+        productListMetaData: {
+          isLoading: false,
+        },
+      };
+    }
+
+    // ---------- PRODUCT BATCH LIST ----------
+    case START_GET_PRODUCT_BATCH_LIST: {
+      return {
+        ...previousState,
+        productBatchListMetaData: {
+          isLoading: true,
+        },
+      };
+    }
+    case SUCCESS_GET_PRODUCT_BATCH_LIST: {
+      return {
+        ...previousState,
+        productBatchListMetaData: {
+          isLoading: false,
+          data: payload.data,
+        },
+      };
+    }
+    case ERROR_GET_PRODUCT_BATCH_LIST: {
+      return {
+        ...previousState,
+        productBatchListMetaData: {
           isLoading: false,
         },
       };

@@ -21,5 +21,18 @@ export const API = {
     );
   },
   getDocumentHashBlockChainProofNew: async (params) =>
-    await healthloqPost("/client-app/verify-coa-document-doc-tool",params),
+    await healthloqPost("/client-app/verify-coa-document-doc-tool", params),
+  getOrganizationList: async (params) => {
+    return await get(`/api/client/get-organization-list`);
+  },
+  getOrganizationLocationList: async (params) => {
+    console.log(params);
+    return await post(`/api/client/get-org-location-list`, params);
+  },
+  getProductList: async (params) => {
+    return await post(`/api/client/get-product-list`, params);
+  },
+  getProductBatchList: async (params) => {
+    return await post(`/api/client/get-product-batch-list`, params);
+  },
 };

@@ -234,3 +234,123 @@ exports.updateDocumentEffectiveDateIntoHealthLOQ = async (data = {}) => {
     };
   }
 };
+
+exports.productListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/integrant-doc-tool/product-list`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return {
+      status: "1",
+      data: response.data,
+    };
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.organizationListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/organization/get-org`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+
+    return response?.data;
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.locationListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/location/location-suggestions`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+
+    return {
+      status: "1",
+      data: response.data,
+    };
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.productBatchListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/integrant-doc-tool/search`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+
+    return {
+      status: "1",
+      data: response.data,
+    };
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
