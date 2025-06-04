@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Body, MuiLinearProgress } from "../components/common";
-import { Typography, Box, Button, Snackbar, IconButton, styled } from "@mui/material";
+import {
+  Typography,
+  Box,
+  Button,
+  Snackbar,
+  IconButton,
+  styled,
+} from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { Link } from "../components";
 import moment from "moment";
@@ -20,7 +27,7 @@ const LastSyncedDataList = styled(Box)(({ theme }) => ({
       marginRight: 5,
     },
   },
-}))
+}));
 export function Home({
   getDashboardOverviewData,
   dashboardOverview,
@@ -85,10 +92,7 @@ export function Home({
           </Link>
         )}
       </Box>
-      <LastSyncedDataList
-        display={"flex"}
-        flexDirection="column"
-      >
+      <LastSyncedDataList display={"flex"} flexDirection="column">
         <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
           <Typography variant="h6">Last synced:</Typography>
           <Typography variant="body2">
@@ -106,18 +110,18 @@ export function Home({
       </LastSyncedDataList>
       {(!publisherDataDashboard?.organization?.ignore_threshold ||
         publisherDataDashboard?.organization?.ignore_threshold === 0) && (
-          <Box sx={{ my: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              Your current month document publish limit overview
-            </Typography>
-            <MuiLinearProgress
-              {...{
-                loading: subscriptionDetails?.isLoading,
-                ...linearProgressData,
-              }}
-            />
-          </Box>
-        )}
+        <Box sx={{ my: 2 }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Your current month document publish limit overview
+          </Typography>
+          <MuiLinearProgress
+            {...{
+              loading: subscriptionDetails?.isLoading,
+              ...linearProgressData,
+            }}
+          />
+        </Box>
+      )}
       <EnhancedTable
         tableTitle="Synced Files"
         headCells={syncedFilesHeaders}
@@ -144,7 +148,7 @@ export function Home({
               variant="contained"
               onClick={() => setOpenUpdateEffectiveDateDialog(true)}
             >
-              Edit Effective Date
+              Edit File Metadata
             </Button>
           </>
         }

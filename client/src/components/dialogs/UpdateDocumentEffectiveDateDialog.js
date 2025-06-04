@@ -10,6 +10,9 @@ import {
   styled,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Grid,
 } from "@mui/material";
 import {
   getOrganizationListMetaData,
@@ -33,7 +36,13 @@ const DateTextField = styled(TextField)(({ theme }) => ({
     minHeight: 40,
     padding: "0 15px",
   },
-}))
+}));
+
+const SelectBoxDiv = styled(Grid)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+}));
 const UpdateDocumentEffectiveDateDialog = ({
   open = false,
   handleClose = () => {},
@@ -61,6 +70,10 @@ const UpdateDocumentEffectiveDateDialog = ({
     await updateDocumentEffectiveDate({
       effective_date: effectiveDate,
       hashList: selectedDocuments,
+      meta_data_org_id: selectOption.organization_id ?? null,
+      meta_data_org_location_id: selectOption.location_id ?? null,
+      meta_data_product_id: selectOption.product_id ?? null,
+      meta_data_product_batch_id: selectOption.product_batch_id ?? null,
     });
     setSelected([]);
     handleClose();
@@ -70,43 +83,48 @@ const UpdateDocumentEffectiveDateDialog = ({
     if (open) {
       setEffectiveDate("");
       getOrganizationListMetaData();
+      setSelectOption({
+        organization_id: null,
+        location_id: null,
+        product_id: null,
+        product_batch_id: null,
+      });
     }
   }, [open]);
 
   const handleSelectOrganization = async (event) => {
     const { value } = event.target;
-    await getOrganizationLocationMetaData({ organization_id: value });
     setSelectOption((prev) => ({
       organization_id: value,
     }));
+    await getOrganizationLocationMetaData({ organization_id: value });
   };
 
   const handleSelectLocation = async (event) => {
     const { value } = event.target;
-    await getProductListMetaData({
-      organization_id: selectOption.organization_id,
-      location_id: value,
-    });
     setSelectOption((prev) => ({
       ...prev,
       location_id: value,
     }));
+    await getProductListMetaData({
+      organization_id: selectOption.organization_id,
+      location_id: value,
+    });
   };
 
   const handleSelectProduct = async (event) => {
     const { value } = event.target;
 
+    setSelectOption((prev) => ({
+      ...prev,
+      product_id: value,
+    }));
     await getProductBatchListMetaData({
       integrant_type_id: value,
       organization_id: selectOption.organization_id,
       offset: 0,
       limit: null,
     });
-
-    setSelectOption((prev) => ({
-      ...prev,
-      product_id: value,
-    }));
   };
 
   const handleSelectProductBatch = async (event) => {
@@ -133,105 +151,188 @@ const UpdateDocumentEffectiveDateDialog = ({
             onChange={(e) => setEffectiveDate(e.target.value)}
           />
         </div>
-        <div>
-          <Select
-            label="Organization"
-            fullWidth
-            value={selectOption.organization_id}
-            onChange={handleSelectOrganization}
-            MenuProps={{
-              anchorOrigin: {
-                vertical: "top",
-                horizontal: "right",
-              },
-              transformOrigin: {
-                vertical: "top",
-                horizontal: "right",
-              },
-            }}
-          >
-            {(organizationListMetaData.data || []).map((org) => (
-              <MenuItem value={org.id}>{org.name}</MenuItem>
-            ))}
-          </Select>
-        </div>
-
-        {selectOption.organization_id &&
-          Array.isArray(organizationLocationListMetaData.data) && (
+        <SelectBoxDiv>
+          <FormControl fullWidth>
+            <InputLabel id="organization-label">Organization</InputLabel>
             <Select
-              label="Location"
-              fullWidth
-              value={selectOption.location_id}
-              onChange={handleSelectLocation}
+              labelId="organization-label"
+              value={selectOption.organization_id}
+              onChange={handleSelectOrganization}
+              label="Organization"
               MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: "auto",
+                  },
+                },
                 anchorOrigin: {
-                  vertical: "top",
-                  horizontal: "right",
+                  vertical: "bottom",
+                  horizontal: "left",
                 },
                 transformOrigin: {
                   vertical: "top",
-                  horizontal: "right",
+                  horizontal: "left",
                 },
+                getContentAnchorEl: null,
               }}
             >
-              {(organizationLocationListMetaData.data || []).map((location) => (
-                <MenuItem value={location.id}>
-                  {location.description} - {location.line_1} {location.line_2}{" "}
-                  {location.city}
+              {organizationListMetaData?.data?.length > 0 ? (
+                (organizationListMetaData.data || []).map((org) => (
+                  <MenuItem key={org.id} value={org.id}>
+                    {org.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled value={null}>
+                  Organization Not found
                 </MenuItem>
-              ))}
+              )}
             </Select>
+          </FormControl>
+          {organizationLocationListMetaData.isLoading && (
+            <CircularProgress size={20} />
+          )}
+        </SelectBoxDiv>
+
+        {selectOption.organization_id &&
+          Array.isArray(organizationLocationListMetaData.data) && (
+            <SelectBoxDiv>
+              <FormControl fullWidth>
+                <InputLabel>Organization Location</InputLabel>
+                <Select
+                  label="Organization Location"
+                  fullWidth
+                  value={selectOption.location_id}
+                  onChange={handleSelectLocation}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflowY: "auto",
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: "bottom",
+                      horizontal: "left",
+                    },
+                    transformOrigin: {
+                      vertical: "top",
+                      horizontal: "left",
+                    },
+                    getContentAnchorEl: null,
+                  }}
+                >
+                  {organizationLocationListMetaData?.data?.length > 0 ? (
+                    (organizationLocationListMetaData.data || []).map(
+                      (location) => (
+                        <MenuItem value={location.id}>
+                          {location.description} - {location.line_1}{" "}
+                          {location.line_2} {location.city}
+                        </MenuItem>
+                      )
+                    )
+                  ) : (
+                    <MenuItem disabled value={null}>
+                      Organization Location not found
+                    </MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+              {productListMetaData.isLoading && <CircularProgress size={20} />}
+            </SelectBoxDiv>
           )}
 
         {selectOption.organization_id &&
           selectOption.location_id &&
           Array.isArray(productListMetaData.data) && (
-            <Select
-              label="Product"
-              fullWidth
-              value={selectOption.product_id}
-              onChange={handleSelectProduct}
-              MenuProps={{
-                anchorOrigin: {
-                  vertical: "top",
-                  horizontal: "right",
-                },
-                transformOrigin: {
-                  vertical: "top",
-                  horizontal: "right",
-                },
-              }}
-            >
-              {(productListMetaData.data || []).map((product) => (
-                <MenuItem value={product.id}>{product.title}</MenuItem>
-              ))}
-            </Select>
+            <SelectBoxDiv>
+              <FormControl fullWidth>
+                <InputLabel>Product</InputLabel>
+                <Select
+                  label="Product"
+                  fullWidth
+                  value={selectOption.product_id}
+                  onChange={handleSelectProduct}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflowY: "auto",
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: "bottom",
+                      horizontal: "left",
+                    },
+                    transformOrigin: {
+                      vertical: "top",
+                      horizontal: "left",
+                    },
+                    getContentAnchorEl: null,
+                  }}
+                >
+                  {productListMetaData?.data?.length > 0 ? (
+                    (productListMetaData.data || []).map((product) => (
+                      <MenuItem value={product.id}>{product.title}</MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled value={null}>
+                      Product not found
+                    </MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+              {productBatchListMetaData.isLoading && (
+                <CircularProgress size={20} />
+              )}
+            </SelectBoxDiv>
           )}
 
         {selectOption.organization_id &&
           selectOption.location_id &&
           selectOption.product_id &&
           Array.isArray(productBatchListMetaData.data) && (
-            <Select
-              label="Product"
-              fullWidth
-              value={selectOption.product_batch_id}
-              onChange={handleSelectProductBatch}
-              MenuProps={{
-                anchorOrigin: {
-                  vertical: "top",
-                  horizontal: "right",
-                },
-                transformOrigin: {
-                  vertical: "top",
-                  horizontal: "right",
-                },
-              }}
-            >
-              {(productBatchListMetaData.data || []).map((product) => (
-                <MenuItem value={product.id}>{product.external_id}</MenuItem>
-              ))}
-            </Select>
+            <SelectBoxDiv>
+              <FormControl fullWidth>
+                <InputLabel>Product batch</InputLabel>
+                <Select
+                  label="Product batch"
+                  fullWidth
+                  value={selectOption.product_batch_id}
+                  onChange={handleSelectProductBatch}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflowY: "auto",
+                      },
+                    },
+                    anchorOrigin: {
+                      vertical: "bottom",
+                      horizontal: "left",
+                    },
+                    transformOrigin: {
+                      vertical: "top",
+                      horizontal: "left",
+                    },
+                    getContentAnchorEl: null,
+                  }}
+                >
+                  {productBatchListMetaData.data.length > 0 ? (
+                    (productBatchListMetaData.data || []).map((product) => (
+                      <MenuItem value={product.id}>
+                        {product.external_id}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled value={null}>
+                      Prodcut batch not found
+                    </MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+            </SelectBoxDiv>
           )}
       </PrimaryDialogContent>
       <DialogActions className="dialog-actions">
