@@ -82,7 +82,7 @@ export function Home({
         sx={{ mb: 3 }}
       >
         <Typography variant="h3" sx={{ textTransform: "capitalize" }}>
-          Document Authenticator Dashboard
+          Document Protection Dashboard
         </Typography>
         {subscriptionDetails?.subscriptionList?.includes("verifier") && (
           <Link to="/document-verification" underline="none">
@@ -112,7 +112,7 @@ export function Home({
         publisherDataDashboard?.organization?.ignore_threshold === 0) && (
         <Box sx={{ my: 2 }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            Your current month document publish limit overview
+            Your current document count and subscription threshold
           </Typography>
           <MuiLinearProgress
             {...{
