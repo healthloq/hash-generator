@@ -114,7 +114,7 @@ export function VerificationDocumentsOverviewFilter({
           if (selected === "") {
             return "Select Producer";
           }
-          const temp = organizationList?.data.find(
+          const temp = organizationList?.data?.data.find(
             (item) => selected === item?.name
           );
           return temp?.name;
@@ -143,7 +143,7 @@ export function VerificationDocumentsOverviewFilter({
           </Typography>
         </MenuItem>
         {organizationList?.isLoading &&
-          organizationList?.data?.length === 0 && (
+          organizationList?.data?.data?.length === 0 && (
             <MenuItem value={"loading"} disabled>
               <Typography className="notranslate" variant="body2">
                 Loading...
@@ -151,7 +151,7 @@ export function VerificationDocumentsOverviewFilter({
               </Typography>
             </MenuItem>
           )}
-        {organizationList?.data?.map((item, i) => {
+        {organizationList?.data?.data.map((item, i) => {
           return (
             <MenuItem key={i} value={item?.name}>
               <Typography className="notranslate" variant="body2">

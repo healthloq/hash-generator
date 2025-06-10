@@ -29,6 +29,31 @@ export const syncedFilesHeaders = [
     numeric: false,
     label: "Modified",
   },
+  {
+    id: "organization_name",
+    numeric: false,
+    label: "Organization Name",
+  },
+  {
+    id: "location_name",
+    numeric: false,
+    label: "Location Name",
+  },
+  {
+    id: "product_name",
+    numeric: false,
+    label: "Product Name",
+  },
+  {
+    id: "product_batch_name",
+    numeric: false,
+    label: "Product Batch Name",
+  },
+  {
+    id: "expiration_date",
+    numeric: false,
+    label: "Expiration date",
+  },
 ];
 
 export const verifiedDocumentsHeaders = [

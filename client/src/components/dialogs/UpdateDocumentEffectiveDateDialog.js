@@ -65,11 +65,12 @@ const UpdateDocumentEffectiveDateDialog = ({
   getDashboardOverviewData,
 }) => {
   const [effectiveDate, setEffectiveDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
   const [selectOption, setSelectOption] = useState({
-    organization_id: '',
-    location_id: '',
-    product_id: '',
-    product_batch_id: '',
+    organization_id: "",
+    location_id: "",
+    product_id: "",
+    product_batch_id: "",
   });
   const handleSubmit = async () => {
     await updateDocumentEffectiveDate({
@@ -79,6 +80,23 @@ const UpdateDocumentEffectiveDateDialog = ({
       meta_data_org_location_id: selectOption.location_id ?? null,
       meta_data_product_id: selectOption.product_id ?? null,
       meta_data_product_batch_id: selectOption.product_batch_id ?? null,
+      expiration_date: expiryDate ?? null,
+      organization_name:
+        organizationListMetaData.data.find(
+          (org) => org.id === selectOption.organization_id
+        )?.name ?? "",
+      location_name:
+        organizationLocationListMetaData.data.find(
+          (location) => location.id === selectOption.location_id
+        )?.description ?? "",
+      product_name:
+        productListMetaData.data.find(
+          (product) => product.id === selectOption.product_id
+        )?.title ?? "",
+      product_batch_name:
+        productBatchListMetaData.data.find(
+          (batch) => batch.id === selectOption.product_batch_id
+        )?.external_id ?? "",
     });
     await getDashboardOverviewData();
     setSelected([]);
@@ -120,7 +138,12 @@ const UpdateDocumentEffectiveDateDialog = ({
         const findDocument = (dashboardOverview.filteredFiles || []).find(
           (file) => file.hash === selectedDocuments[0]
         );
-
+        if (findDocument.effective_date) {
+          setEffectiveDate(findDocument.effective_date);
+        }
+        if (findDocument.expiration_date) {
+          setEffectiveDate(findDocument.expiration_date);
+        }
         addPreviousData(findDocument);
       } else {
         setSelectOption({
@@ -192,6 +215,19 @@ const UpdateDocumentEffectiveDateDialog = ({
             onChange={(e) => setEffectiveDate(e.target.value)}
           />
         </div>
+        <div>
+          <DateTextField
+            id="date"
+            label="Expiration Date"
+            type="date"
+            required
+            InputLabelProps={{
+              shrink: true,
+            }}
+            value={expiryDate}
+            onChange={(e) => setExpiryDate(e.target.value)}
+          />
+        </div>
         <SelectBoxDiv>
           <FormControl fullWidth>
             <InputLabel id="organization-label">Organization</InputLabel>
@@ -199,6 +235,12 @@ const UpdateDocumentEffectiveDateDialog = ({
               labelId="organization-label"
               value={selectOption.organization_id}
               onChange={handleSelectOrganization}
+              disabled={
+                organizationListMetaData.isLoading ||
+                organizationLocationListMetaData.isLoading ||
+                productListMetaData.isLoading ||
+                productBatchListMetaData.isLoading
+              }
               label="Organization"
               MenuProps={{
                 PaperProps: {

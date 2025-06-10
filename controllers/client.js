@@ -393,10 +393,15 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
         ? {
             ...item,
             effective_date: req.body?.effective_date,
-            organization_id : req.body?.meta_data_org_id,
-            location_id : req.body?.meta_data_org_location_id,
-            product_id : req.body?.meta_data_product_id,
-            product_batch_id : req.body?.meta_data_product_batch_id
+            organization_id: req.body?.meta_data_org_id,
+            location_id: req.body?.meta_data_org_location_id,
+            product_id: req.body?.meta_data_product_id,
+            product_batch_id: req.body?.meta_data_product_batch_id,
+            expiration_date: req.body?.expiration_date,
+            organization_name: req.body?.organization_name,
+            location_name: req.body?.location_name,
+            product_name: req.body?.product_name,
+            product_batch_name: req.body?.product_batch_name,
           }
         : item
     );
@@ -545,7 +550,7 @@ exports.getOrgLocation = async (req, res) => {
     if (healthloqRes.status === "1") {
       return res.status(200).json(healthloqRes);
     }
-    
+
     return res.status(422).json({
       status: "0",
       message: "Something went wrong",

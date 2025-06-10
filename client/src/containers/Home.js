@@ -135,6 +135,13 @@ export function Home({
             ? moment(file?.effective_date).format("MM/DD/YYYY")
             : "",
           id: file?.hash,
+          organization_name: file.organization_name ?? "-",
+          location_name: file.location_name ?? "-",
+          product_name: file.product_name ?? "-",
+          product_batch_name: file.product_batch_name ?? "-",
+          expiration_date: file?.expiration_date
+            ? moment(file?.expiration_date).format("MM/DD/YYYY")
+            : "-",
         }))}
         tableId="syncedFilesFilter"
         isLoading={dashboardOverview?.isLoading}
