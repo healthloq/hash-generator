@@ -393,6 +393,10 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
         ? {
             ...item,
             effective_date: req.body?.effective_date,
+            organization_id : req.body?.meta_data_org_id,
+            location_id : req.body?.meta_data_org_location_id,
+            product_id : req.body?.meta_data_product_id,
+            product_batch_id : req.body?.meta_data_product_batch_id
           }
         : item
     );

@@ -161,6 +161,7 @@ export function Home({
         }}
         selectedDocuments={selected}
         setSelected={setSelected}
+        dashboardOverview={dashboardOverview}
       />
       <Snackbar
         anchorOrigin={{ vertical: "top", horizontal: "right" }}

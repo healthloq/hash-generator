@@ -31,6 +31,7 @@ import {
   START_GET_PRODUCT_BATCH_LIST,
   SUCCESS_GET_PRODUCT_BATCH_LIST,
   ERROR_GET_PRODUCT_BATCH_LIST,
+  RESET_STATE_META_DATA_STATE,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -396,4 +397,10 @@ export const getProductBatchListMetaData = (params) => async (dispatch) => {
       type: ERROR_GET_PRODUCT_BATCH_LIST,
     });
   }
+};
+
+export const resetMetaDataState = () => async (dispatch) => {
+  dispatch({
+    type: RESET_STATE_META_DATA_STATE,
+  });
 };

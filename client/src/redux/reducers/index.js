@@ -34,6 +34,7 @@ import {
   START_GET_PRODUCT_BATCH_LIST,
   SUCCESS_GET_PRODUCT_BATCH_LIST,
   ERROR_GET_PRODUCT_BATCH_LIST,
+  RESET_STATE_META_DATA_STATE,
 } from "../actionTypes";
 import { abbrNum } from "../../utils";
 
@@ -626,6 +627,24 @@ const Reducer = (
         ...previousState,
         productBatchListMetaData: {
           isLoading: false,
+        },
+      };
+    }
+
+    case RESET_STATE_META_DATA_STATE: {
+      return {
+        ...previousState,
+        organizationLocationListMetaData: {
+          isLoading: false,
+          data: null,
+        },
+        productListMetaData: {
+          isLoading: false,
+          data: null,
+        },
+        productBatchListMetaData: {
+          isLoading: false,
+          data: null,
         },
       };
     }
