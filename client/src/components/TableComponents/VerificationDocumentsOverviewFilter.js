@@ -151,7 +151,7 @@ export function VerificationDocumentsOverviewFilter({
               </Typography>
             </MenuItem>
           )}
-        {organizationList?.data?.data.map((item, i) => {
+        {(organizationList?.data?.data || []).map((item, i) => {
           return (
             <MenuItem key={i} value={item?.name}>
               <Typography className="notranslate" variant="body2">
