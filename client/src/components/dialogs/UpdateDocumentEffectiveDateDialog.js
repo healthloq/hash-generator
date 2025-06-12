@@ -82,19 +82,19 @@ const UpdateDocumentEffectiveDateDialog = ({
       meta_data_product_batch_id: selectOption.product_batch_id ?? null,
       expiration_date: expiryDate ?? null,
       organization_name:
-        organizationListMetaData.data.find(
+        (organizationListMetaData?.data || []).find(
           (org) => org.id === selectOption.organization_id
         )?.name ?? "",
       location_name:
-        organizationLocationListMetaData.data.find(
+        (organizationLocationListMetaData?.data || []).find(
           (location) => location.id === selectOption.location_id
         )?.description ?? "",
       product_name:
-        productListMetaData.data.find(
+        (productListMetaData?.data || []).find(
           (product) => product.id === selectOption.product_id
         )?.title ?? "",
       product_batch_name:
-        productBatchListMetaData.data.find(
+        (productBatchListMetaData?.data || []).find(
           (batch) => batch.id === selectOption.product_batch_id
         )?.external_id ?? "",
     });
@@ -132,6 +132,7 @@ const UpdateDocumentEffectiveDateDialog = ({
   useEffect(() => {
     if (open) {
       setEffectiveDate("");
+      setExpiryDate("");
       getOrganizationListMetaData();
       resetMetaDataState();
       if (selectedDocuments.length === 1) {
@@ -142,7 +143,7 @@ const UpdateDocumentEffectiveDateDialog = ({
           setEffectiveDate(findDocument.effective_date);
         }
         if (findDocument.expiration_date) {
-          setEffectiveDate(findDocument.expiration_date);
+          setExpiryDate(findDocument.expiration_date);
         }
         addPreviousData(findDocument);
       } else {

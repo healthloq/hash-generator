@@ -392,6 +392,15 @@ exports.generateHashForPublisher = async (
             state,
             createdAt: new Date(),
             effective_date: moment("9999-12-31", "YYYY-MM-DD"),
+            organization_id: "",
+            location_id: "",
+            product_id: "",
+            product_batch_id: "",
+            expiration_date: moment("9999-12-31", "YYYY-MM-DD"),
+            organization_name: null,
+            location_name: null,
+            product_name: null,
+            product_batch_name: null,
           });
           if (arr?.length === 500) {
             lastSyncedFile = item?.name;
@@ -515,7 +524,9 @@ exports.getSyncData = async (syncedData = null) => {
         hashList = hashList?.slice(0, hashList?.length - extraDocLength);
       }
     }
-    let newData = syncedData?.concat(latestData || []);
+
+    const updateData = latestData.filter((data) => !syncedhash.includes(data.hash) )
+    let newData = syncedData?.concat(updateData || []);
     let syncStatus = null;
     if (hashList?.length || deletedHashList?.length) {
       syncStatus = await syncHash({

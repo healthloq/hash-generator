@@ -398,10 +398,18 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
             product_id: req.body?.meta_data_product_id,
             product_batch_id: req.body?.meta_data_product_batch_id,
             expiration_date: req.body?.expiration_date,
-            organization_name: req.body?.organization_name,
-            location_name: req.body?.location_name,
-            product_name: req.body?.product_name,
-            product_batch_name: req.body?.product_batch_name,
+            organization_name:
+              req.body?.organization_name !== ""
+                ? req.body?.organization_name
+                : null,
+            location_name:
+              req.body?.location_name !== "" ? req.body?.location_name : null,
+            product_name:
+              req.body?.product_name !== "" ? req.body?.product_name : null,
+            product_batch_name:
+              req.body?.product_batch_name !== ""
+                ? req.body?.product_batch_name
+                : null,
           }
         : item
     );
