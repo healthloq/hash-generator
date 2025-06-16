@@ -30,6 +30,9 @@ exports.syncHash = async (data) => {
       }
     }
   } catch (error) {
+    if (error.response) {
+      console.log(`API Error: ${error.response.status} - ${error.response.statusText}`)
+    }
     console.log("sync hash with healthloq catch block", error);
   }
   return response?.data?.status || "0";
@@ -49,6 +52,13 @@ exports.verifyDocument = async (params) => {
     return response?.data;
   } catch (error) {
     console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -56,6 +66,33 @@ exports.verifyDocument = async (params) => {
   }
 };
 
+exports.verifyDocumentNew = async (params) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/document-hash/verify-document-doc-tool`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
 exports.verifyDocumentOrganizations = async (params) => {
   try {
     const response = await axios.post(
@@ -70,6 +107,13 @@ exports.verifyDocumentOrganizations = async (params) => {
     return response?.data;
   } catch (error) {
     console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -90,6 +134,13 @@ exports.getSubscriptionDetail = async () => {
     return response?.data;
   } catch (error) {
     console.log(error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -114,6 +165,13 @@ exports.syncDocToolLogs = async (data = {}) => {
     return response?.data;
   } catch (error) {
     console.log("syncDocToolLogs => ", error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -135,6 +193,13 @@ exports.publisherScriptIsRunningOrNot = async (data = {}) => {
     return response?.data;
   } catch (error) {
     console.log("publisherScriptIsRunningOrNot => ", error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,
@@ -156,6 +221,133 @@ exports.updateDocumentEffectiveDateIntoHealthLOQ = async (data = {}) => {
     return response?.data;
   } catch (error) {
     console.log("updateDocumentEffectiveDateIntoHealthLOQ => ", error);
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.productListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/integrant-doc-tool/product-list`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return {
+      status: "1",
+      data: response.data,
+    };
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.organizationListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/organization/get-org`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+
+    return response?.data;
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.locationListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/location/location-suggestions`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+
+    return {
+      status: "1",
+      data: response.data,
+    };
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
+    return {
+      status: "0",
+      message: error.message,
+    };
+  }
+};
+
+exports.productBatchListForMetaData = async (data = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/integrant-doc-tool/search`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+
+    return {
+      status: "1",
+      data: response.data,
+    };
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data.message,
+      };
+    }
     return {
       status: "0",
       message: error.message,

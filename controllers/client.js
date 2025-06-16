@@ -12,11 +12,16 @@ const {
   getSubscriptionDetail,
   verifyDocumentOrganizations,
   updateDocumentEffectiveDateIntoHealthLOQ,
+  verifyDocumentNew,
+  productListForMetaData,
+  organizationListForMetaData,
+  locationListForMetaData,
+  productBatchListForMetaData,
 } = require("../services/healthloq");
 const fs = require("fs");
 const path = require("path");
 const moment = require("moment");
-const json2csv = require("json2csv").parse;
+const { Parser } = require("json2csv");
 
 exports.getDashboardData = async (req, res) => {
   const data = await getData();
@@ -69,6 +74,12 @@ exports.getFolderOverviewData = async (req, res) => {
     "File Path": doc.path,
     "Is Verified Document": doc.is_vrf_doc,
     Created: doc.createdAt,
+    labDocumentHashId: doc.labDocumentHashId,
+    documentHashId: doc.documentHashId,
+    OrganizationExhibitId: doc.OrganizationExhibitId,
+    integrantId: doc.integrantId,
+    labOrgName: doc.labOrgName,
+    hash: doc.hash,
   }));
 
   dataCount["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
@@ -101,7 +112,7 @@ exports.getSubscriptionOverview = async (req, res) => {
       ...subscriptionDetails,
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });
@@ -111,34 +122,34 @@ exports.getSubscriptionOverview = async (req, res) => {
 exports.verifyDocuments = async (req, res) => {
   try {
     const { folderPath, selectedOrganizations } = req.body;
-    res.status(200).json({
-      status: "1",
-      data: [],
-    });
+
+    // Send immediate response to client
+    res.status(200).json({ status: "1", data: [] });
+
     global.isVerifierScriptRunning = true;
     console.log("req ===>>>>", req);
     const organizationIds = selectedOrganizations?.map((item) => item?.id);
-    // Verify document organizations
+
+    // 1. Verify document organizations
     let docOrgVerificationData = [];
     try {
-      let response = await verifyDocumentOrganizations({
-        organizationIds,
-      });
-      if (response?.data?.length) {
-        docOrgVerificationData = response?.data;
-      }
+      const response = await verifyDocumentOrganizations({ organizationIds });
+      if (response?.data?.length) docOrgVerificationData = response.data;
     } catch (error) {
       console.log(error);
     }
-    // Verify documents
-    const docVerificationLimit = 100; // No of documents verify at a time
+
+    // 2. Generate hashes
+    const docVerificationLimit = 100;
     let finalResult = [];
     let errorMsg = "";
+
     const {
       data: documentHashData,
       unreadFiles,
       unreadFolders,
     } = await generateHashForVerifier(folderPath);
+
     for (let i = 0; i < documentHashData?.length; i += docVerificationLimit) {
       if (!global.isVerifierScriptRunning) {
         break;
@@ -146,7 +157,7 @@ exports.verifyDocuments = async (req, res) => {
       const arr = documentHashData?.slice(i, i + docVerificationLimit);
       if (arr?.length) {
         // verify documents in blockchain
-        const response = await verifyDocument({
+        const response = await verifyDocumentNew({
           hashList: arr?.map((item) => item?.hash),
           organizationIds,
           otherData: arr.map((data) => ({
@@ -158,6 +169,7 @@ exports.verifyDocuments = async (req, res) => {
           errorMsg = response?.message;
           break;
         }
+
         if (response?.status === "1") {
           finalResult = [
             ...finalResult,
@@ -176,11 +188,7 @@ exports.verifyDocuments = async (req, res) => {
                 )[0] || null;
               return {
                 "Organization Name": orgInfo?.name || "",
-                "Is Verified Organization": orgVerificationInfo
-                  ? orgVerificationInfo?.isVerifiedOrg
-                    ? "Yes"
-                    : "No"
-                  : "",
+                "Is Verified Organization": item?.isOrganizationVerified,
                 "File Name": fileInfo?.fileName,
                 "File Path": fileInfo?.path,
                 "Is Verified Document": item?.isVerifiedDocument,
@@ -193,6 +201,7 @@ exports.verifyDocuments = async (req, res) => {
                 OrganizationExhibitId: item?.OrganizationExhibitId,
                 documentHashId: item?.documentHashId,
                 labDocumentHashId: item?.labDocumentHashId,
+                labOrgName: item.labOrgName,
               };
             }),
           ];
@@ -206,43 +215,42 @@ exports.verifyDocuments = async (req, res) => {
           }
         } else if (response?.status === "2") {
           errorMsg = response?.message;
-          finalResult = [
-            ...finalResult,
-            ...response?.data?.data?.map((item) => {
-              const fileInfo = documentHashData?.filter(
-                (a) => a?.hash === item?.hash
-              )[0];
-              const orgInfo = item?.organization_id
-                ? selectedOrganizations?.filter(
-                    (a) => a?.id === item?.organization_id
-                  )[0]
-                : null;
-              const orgVerificationInfo =
-                docOrgVerificationData?.filter(
-                  (a) => a?.organization_id === item?.organization_id
-                )[0] || null;
-              return {
-                "Organization Name": orgInfo?.name || "",
-                "Is Verified Organization": orgVerificationInfo
-                  ? orgVerificationInfo?.isVerifiedOrg
-                    ? "Yes"
-                    : "No"
-                  : "",
-                "File Name": fileInfo?.fileName,
-                "File Path": fileInfo?.path,
-                "Is Verified Document": item?.isVerifiedDocument,
-                Created: item?.created_on
-                  ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
-                  : null,
-                Message: item?.message,
-                "Error Message": "",
-                integrantId: item?.integrantId,
-                OrganizationExhibitId: item?.OrganizationExhibitId,
-                documentHashId: item?.documentHashId,
-                labDocumentHashId: item?.labDocumentHashId,
-              };
-            }),
-          ];
+          if (response?.data?.data) {
+            finalResult = [
+              ...finalResult,
+              ...response?.data?.data?.map((item) => {
+                const fileInfo = documentHashData?.filter(
+                  (a) => a?.hash === item?.hash
+                )[0];
+                const orgInfo = item?.organization_id
+                  ? selectedOrganizations?.filter(
+                      (a) => a?.id === item?.organization_id
+                    )[0]
+                  : null;
+                const orgVerificationInfo =
+                  docOrgVerificationData?.filter(
+                    (a) => a?.organization_id === item?.organization_id
+                  )[0] || null;
+                return {
+                  "Organization Name": orgInfo?.name || "",
+                  "Is Verified Organization": item?.isOrganizationVerified,
+                  "File Name": fileInfo?.fileName,
+                  "File Path": fileInfo?.path,
+                  "Is Verified Document": item?.isVerifiedDocument,
+                  Created: item?.created_on
+                    ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                    : null,
+                  Message: item?.message,
+                  "Error Message": "",
+                  integrantId: item?.integrantId,
+                  OrganizationExhibitId: item?.OrganizationExhibitId,
+                  documentHashId: item?.documentHashId,
+                  labDocumentHashId: item?.labDocumentHashId,
+                  labOrgName: item.labOrgName,
+                };
+              }),
+            ];
+          }
           io.sockets.emit("documentVerificationUpdate", {
             verifiedFilesCount: finalResult?.length,
           });
@@ -264,6 +272,7 @@ exports.verifyDocuments = async (req, res) => {
                 OrganizationExhibitId: null,
                 documentHashId: null,
                 labDocumentHashId: null,
+                labOrgName: null,
               };
             }),
           ];
@@ -273,39 +282,45 @@ exports.verifyDocuments = async (req, res) => {
         }
       }
     }
+
+    // 3. Merge Data Efficiently
     if (global.isVerifierScriptRunning) {
-      const mergeData = [];
-      for (let resultItem of finalResult) {
-        const docVerificationObj = {};
-        for (let hashDataItem of documentHashData) {
-          if (resultItem["File Path"] === hashDataItem.path) {
-            docVerificationObj["fileName"] = hashDataItem.fileName;
-            docVerificationObj["org_name"] = resultItem["Organization Name"];
-            docVerificationObj["err_message"] = resultItem["Error Message"];
-            docVerificationObj["message"] = resultItem["Message"];
-            docVerificationObj["path"] = hashDataItem.path;
-            docVerificationObj["hash"] = hashDataItem.hash;
-            docVerificationObj["state"] = hashDataItem.state;
-            docVerificationObj["createdAt"] = hashDataItem.createdAt;
-            docVerificationObj["is_vrf_org"] =
-              resultItem["Is Verified Organization"];
-            docVerificationObj["is_vrf_doc"] =
-              resultItem["Is Verified Document"];
-          }
-          mergeData.push(docVerificationObj);
-        }
-      }
-      let oldData;
-      oldData = await getData("documentVerificationData");
-      let newData = oldData?.concat(mergeData);
-      setData(newData, "documentVerificationData");
+      const pathMap = new Map(documentHashData.map((d) => [d.path, d]));
+
+      const mergeData = finalResult
+        .map((item) => {
+          const doc = pathMap.get(item["File Path"]);
+          if (!doc) return null;
+          return {
+            fileName: doc.fileName,
+            org_name: item["Organization Name"],
+            err_message: item["Error Message"],
+            message: item["Message"],
+            path: doc.path,
+            hash: doc.hash,
+            state: doc.state,
+            createdAt: doc.createdAt,
+            is_vrf_org: item["Is Verified Organization"],
+            is_vrf_doc: item["Is Verified Document"],
+            labDocumentHashId: item.labDocumentHashId,
+            documentHashId: item.documentHashId,
+            OrganizationExhibitId: item.OrganizationExhibitId,
+            integrantId: item.integrantId,
+            labOrgName: item.labOrgName,
+          };
+        })
+        .filter(Boolean);
+
+      const oldData = await getData("documentVerificationData");
+      await setData([...oldData, ...mergeData], "documentVerificationData");
     }
 
-    if (global.isVerifierScriptRunning) {
-      // Create document verification final csv
-      if (finalResult?.length) {
-        const csv = json2csv(
-          finalResult?.map((item) =>
+    // 4. Stream CSV to File
+    if (global.isVerifierScriptRunning && finalResult.length) {
+      try {
+        const csvParser = new Parser();
+        const csv = csvParser.parse(
+          finalResult.map((item) =>
             filterObj(item, [
               "documentHashId",
               "OrganizationExhibitId",
@@ -313,36 +328,35 @@ exports.verifyDocuments = async (req, res) => {
             ])
           )
         );
-        try {
-          fs.writeFileSync(
-            path.join(
-              __dirname,
-              "../public/exports/document-verification-overview.csv"
-            ),
-            csv
-          );
-        } catch (error) {
-          console.log(error);
-        }
+        const filePath = path.join(
+          __dirname,
+          "../public/exports/document-verification-overview.csv"
+        );
+        fs.writeFileSync(filePath, csv); // Optional: convert this to stream if file size is very large
+      } catch (error) {
+        console.log("CSV write failed", error);
       }
-      // Send final socket for document verfication quick overview and send csv url to export final result
+    }
+
+    // 5. Final Socket Emit
+    if (global.isVerifierScriptRunning) {
       io.sockets.emit("documentVerificationResult", {
-        noOfVerifiedDocumentsWithVerifiedOrg: finalResult?.filter(
+        noOfVerifiedDocumentsWithVerifiedOrg: finalResult.filter(
           (item) =>
             item["Is Verified Organization"] === "Yes" &&
             item["Is Verified Document"] === "Yes"
-        )?.length,
-        noOfVerifiedDocumentsWithUnVerifiedOrg: finalResult?.filter(
+        ).length,
+        noOfVerifiedDocumentsWithUnVerifiedOrg: finalResult.filter(
           (item) =>
             item["Is Verified Organization"] === "No" &&
             item["Is Verified Document"] === "Yes"
-        )?.length,
-        noOfUnverifiedDocuments: finalResult?.filter(
+        ).length,
+        noOfUnverifiedDocuments: finalResult.filter(
           (item) => item["Is Verified Document"] === "No"
-        )?.length,
+        ).length,
         verificationData: finalResult,
         errorMsg,
-        url: finalResult?.length
+        url: finalResult.length
           ? `${process.env.REACT_APP_API_BASE_URL}/public/exports/document-verification-overview.csv`
           : null,
         isDocVerificationFinalOverview: true,
@@ -350,13 +364,19 @@ exports.verifyDocuments = async (req, res) => {
         unreadFolders,
       });
     }
+
     if (global.isVerifierScriptRunning) {
       setFolderPathToArray(folderPath);
     }
 
+    // 6. Clean up memory
+    documentHashData.length = 0;
+    finalResult.length = 0;
     global.isVerifierScriptRunning = false;
+    console.log("🔍 Memory usage:", process.memoryUsage());
+    if (global.gc) global.gc();
   } catch (error) {
-    console.log(error);
+    console.log("💥 Fatal Error:", error);
     global.isVerifierScriptRunning = false;
   }
 };
@@ -378,13 +398,30 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
         ? {
             ...item,
             effective_date: req.body?.effective_date,
+            organization_id: req.body?.meta_data_org_id,
+            location_id: req.body?.meta_data_org_location_id,
+            product_id: req.body?.meta_data_product_id,
+            product_batch_id: req.body?.meta_data_product_batch_id,
+            expiration_date: req.body?.expiration_date,
+            organization_name:
+              req.body?.organization_name !== ""
+                ? req.body?.organization_name
+                : null,
+            location_name:
+              req.body?.location_name !== "" ? req.body?.location_name : null,
+            product_name:
+              req.body?.product_name !== "" ? req.body?.product_name : null,
+            product_batch_name:
+              req.body?.product_batch_name !== ""
+                ? req.body?.product_batch_name
+                : null,
           }
         : item
     );
     setData(data);
     res.status(200).json(healthloqRes);
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });
@@ -393,13 +430,15 @@ exports.updateDocumentEffectiveDate = async (req, res) => {
 
 exports.getFolderPath = async (req, res) => {
   try {
-    let data = JSON.parse(localStorage.getItem("folderPath")) || [];
+    let data = localStorage.getItem("folderPath")
+      ? JSON.parse(localStorage.getItem("folderPath"))
+      : [];
     res.status(200).json({
       status: "1",
       data,
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(422).json({
       status: "0",
       message: error.message,
     });
@@ -430,15 +469,22 @@ exports.getVerifyDocumentCount = async (req, res) => {
         }
       });
     }
+
     const previousData = newData.map((doc) => ({
       "Organization Name": doc?.org_name,
       Message: doc?.message,
+      hash: doc.hash,
       "Error Message": doc?.err_message,
       "Is Verified Organization": doc.is_vrf_org,
       "File Name": doc.fileName,
       "File Path": doc.path,
       "Is Verified Document": doc.is_vrf_doc,
       Created: doc.createdAt,
+      labDocumentHashId: doc.labDocumentHashId,
+      documentHashId: doc.documentHashId,
+      OrganizationExhibitId: doc.OrganizationExhibitId,
+      integrantId: doc.integrantId,
+      labOrgName: doc.labOrgName,
     }));
 
     data["noOfVerifiedDocumentsWithVerifiedOrg"] = newData?.filter(
@@ -461,7 +507,108 @@ exports.getVerifyDocumentCount = async (req, res) => {
       doc: previousData,
     });
   } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+// View document
+exports.viewFile = (req, res) => {
+  try {
+    const filePath = req.query.path;
+
+    if (!filePath) {
+      return res.status(400).send("File path is required");
+    }
+
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        return res.status(400).send("File not found");
+      }
+
+      res.sendFile(filePath);
+    });
+  } catch (error) {
     res.status(200).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getAllOrganization = async (req, res) => {
+  try {
+    const healthloqRes = await organizationListForMetaData(req.body);
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getOrgLocation = async (req, res) => {
+  try {
+    const healthloqRes = await locationListForMetaData(req.body);
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getProduct = async (req, res) => {
+  try {
+    const healthloqRes = await productListForMetaData(req.body);
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
+      status: "0",
+      message: error.message,
+    });
+  }
+};
+
+exports.getProductBatch = async (req, res) => {
+  try {
+    const healthloqRes = await productBatchListForMetaData(req.body);
+
+    if (healthloqRes.status === "1") {
+      return res.status(200).json(healthloqRes);
+    }
+
+    return res.status(422).json({
+      status: "0",
+      message: "Something went wrong",
+    });
+  } catch (error) {
+    res.status(422).json({
       status: "0",
       message: error.message,
     });

@@ -10,113 +10,215 @@ import {
   Typography,
   CircularProgress,
   Box,
+  styled,
+  Grid,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import React, { useEffect } from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch, useSelector } from "react-redux";
+import BlockchainProof from "./BlockchainProof";
 import {
+  getBlockChainProofData,
   getDocumentHashBlockchainProof,
   getExhibitBlockchainProof,
-  getOrganizationExhibitBlockchainProof,
   getLabDocumentHashBlockchainProof,
+  getOrganizationExhibitBlockchainProof,
 } from "../../redux/actions";
-import BlockchainProof from "./BlockchainProof";
+import ExpiredDocument from "../common/BlockchainResults/ExpiredDocument";
+import VerifiedDocumentInfo from "../common/BlockchainResults/VerifiedDocumentInfo";
+import VerifiedOrganizationInfo from "../common/BlockchainResults/VerifiedOrganizationInfo";
+import HashNotVerifiedErrorMsg from "../common/BlockchainResults/HashNotVerifiedErrorMsg";
+import LockIcon from "@mui/icons-material/Lock";
 
-const useStyle = makeStyles((theme) => ({
-  tableRow: {
-    "&>td": {
-      border: `1px solid ${theme.palette.borderColor}`,
-    },
-    "&:nth-child(even)": {
-      backgroundColor: theme.palette.action.hover,
-    },
+const PrimaryTableRow = styled(TableRow)(({ theme }) => ({
+  "&>td": {
+    border: `1px solid ${theme.palette.borderColor}`,
   },
-  blockchainProofContainer: {
-    "&>div:not(:last-child)": {
-      marginBottom: 100,
-      position: "relative",
-      "&::before": {
-        position: "absolute",
-        content: "' '",
-        width: 2,
-        height: 100,
-        backgroundColor: theme.palette.primary.main,
-        top: "calc(100% + 2px)",
-        left: " 50%",
-        transform: "translateX(-50%)",
-      },
-      "&::after": {
-        position: "absolute",
-        content: "' '",
-        width: 50,
-        height: 50,
-        top: "calc(100% + 25px)",
-        backgroundColor: theme.palette.primary.main,
-        outline: `2px solid ${theme.palette.common.white}`,
-        borderRadius: "50%",
-        left: "50%",
-        transform: "translateX(-50%) scaleX(-1)",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='25' viewBox='0 0 20 25' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M16.8664 10.1578H5.26193V6.74505C5.25926 4.39682 7.16921 2.48682 9.5145 2.48414C11.8627 2.48414 13.7727 4.39434 13.7754 6.73965C13.7781 6.98639 13.8779 7.21361 14.0415 7.3745C14.2051 7.53807 14.4269 7.63787 14.6763 7.63787H15.3611C15.86 7.63787 16.262 7.23584 16.262 6.7396H16.2594C16.2566 3.02188 13.2322 -0.00247373 9.51431 1.51829e-06C5.79678 0.00270885 2.77518 3.02733 2.77518 6.74505L2.77789 10.1578H2.31203C1.03401 10.1578 -0.00291464 11.1974 6.15529e-06 12.4754V22.6358C6.15529e-06 23.9139 1.03961 24.9508 2.31763 24.9508L16.728 24.9425C18.006 24.9425 19.043 23.9056 19.04 22.6275V12.4647C19.04 11.2365 18.078 10.2329 16.8665 10.158L16.8664 10.1578Z' fill='white' /%3E%3C/svg%3E")`,
-      },
+  "&:nth-child(even)": {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
+
+const BlockchainProofContainer = styled(Box)(({ theme }) => ({
+  "&>div:not(:last-child)": {
+    marginBottom: 100,
+    position: "relative",
+    "&::before": {
+      position: "absolute",
+      content: "' '",
+      width: 2,
+      height: 100,
+      backgroundColor: theme.palette.primary.main,
+      top: "calc(100% + 2px)",
+      left: " 50%",
+      transform: "translateX(-50%)",
+    },
+    "&::after": {
+      position: "absolute",
+      content: "' '",
+      width: 50,
+      height: 50,
+      top: "calc(100% + 25px)",
+      backgroundColor: theme.palette.primary.main,
+      outline: `2px solid ${theme.palette.common.white}`,
+      borderRadius: "50%",
+      left: "50%",
+      transform: "translateX(-50%) scaleX(-1)",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+      backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='25' viewBox='0 0 20 25' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Cpath d='M16.8664 10.1578H5.26193V6.74505C5.25926 4.39682 7.16921 2.48682 9.5145 2.48414C11.8627 2.48414 13.7727 4.39434 13.7754 6.73965C13.7781 6.98639 13.8779 7.21361 14.0415 7.3745C14.2051 7.53807 14.4269 7.63787 14.6763 7.63787H15.3611C15.86 7.63787 16.262 7.23584 16.262 6.7396H16.2594C16.2566 3.02188 13.2322 -0.00247373 9.51431 1.51829e-06C5.79678 0.00270885 2.77518 3.02733 2.77518 6.74505L2.77789 10.1578H2.31203C1.03401 10.1578 -0.00291464 11.1974 6.15529e-06 12.4754V22.6358C6.15529e-06 23.9139 1.03961 24.9508 2.31763 24.9508L16.728 24.9425C18.006 24.9425 19.043 23.9056 19.04 22.6275V12.4647C19.04 11.2365 18.078 10.2329 16.8665 10.158L16.8664 10.1578Z' fill='white' /%3E%3C/svg%3E")`,
     },
   },
 }));
 
+const getBlockchainProofs = (data, i = 0) => {
+  if (!data) return <></>;
+  return (
+    <>
+      {data?.loading && (
+        <Typography variant="body2">
+          Please wait while we are verifying the document...
+          <CircularProgress size={20} />
+        </Typography>
+      )}
+      {data?.status === "1" &&
+        !data?.loading &&
+        (data?.isVerifyDocument ? (
+          <>
+            {data?.is_expired ? (
+              <ExpiredDocument {...data} />
+            ) : (
+              <VerifiedDocumentInfo {...data} />
+            )}
+            {!data?.hide_org &&
+              (data?.govEntity?.length ? (
+                <>
+                  <Grid container direction="column" alignItems="center">
+                    {/* Top line */}
+                    <Box
+                      sx={(theme) => ({
+                        width: "2px",
+                        height: "20px",
+                        backgroundColor: theme.palette.primary.main,
+                      })}
+                    />
+
+                    {/* Icon */}
+                    <Grid
+                      sx={(theme) => ({
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        backgroundColor: theme.palette.primary.main,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        boxShadow: 1,
+                      })}
+                    >
+                      <LockIcon sx={{ color: "white" }} />
+                    </Grid>
+                    {/* Bottom line */}
+                    <Box
+                      sx={(theme) => ({
+                        width: "2px",
+                        height: "20px",
+                        backgroundColor: theme.palette.primary.main,
+                      })}
+                    />
+                  </Grid>
+                  <VerifiedOrganizationInfo
+                    {...data}
+                    onOrganizationClick={(a) =>
+                      // verifyOrganizationDocument(a, i)
+                      console.log(a)
+                    }
+                  />
+                  {/* {getBlockchainProofs(
+                    data?.govEntity?.filter(
+                      (a) => a?.id === activeOrgDocuments[i]
+                    )?.[0]?.documentInfo || null,
+                    i + 1
+                  )} */}
+                </>
+              ) : (
+                <HashNotVerifiedErrorMsg hashType="Organization" {...data} />
+              ))}
+          </>
+        ) : (
+          <HashNotVerifiedErrorMsg
+            hashType={data?.isOrganizationDoc ? "Organization" : "Document"}
+            {...data}
+          />
+        ))}
+    </>
+  );
+};
 export function DocumentVerificationDetailOverview({
   open = false,
   handleClose = () => {},
   data = {},
-  getDocumentHashBlockchainProof,
-  documentHashBlockchainProof,
-  getExhibitBlockchainProof,
-  getOrganizationExhibitBlockchainProof,
-  exhibitBlockchainProof,
-  organizationExhibitBlockchainProof,
-  labDocumentHashBlockchainProof,
-  getLabDocumentHashBlockchainProof,
 }) {
-  const classes = useStyle();
+  const dispatch = useDispatch();
+  const {
+    documentHashBlockchainProof,
+    exhibitBlockchainProof,
+    organizationExhibitBlockchainProof,
+    labDocumentHashBlockchainProof,
+    documentBlockChainProofData,
+  } = useSelector((state) => state.reducer);
+
   useEffect(() => {
     if (open) {
-      if (data?.integrantId) {
-        getExhibitBlockchainProof({
-          type: "integrant",
-          id: data?.integrantId,
-        });
-      }
-      if (data?.OrganizationExhibitId) {
-        getOrganizationExhibitBlockchainProof({
-          type: "organization_exhibit",
-          id: data?.OrganizationExhibitId,
-        });
-      }
-      if (data?.documentHashId) {
-        getDocumentHashBlockchainProof({
-          type: "document_hash",
-          id: data?.documentHashId,
-        });
-      }
-      if (data?.labDocumentHashId) {
-        getLabDocumentHashBlockchainProof({
-          type: "document_hash",
-          id: data?.labDocumentHashId,
-        });
+      // if (data?.integrantId) {
+      //   dispatch(
+      //     getExhibitBlockchainProof({
+      //       type: "integrant",
+      //       id: data?.integrantId,
+      //     })
+      //   );
+      // }
+      // if (data?.OrganizationExhibitId) {
+      //   dispatch(
+      //     getOrganizationExhibitBlockchainProof({
+      //       type: "organization_exhibit",
+      //       id: data?.OrganizationExhibitId,
+      //     })
+      //   );
+      // }
+      // if (data?.documentHashId) {
+      //   dispatch(
+      //     getDocumentHashBlockchainProof({
+      //       type: "document_hash",
+      //       id: data?.documentHashId,
+      //     })
+      //   );
+      // }
+      // if (data?.labDocumentHashId) {
+      //   dispatch(
+      //     getLabDocumentHashBlockchainProof({
+      //       type: "document_hash",
+      //       id: data?.labDocumentHashId,
+      //     })
+      //   );
+      // }
+      console.log(data?.hash && data["Is Verified Document"] === "Yes")
+      if (data?.hash && data["Is Verified Document"] === "Yes") {
+        dispatch(getBlockChainProofData({ hash: data?.hash }));
       }
     }
   }, [open]);
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
       <DialogContent>
-        {(data?.documentHashId ||
+        {/* {(data?.documentHashId ||
           data?.integrantId ||
           data?.OrganizationExhibitId) && (
           <Box sx={{ mb: 2 }}>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Document Blockchain Proof
             </Typography>
-            <Box className={classes.blockchainProofContainer}>
+            <BlockchainProofContainer>
               {data?.integrantId ? (
                 exhibitBlockchainProof?.isLoading ? (
                   <Typography
@@ -220,9 +322,18 @@ export function DocumentVerificationDetailOverview({
                     proof.
                   </Typography>
                 )}
-            </Box>
+            </BlockchainProofContainer>
           </Box>
-        )}
+        )} */}
+        {data["Is Verified Document"] === "Yes" &&
+          (documentBlockChainProofData.isLoading ? (
+            <Typography display="flex" justifyContent="center" variant="body2">
+              Please wait while we are verifying the document...
+              <CircularProgress size={20} />
+            </Typography>
+          ) : (
+            getBlockchainProofs(documentBlockChainProofData.data)
+          ))}
         <Typography variant="h6" sx={{ my: 1 }}>
           Document Verification Details
         </Typography>
@@ -235,13 +346,14 @@ export function DocumentVerificationDetailOverview({
                     "documentHashId",
                     "OrganizationExhibitId",
                     "integrantId",
+                    "labDocumentHashId",
                   ].includes(key)
               )
               ?.map(([key, value], i) => (
-                <TableRow key={i} className={classes.tableRow}>
+                <PrimaryTableRow key={i}>
                   <TableCell>{key}</TableCell>
                   <TableCell>{value}</TableCell>
-                </TableRow>
+                </PrimaryTableRow>
               ))}
           </TableBody>
         </Table>
@@ -255,26 +367,9 @@ export function DocumentVerificationDetailOverview({
   );
 }
 
-const mapStateToProps = ({
-  reducer: {
-    documentHashBlockchainProof,
-    exhibitBlockchainProof,
-    organizationExhibitBlockchainProof,
-    labDocumentHashBlockchainProof,
-  },
-}) => ({
-  documentHashBlockchainProof,
-  exhibitBlockchainProof,
-  organizationExhibitBlockchainProof,
-  labDocumentHashBlockchainProof,
-});
+const mapStateToProps = ({ reducer: {} }) => ({});
 
-const mapDispatchToProps = {
-  getDocumentHashBlockchainProof,
-  getExhibitBlockchainProof,
-  getOrganizationExhibitBlockchainProof,
-  getLabDocumentHashBlockchainProof,
-};
+const mapDispatchToProps = {};
 
 export default connect(
   mapStateToProps,

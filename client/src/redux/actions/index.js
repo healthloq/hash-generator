@@ -17,6 +17,23 @@ import {
   GET_FOLDER_PATH,
   GET_VERIFY_DOCUMENT_COUNT,
   GET_FORBIDDEN_LIST,
+  HANDLE_FILTER_VALUE,
+  START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+  SUCCESS_GET_ORGANIZATION_LIST,
+  START_GET_ORGANIZATION_LIST,
+  ERROR_GET_ORGANIZATION_LIST,
+  START_GET_ORGANIZATION_LOCATION_LIST,
+  SUCCESS_GET_ORGANIZATION_LOCATION_LIST,
+  ERROR_GET_ORGANIZATION_LOCATION_LIST,
+  START_GET_PRODUCT_LIST,
+  SUCCESS_GET_PRODUCT_LIST,
+  ERROR_GET_PRODCUT_LIST,
+  START_GET_PRODUCT_BATCH_LIST,
+  SUCCESS_GET_PRODUCT_BATCH_LIST,
+  ERROR_GET_PRODUCT_BATCH_LIST,
+  RESET_STATE_META_DATA_STATE,
 } from "../actionTypes";
 import { API } from "../apis";
 
@@ -37,6 +54,26 @@ export const updateDocumentEffectiveDate = (params) => async (dispatch) => {
       },
     });
   } catch (error) {
+    console.log(error);
+  }
+};
+
+export const getBlockChainProofData = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: START_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+    });
+
+    const response = await API.getDocumentHashBlockChainProofNew(params);
+
+    dispatch({
+      type: SUCCESS_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+      payload: response,
+    });
+  } catch (error) {
+    dispatch({
+      type: ERROR_VERIFY_DOCUMENT_BLOCKCHAIN_PROOF_OR_NOT,
+    });
     console.log(error);
   }
 };
@@ -110,6 +147,13 @@ export const handleDocumentVerificationDataFilter =
       payload: params,
     });
   };
+
+export const handleFilterValue = (params) => async (dispatch) => {
+  dispatch({
+    type: HANDLE_FILTER_VALUE,
+    payload: params,
+  });
+};
 
 export const getDashboardOverviewData = (params) => async (dispatch) => {
   try {
@@ -308,4 +352,84 @@ export const fetchForbiddenList = () => async (dispatch) => {
       },
     });
   }
+};
+export const getOrganizationListMetaData = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: START_GET_ORGANIZATION_LIST,
+    });
+
+    const response = await API.getOrganizationList(params);
+    dispatch({
+      type: SUCCESS_GET_ORGANIZATION_LIST,
+      payload: response,
+    });
+  } catch (error) {
+    dispatch({
+      type: ERROR_GET_ORGANIZATION_LIST,
+    });
+  }
+};
+
+export const getOrganizationLocationMetaData = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: START_GET_ORGANIZATION_LOCATION_LIST,
+    });
+
+    const response = await API.getOrganizationLocationList(params);
+
+    dispatch({
+      type: SUCCESS_GET_ORGANIZATION_LOCATION_LIST,
+      payload: response,
+    });
+  } catch (error) {
+    dispatch({
+      type: ERROR_GET_ORGANIZATION_LOCATION_LIST,
+    });
+  }
+};
+
+export const getProductListMetaData = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: START_GET_PRODUCT_LIST,
+    });
+
+    const response = await API.getProductList(params);
+
+    dispatch({
+      type: SUCCESS_GET_PRODUCT_LIST,
+      payload: response,
+    });
+  } catch (error) {
+    dispatch({
+      type: ERROR_GET_PRODCUT_LIST,
+    });
+  }
+};
+
+export const getProductBatchListMetaData = (params) => async (dispatch) => {
+  try {
+    dispatch({
+      type: START_GET_PRODUCT_BATCH_LIST,
+    });
+
+    const response = await API.getProductBatchList(params);
+
+    dispatch({
+      type: SUCCESS_GET_PRODUCT_BATCH_LIST,
+      payload: response,
+    });
+  } catch (error) {
+    dispatch({
+      type: ERROR_GET_PRODUCT_BATCH_LIST,
+    });
+  }
+};
+
+export const resetMetaDataState = () => async (dispatch) => {
+  dispatch({
+    type: RESET_STATE_META_DATA_STATE,
+  });
 };

@@ -7,80 +7,204 @@ import {
   TextField,
   Button,
   CircularProgress,
+  styled,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Grid,
 } from "@mui/material";
-import { updateDocumentEffectiveDate } from "../../redux/actions";
+import {
+  getDashboardOverviewData,
+  getOrganizationListMetaData,
+  getOrganizationLocationMetaData,
+  getProductBatchListMetaData,
+  getProductListMetaData,
+  resetMetaDataState,
+  updateDocumentEffectiveDate,
+} from "../../redux/actions";
 import { connect } from "react-redux";
-import { makeStyles } from "@mui/styles";
 
-const useStyle = makeStyles((theme) => ({
-  dialogContent: {
-    "&>div": {
-      padding: "20px 0",
-    },
-  },
-  fileDiv: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    "&>img": {
-      maxHeight: 150,
-    },
-    "&>label": {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "flex-start",
-    },
-  },
-  inputLabelRoot: {
-    marginBottom: 5,
-  },
-  datePickerRoot: {
-    zIndex: 1301,
-  },
-  dateTextField: {
-    maxWidth: 400,
-    width: "100%",
-    "&>div": {
-      minHeight: 40,
-      padding: "0 15px",
-    },
+const PrimaryDialogContent = styled(DialogContent)(({ theme }) => ({
+  "&>div": {
+    padding: "20px 0",
   },
 }));
 
+const DateTextField = styled(TextField)(({ theme }) => ({
+  maxWidth: 400,
+  width: "100%",
+  "&>div": {
+    minHeight: 40,
+    padding: "0 15px",
+  },
+}));
+
+const SelectBoxDiv = styled(Grid)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+}));
 const UpdateDocumentEffectiveDateDialog = ({
   open = false,
   handleClose = () => {},
   selectedDocuments = [],
   setSelected = () => {},
+  dashboardOverview,
   updateDocumentEffectiveDate,
   updateEffectiveDateData,
+  getOrganizationListMetaData,
+  organizationListMetaData,
+  getOrganizationLocationMetaData,
+  organizationLocationListMetaData,
+  getProductListMetaData,
+  getProductBatchListMetaData,
+  productListMetaData,
+  productBatchListMetaData,
+  resetMetaDataState,
+  getDashboardOverviewData,
 }) => {
-  const classes = useStyle();
   const [effectiveDate, setEffectiveDate] = useState("");
-
+  const [expiryDate, setExpiryDate] = useState("");
+  const [selectOption, setSelectOption] = useState({
+    organization_id: "",
+    location_id: "",
+    product_id: "",
+    product_batch_id: "",
+  });
   const handleSubmit = async () => {
     await updateDocumentEffectiveDate({
       effective_date: effectiveDate,
       hashList: selectedDocuments,
+      meta_data_org_id: selectOption.organization_id ?? null,
+      meta_data_org_location_id: selectOption.location_id ?? null,
+      meta_data_product_id: selectOption.product_id ?? null,
+      meta_data_product_batch_id: selectOption.product_batch_id ?? null,
+      expiration_date: expiryDate ?? null,
+      organization_name:
+        (organizationListMetaData?.data || []).find(
+          (org) => org.id === selectOption.organization_id
+        )?.name ?? "",
+      location_name:
+        (organizationLocationListMetaData?.data || []).find(
+          (location) => location.id === selectOption.location_id
+        )?.description ?? "",
+      product_name:
+        (productListMetaData?.data || []).find(
+          (product) => product.id === selectOption.product_id
+        )?.title ?? "",
+      product_batch_name:
+        (productBatchListMetaData?.data || []).find(
+          (batch) => batch.id === selectOption.product_batch_id
+        )?.external_id ?? "",
     });
+    await getDashboardOverviewData();
     setSelected([]);
     handleClose();
+  };
+
+  const addPreviousData = async (findDocument) => {
+    const { organization_id, location_id, product_id, product_batch_id } =
+      findDocument;
+
+    setSelectOption({
+      organization_id,
+      location_id,
+      product_id,
+      product_batch_id,
+    });
+
+    if (organization_id) {
+      getOrganizationLocationMetaData({ organization_id });
+      getProductListMetaData({ organization_id });
+    }
+
+    if (product_id) {
+      getProductBatchListMetaData({
+        integrant_type_id: product_id,
+        organization_id,
+        offset: 0,
+        limit: null,
+      });
+    }
   };
 
   useEffect(() => {
     if (open) {
       setEffectiveDate("");
+      setExpiryDate("");
+      getOrganizationListMetaData();
+      resetMetaDataState();
+      if (selectedDocuments.length === 1) {
+        const findDocument = (dashboardOverview.filteredFiles || []).find(
+          (file) => file.hash === selectedDocuments[0]
+        );
+        if (findDocument.effective_date) {
+          setEffectiveDate(findDocument.effective_date);
+        }
+        if (findDocument.expiration_date) {
+          setExpiryDate(findDocument.expiration_date);
+        }
+        addPreviousData(findDocument);
+      } else {
+        setSelectOption({
+          organization_id: null,
+          location_id: null,
+          product_id: null,
+          product_batch_id: null,
+        });
+      }
     }
   }, [open]);
 
+  const handleSelectOrganization = async (event) => {
+    const { value } = event.target;
+    setSelectOption((prev) => ({
+      organization_id: value,
+    }));
+    resetMetaDataState();
+    await getOrganizationLocationMetaData({ organization_id: value });
+    await getProductListMetaData({
+      organization_id: value,
+    });
+  };
+
+  const handleSelectLocation = async (event) => {
+    const { value } = event.target;
+    setSelectOption((prev) => ({
+      ...prev,
+      location_id: value,
+    }));
+  };
+
+  const handleSelectProduct = async (event) => {
+    const { value } = event.target;
+
+    setSelectOption((prev) => ({
+      ...prev,
+      product_id: value,
+    }));
+    await getProductBatchListMetaData({
+      integrant_type_id: value,
+      organization_id: selectOption.organization_id,
+      offset: 0,
+      limit: null,
+    });
+  };
+
+  const handleSelectProductBatch = async (event) => {
+    const { value } = event.target;
+    setSelectOption((prev) => ({
+      ...prev,
+      product_batch_id: value,
+    }));
+  };
   return (
     <Dialog open={open} fullWidth maxWidth="sm">
-      <DialogTitle className="dialog-title">
-        Update Document Effective Date
-      </DialogTitle>
-      <DialogContent className={classes.dialogContent}>
+      <DialogTitle className="dialog-title">Edit File Metadata</DialogTitle>
+      <PrimaryDialogContent>
         <div>
-          <TextField
+          <DateTextField
             id="date"
             label="Effective Date"
             type="date"
@@ -90,10 +214,200 @@ const UpdateDocumentEffectiveDateDialog = ({
             }}
             value={effectiveDate}
             onChange={(e) => setEffectiveDate(e.target.value)}
-            className={classes.dateTextField}
           />
         </div>
-      </DialogContent>
+        <div>
+          <DateTextField
+            id="date"
+            label="Expiration Date"
+            type="date"
+            required
+            InputLabelProps={{
+              shrink: true,
+            }}
+            value={expiryDate}
+            onChange={(e) => setExpiryDate(e.target.value)}
+          />
+        </div>
+        <SelectBoxDiv>
+          <FormControl fullWidth>
+            <InputLabel id="organization-label">Organization</InputLabel>
+            <Select
+              labelId="organization-label"
+              value={selectOption.organization_id}
+              onChange={handleSelectOrganization}
+              disabled={
+                organizationListMetaData.isLoading ||
+                organizationLocationListMetaData.isLoading ||
+                productListMetaData.isLoading ||
+                productBatchListMetaData.isLoading
+              }
+              label="Organization"
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: "auto",
+                  },
+                },
+                anchorOrigin: {
+                  vertical: "bottom",
+                  horizontal: "left",
+                },
+                transformOrigin: {
+                  vertical: "top",
+                  horizontal: "left",
+                },
+                getContentAnchorEl: null,
+              }}
+            >
+              {organizationListMetaData?.data?.length > 0 ? (
+                (organizationListMetaData.data || []).map((org) => (
+                  <MenuItem key={org.id} value={org.id}>
+                    {org.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled value={null}>
+                  Organization Not found
+                </MenuItem>
+              )}
+            </Select>
+          </FormControl>
+          {organizationListMetaData.isLoading && <CircularProgress size={20} />}
+        </SelectBoxDiv>
+
+        <SelectBoxDiv>
+          <FormControl fullWidth>
+            <InputLabel>Organization Location</InputLabel>
+            <Select
+              label="Organization Location"
+              fullWidth
+              value={selectOption.location_id}
+              onChange={handleSelectLocation}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: "auto",
+                  },
+                },
+                anchorOrigin: {
+                  vertical: "bottom",
+                  horizontal: "left",
+                },
+                transformOrigin: {
+                  vertical: "top",
+                  horizontal: "left",
+                },
+                getContentAnchorEl: null,
+              }}
+            >
+              {organizationLocationListMetaData?.data?.length > 0 ? (
+                (organizationLocationListMetaData.data || []).map(
+                  (location) => (
+                    <MenuItem key={location.id} value={location.id}>
+                      {location.description} - {location.line_1}{" "}
+                      {location.line_2} {location.city}
+                    </MenuItem>
+                  )
+                )
+              ) : (
+                <MenuItem disabled value={null}>
+                  Organization Location not found
+                </MenuItem>
+              )}
+            </Select>
+          </FormControl>
+          {organizationLocationListMetaData.isLoading && (
+            <CircularProgress size={20} />
+          )}
+        </SelectBoxDiv>
+
+        <SelectBoxDiv>
+          <FormControl fullWidth>
+            <InputLabel>Product</InputLabel>
+            <Select
+              label="Product"
+              fullWidth
+              value={selectOption.product_id}
+              onChange={handleSelectProduct}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: "auto",
+                  },
+                },
+                anchorOrigin: {
+                  vertical: "bottom",
+                  horizontal: "left",
+                },
+                transformOrigin: {
+                  vertical: "top",
+                  horizontal: "left",
+                },
+                getContentAnchorEl: null,
+              }}
+            >
+              {productListMetaData?.data?.length > 0 ? (
+                (productListMetaData.data || []).map((product) => (
+                  <MenuItem key={product.id} value={product.id}>
+                    {product.title}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled value={null}>
+                  Product not found
+                </MenuItem>
+              )}
+            </Select>
+          </FormControl>
+          {productListMetaData.isLoading && <CircularProgress size={20} />}
+        </SelectBoxDiv>
+
+        <SelectBoxDiv>
+          <FormControl fullWidth>
+            <InputLabel>Product batch</InputLabel>
+            <Select
+              label="Product batch"
+              fullWidth
+              value={selectOption.product_batch_id}
+              onChange={handleSelectProductBatch}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    overflowY: "auto",
+                  },
+                },
+                anchorOrigin: {
+                  vertical: "bottom",
+                  horizontal: "left",
+                },
+                transformOrigin: {
+                  vertical: "top",
+                  horizontal: "left",
+                },
+                getContentAnchorEl: null,
+              }}
+            >
+              {productBatchListMetaData?.data?.length > 0 ? (
+                (productBatchListMetaData.data || []).map((product) => (
+                  <MenuItem key={product.id} value={product.id}>
+                    {product.external_id}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled value={null}>
+                  Prodcut batch not found
+                </MenuItem>
+              )}
+            </Select>
+          </FormControl>
+          {productBatchListMetaData.isLoading && <CircularProgress size={20} />}
+        </SelectBoxDiv>
+      </PrimaryDialogContent>
       <DialogActions className="dialog-actions">
         <Button
           variant="outlined"
@@ -120,12 +434,30 @@ const UpdateDocumentEffectiveDateDialog = ({
   );
 };
 
-const mapStateToProps = ({ reducer: { updateEffectiveDateData } }) => ({
+const mapStateToProps = ({
+  reducer: {
+    updateEffectiveDateData,
+    organizationListMetaData,
+    organizationLocationListMetaData,
+    productListMetaData,
+    productBatchListMetaData,
+  },
+}) => ({
   updateEffectiveDateData,
+  organizationListMetaData,
+  organizationLocationListMetaData,
+  productListMetaData,
+  productBatchListMetaData,
 });
 
 const mapDispatchToProps = {
+  getOrganizationListMetaData,
   updateDocumentEffectiveDate,
+  getOrganizationLocationMetaData,
+  getProductListMetaData,
+  getProductBatchListMetaData,
+  resetMetaDataState,
+  getDashboardOverviewData,
 };
 
 export default connect(

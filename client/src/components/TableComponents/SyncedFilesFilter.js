@@ -1,22 +1,10 @@
 import React from "react";
-import { TextField, InputAdornment } from "@mui/material";
-import { makeStyles } from "@mui/styles";
+import { TextField, InputAdornment, styled } from "@mui/material";
 import { handleSyncedFilter } from "../../redux/actions";
 import { connect } from "react-redux";
 import { Search } from "@mui/icons-material";
 
-const useStyle = makeStyles((theme) => ({
-  filterContainer: {
-    padding: 20,
-    backgroundColor: theme.palette.common.white,
-  },
-  searchTextfield: {
-    maxWidth: 300,
-  },
-}));
-
 export function SyncedFilesFilter({ handleSyncedFilter, syncedFilesFilter }) {
-  const classes = useStyle();
   return (
     <TextField
       label="Search files by fileName"
@@ -27,6 +15,9 @@ export function SyncedFilesFilter({ handleSyncedFilter, syncedFilesFilter }) {
           isFilterData: e.target.value?.trim() === "",
         })
       }
+      sx={{
+        maxWidth: 300
+      }}
       variant="standard"
       InputProps={{
         endAdornment: (
@@ -38,7 +29,6 @@ export function SyncedFilesFilter({ handleSyncedFilter, syncedFilesFilter }) {
           </InputAdornment>
         ),
       }}
-      className={classes.searchTextfield}
     />
   );
 }

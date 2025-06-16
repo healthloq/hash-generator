@@ -29,6 +29,31 @@ export const syncedFilesHeaders = [
     numeric: false,
     label: "Modified",
   },
+  {
+    id: "organization_name",
+    numeric: false,
+    label: "Organization Name",
+  },
+  {
+    id: "location_name",
+    numeric: false,
+    label: "Location Name",
+  },
+  {
+    id: "product_name",
+    numeric: false,
+    label: "Product Name",
+  },
+  {
+    id: "product_batch_name",
+    numeric: false,
+    label: "Product Batch Name",
+  },
+  {
+    id: "expiration_date",
+    numeric: false,
+    label: "Expiration date",
+  },
 ];
 
 export const verifiedDocumentsHeaders = [
@@ -40,22 +65,32 @@ export const verifiedDocumentsHeaders = [
   {
     id: "is_verified_organization",
     numeric: false,
-    label: "Is Verified Organization",
+    label: "Verified Organization",
   },
   {
-    id: "file_path",
+    id: "labOrgName",
     numeric: false,
-    label: "File Path",
+    label: "Document Prepared By",
+  },
+  {
+    id: "file_name",
+    numeric: false,
+    label: "File Name",
   },
   {
     id: "is_verified_document",
     numeric: false,
-    label: "Is Verified Document",
+    label: "Verified Document",
   },
   {
     id: "message",
     numeric: false,
     label: "Message",
+  },
+  {
+    id: "created",
+    numeric: false,
+    label: "Created",
   },
   {
     id: "action",
