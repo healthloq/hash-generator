@@ -418,7 +418,7 @@ const Reducer = (
         ...previousState,
         organizationList: {
           ...previousState.organizationList,
-          ...payload,
+          ...payload?.data?.data?.data,
         },
       };
     }
