@@ -22,6 +22,7 @@ import axios from "axios";
 import { ReactComponent as VerifyDocumentIcon } from "../../assets/images/submitIcon.svg";
 import { MuiLinearProgress } from "../common";
 import { abbrNum, numberWithCommas } from "../../utils";
+import ExceedLimitModal from "../dialogs/ExceedLimitModal";
 
 function DocumentVerifierNewDesign({
   organizationList,
@@ -40,6 +41,8 @@ function DocumentVerifierNewDesign({
     totalFile: 0,
     newFile: 0,
   });
+  const [openWarningPopUp, setOpenWarningPopUp] = useState(false);
+
   const handleAdd = (value) => {
     if (value && !options.includes(value)) {
       setOptions([...options, value]);
@@ -287,6 +290,10 @@ function DocumentVerifierNewDesign({
       >
         {documentVerificationData.isLoading ? "Verfiying..." : "Verfiy"}
       </Button>
+      <ExceedLimitModal
+        open={openWarningPopUp}
+        onClose={() => setOpenWarningPopUp(false)}
+      />
     </Box>
   );
 }

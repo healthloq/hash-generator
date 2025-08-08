@@ -24,6 +24,7 @@ import { abbrNum, numberWithCommas } from "../utils";
 import ProgressIndicator from "../components/common/ProgressIndicator";
 import { ApexChart } from "../components/graph/PieChart";
 import DocumentTableView from "../components/Home/DocumentTableView";
+import ExceedLimitModal from "../components/dialogs/ExceedLimitModal";
 
 export const DocumentVerification = (props) => {
   const {
@@ -44,6 +45,7 @@ export const DocumentVerification = (props) => {
     value: 0,
     max: 0,
   });
+  const [openWarningPopUp, setOpenWarningPopUp] = useState(false);
 
   useEffect(() => {
     if (apiFlags.subscriptionDetailFlag) {
@@ -97,6 +99,16 @@ export const DocumentVerification = (props) => {
         folderOverview?.count?.noOfUnverifiedDocuments,
     }));
   }, [getVerifyDocumentCount, folderOverview]);
+
+  useEffect(() => {
+    if (
+      parseInt(progressBarData.value) !== 0 &&
+      parseInt(progressBarData.max) !== 0 &&
+      parseInt(progressBarData.value) >= parseInt(progressBarData.max)
+    ) {
+      setOpenWarningPopUp(true);
+    }
+  }, [progressBarData]);
   return (
     <Body>
       <Box
@@ -186,13 +198,18 @@ export const DocumentVerification = (props) => {
                 }}
               >
                 <Typography variant="h5">
-                The document overview will appear here once you verify the document or select an existing folder path
+                  The document overview will appear here once you verify the
+                  document or select an existing folder path
                 </Typography>
               </Grid>
             )}
           </CardContent>
         </Card>
       </Box>
+      <ExceedLimitModal
+        open={openWarningPopUp}
+        onClose={() => setOpenWarningPopUp(false)}
+      />
       {/* <DocumentVerifier /> */}
       <DocumentTableView />
     </Body>
