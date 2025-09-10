@@ -9,11 +9,11 @@ export const syncedFilesHeaders = [
     numeric: true,
     label: "File Size",
   },
-  {
-    id: "filePath",
-    numeric: false,
-    label: "File Path",
-  },
+  // {
+  //   id: "filePath",
+  //   numeric: false,
+  //   label: "File Path",
+  // },
   {
     id: "effective_date",
     numeric: false,
