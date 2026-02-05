@@ -139,7 +139,8 @@ exports.getFolderOverview = async (rootFolderPath) => {
 
       for await (const item of files) {
         if (item.isFile()) {
-          const mime_type = getMimeType(`${item.path}/${item.name}`);
+          const filePath = path.join(folderPath, item.name);
+          const mime_type = getMimeType(filePath);
           if (
             !ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mime_type)
             // item?.name
@@ -150,8 +151,8 @@ exports.getFolderOverview = async (rootFolderPath) => {
           )
             continue;
           filesCount++;
-          const filePath = path.join(folderPath, item.name);
-          const state = fs.statSync(filePath);
+          const fullFilePath = path.join(folderPath, item.name);
+          const state = fs.statSync(fullFilePath);
           if (
             state &&
             (!oldData ||
@@ -232,10 +233,10 @@ exports.generateHashForVerifier = async (
       // console.log("files ====>>>>>>", files)
       for await (const item of files) {
         if (item.isFile()) {
-          const pathName = `${item.path}/${item.name}`;
-          const mimeType = getMimeType(pathName);
-          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
+          // const pathName = `${item.path}/${item.name}`;
           const filePath = path.join(folderPath, item.name);
+          const mimeType = getMimeType(filePath);
+          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
           let state = null;
           try {
             state = fs.statSync(filePath);
@@ -361,15 +362,15 @@ exports.generateHashForPublisher = async (
           break;
         }
         if (item.isFile()) {
-          const pathName = `${item.path}/${item.name}`;
-          const mimeType = getMimeType(pathName);
+          // const pathName = `${item.path}/${item.name}`;
+          const filePath = path.join(folderPath, item.name);
+          const mimeType = getMimeType(filePath);
           count++;
           if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
           // if (lastSyncedFile) {
           //   if (item?.name === lastSyncedFile) lastSyncedFile = null;
           //   continue;
           // }
-          const filePath = path.join(folderPath, item.name);
           let state = fs.statSync(filePath);
           if (
             state &&
