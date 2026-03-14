@@ -1,0 +1,30 @@
+<h1>Hash Generator Dashboard</h1>
+
+<div>
+Total Documents Hashed:
+<span id="hashed"></span>
+</div>
+
+<div>
+Errors:
+<span id="errors"></span>
+</div>
+
+<script>
+
+async function load(){
+
+ const stats =
+  await fetch("/api/dashboard/stats").then(r=>r.json())
+
+ document.getElementById("hashed").innerText =
+   stats.total_hashed
+
+ document.getElementById("errors").innerText =
+   stats.total_errors
+}
+
+setInterval(load,3000)
+load()
+
+</script>

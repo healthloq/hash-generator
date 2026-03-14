@@ -1,4 +1,5 @@
 const { default: axios } = require("axios");
+const metrics = require("../monitor/metrics")
 
 exports.syncHash = async (data) => {
   let response = null;
@@ -14,8 +15,11 @@ exports.syncHash = async (data) => {
           },
         }
       );
-      if (response?.data.status === "1")
+      if (response?.data.status === "1") {
+
         console.log("Hash synced with healthloq successful");
+        metrics.recordHashes(data.hashList.length)
+}
       else console.log(response?.data.message);
       if (response?.data?.status === "2") {
         io.sockets.emit("docUploadLimitExceededError", {
@@ -30,6 +34,7 @@ exports.syncHash = async (data) => {
       }
     }
   } catch (error) {
+    metrics.recordError()
     if (error.response) {
       console.log(`API Error: ${error.response.status} - ${error.response.statusText}`)
     }

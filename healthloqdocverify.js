@@ -56,6 +56,8 @@ app.use("/api/client", require("./routes/client"));
 app.use(express.static(path.join(__dirname, "client/build")));
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "client/build/index.html"));
+
+app.use("/api/dashboard", require("./routes/dashboard"))
 });
 
 server.listen(port, () =>
