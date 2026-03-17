@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check healthloqdocverify.js)",
+      "Bash(node --check utils/index.js)",
+      "Bash(node --check services/healthloq.js)",
+      "Bash(node --check services/fileScanner.js)",
+      "Bash(node --check services/hasher.js)",
+      "Bash(node --check controllers/client.js)",
+      "Bash(node --check db.js)",
+      "Bash(node --check logger.js)"
+    ]
+  }
+}
