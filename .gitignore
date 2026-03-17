@@ -3,3 +3,5 @@ yarn.lock
 scratch/
 public/exports/
 package-lock.json
+.env
+logs/

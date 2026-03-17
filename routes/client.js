@@ -11,6 +11,8 @@ const {
   getOrgLocation,
   getProduct,
   getProductBatch,
+  getBlockchainProof,
+  getCoaBlockchainProof,
 } = require("../controllers/client");
 const router = require("express").Router();
 
@@ -26,5 +28,7 @@ router.get("/get-organization-list", getAllOrganization);
 router.post("/get-org-location-list", getOrgLocation);
 router.post("/get-product-list", getProduct);
 router.post("/get-product-batch-list", getProductBatch);
+router.post("/blockchain-proof", getBlockchainProof);
+router.post("/blockchain-proof-coa", getCoaBlockchainProof);
 
 module.exports = router;

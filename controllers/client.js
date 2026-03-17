@@ -17,11 +17,27 @@ const {
   organizationListForMetaData,
   locationListForMetaData,
   productBatchListForMetaData,
+  verifyBlockchainProof,
+  verifyCoaDocumentProof,
 } = require("../services/healthloq");
 const fs = require("fs");
 const path = require("path");
-const moment = require("moment");
+const { format: formatDate } = require("date-fns");
 const { Parser } = require("json2csv");
+
+/**
+ * Resolve and validate a user-supplied path so it cannot escape rootDir.
+ * Returns the resolved absolute path, or null if it escapes the root.
+ */
+function safePath(userPath, rootDir) {
+  if (!userPath || typeof userPath !== "string") return null;
+  const resolved = path.resolve(rootDir, userPath);
+  // Ensure the resolved path starts with rootDir (plus a separator) or IS rootDir
+  if (resolved !== rootDir && !resolved.startsWith(rootDir + path.sep)) {
+    return null;
+  }
+  return resolved;
+}
 
 exports.getDashboardData = async (req, res) => {
   const data = await getData();
@@ -42,7 +58,11 @@ exports.getDashboardData = async (req, res) => {
 };
 
 exports.getFolderOverviewData = async (req, res) => {
-  const { folderPath } = req.body;
+  const rawFolderPath = req.body?.folderPath;
+  const folderPath = rawFolderPath ? path.resolve(rawFolderPath) : null;
+  if (!folderPath) {
+    return res.status(400).json({ status: "0", message: "Invalid folder path" });
+  }
   const docData = await getData("documentVerificationData");
   let newData = [];
   if (folderPath) {
@@ -121,7 +141,12 @@ exports.getSubscriptionOverview = async (req, res) => {
 
 exports.verifyDocuments = async (req, res) => {
   try {
-    const { folderPath, selectedOrganizations } = req.body;
+    const { folderPath: rawFolderPath, selectedOrganizations } = req.body;
+    const folderPath = rawFolderPath ? path.resolve(rawFolderPath) : null;
+
+    if (!folderPath) {
+      return res.status(400).json({ status: "0", message: "Invalid folder path" });
+    }
 
     // Send immediate response to client
     res.status(200).json({ status: "1", data: [] });
@@ -188,7 +213,7 @@ exports.verifyDocuments = async (req, res) => {
                 "File Path": fileInfo?.path,
                 "Is Verified Document": item?.isVerifiedDocument,
                 Created: item?.created_on
-                  ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                  ? formatDate(new Date(item?.created_on), "dd MMMM, yyyy hh:mm a")
                   : null,
                 Message: item?.message,
                 "Error Message": "",
@@ -233,7 +258,7 @@ exports.verifyDocuments = async (req, res) => {
                   "File Path": fileInfo?.path,
                   "Is Verified Document": item?.isVerifiedDocument,
                   Created: item?.created_on
-                    ? moment(item?.created_on).format("DD MMMM, YYYY hh:mm A")
+                    ? formatDate(new Date(item?.created_on), "dd MMMM, yyyy hh:mm a")
                     : null,
                   Message: item?.message,
                   "Error Message": "",
@@ -509,24 +534,28 @@ exports.getVerifyDocumentCount = async (req, res) => {
   }
 };
 
-// View document
+// View document — restricted to ROOT_FOLDER_PATH to prevent traversal
 exports.viewFile = (req, res) => {
   try {
-    const filePath = req.query.path;
-
-    if (!filePath) {
+    const rawPath = req.query.path;
+    if (!rawPath) {
       return res.status(400).send("File path is required");
+    }
+
+    const rootDir = path.resolve(process.env.ROOT_FOLDER_PATH || ".");
+    const filePath = safePath(rawPath, rootDir);
+    if (!filePath) {
+      return res.status(403).send("Access denied: path is outside the document root");
     }
 
     fs.access(filePath, fs.constants.F_OK, (err) => {
       if (err) {
-        return res.status(400).send("File not found");
+        return res.status(404).send("File not found");
       }
-
       res.sendFile(filePath);
     });
   } catch (error) {
-    res.status(200).json({
+    res.status(500).json({
       status: "0",
       message: error.message,
     });
@@ -607,5 +636,25 @@ exports.getProductBatch = async (req, res) => {
       status: "0",
       message: error.message,
     });
+  }
+};
+
+// Proxy: blockchain proof verification (keeps JWT server-side)
+exports.getBlockchainProof = async (req, res) => {
+  try {
+    const result = await verifyBlockchainProof(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(422).json({ status: "0", message: error.message });
+  }
+};
+
+// Proxy: COA document blockchain proof verification (keeps JWT server-side)
+exports.getCoaBlockchainProof = async (req, res) => {
+  try {
+    const result = await verifyCoaDocumentProof(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(422).json({ status: "0", message: error.message });
   }
 };
