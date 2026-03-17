@@ -74,22 +74,10 @@ app.use("/api", limiter);
 
 app.use("/public", express.static(path.join(__dirname, "./public")));
 app.use("/api/client", require("./routes/client"));
+app.use("/api/health", require("./routes/health"));
 
-// Health check endpoint
-app.get("/health", (req, res) => {
-  const staticData = (() => {
-    try { return JSON.parse(global.localStorage.getItem("staticData") || "{}"); }
-    catch { return {}; }
-  })();
-  res.status(200).json({
-    status: "ok",
-    version: require("./package.json").version,
-    lastSyncedDate: staticData?.lastSyncedDate || null,
-    syncRunning: global.isGetSyncDataProcessStart || false,
-    verifierRunning: global.isVerifierScriptRunning || false,
-    subscriptionTypes: (global.subscriptionDetail || []).map((s) => s.subscription_type),
-  });
-});
+// Legacy /health alias kept for backwards compatibility
+app.get("/health", require("./controllers/health").getStatus);
 
 app.use(express.static(path.join(__dirname, "client/build")));
 app.get("*", (req, res) => {

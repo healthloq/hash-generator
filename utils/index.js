@@ -3,6 +3,7 @@ const path = require("path");
 const { syncHash, getSubscriptionDetail, syncDocToolLogs, publisherScriptIsRunningOrNot } = require("../services/healthloq");
 const { scanDirectory } = require("../services/fileScanner");
 const { hashFile } = require("../services/hasher");
+const { logSuccess, logFailure } = require("../services/healthMetrics");
 const { isEqual } = require("date-fns");
 const logger = require("../logger");
 const packageJson = require("../package.json");
@@ -99,8 +100,9 @@ exports.generateHashForVerifier = async (
       let state;
       try {
         state = fs.statSync(entry.filePath);
-      } catch {
+      } catch (err) {
         unreadFiles.push(entry.filePath);
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_STAT_ERROR", errorMessage: err.message });
         continue;
       }
 
@@ -113,8 +115,9 @@ exports.generateHashForVerifier = async (
       let hash;
       try {
         hash = hashFile(entry.filePath);
-      } catch {
+      } catch (err) {
         unreadFiles.push(entry.filePath);
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_READ_ERROR", errorMessage: err.message });
         continue;
       }
 
@@ -159,6 +162,7 @@ exports.generateHashForPublisher = async (
         state = fs.statSync(entry.filePath);
       } catch (err) {
         logger.warn({ filePath: entry.filePath, err }, "generateHashForPublisher: cannot stat file");
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_STAT_ERROR", errorMessage: err.message });
         continue;
       }
 
@@ -173,6 +177,7 @@ exports.generateHashForPublisher = async (
         hash = hashFile(entry.filePath);
       } catch (err) {
         logger.warn({ filePath: entry.filePath, err }, "generateHashForPublisher: cannot read file");
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_READ_ERROR", errorMessage: err.message });
         continue;
       }
 
@@ -335,9 +340,11 @@ exports.getSyncData = async (syncedData = null) => {
         hashCount: todayHashLimit + hashList.length,
       });
       if (syncStatus === "1") {
+        const now = new Date().toISOString();
         for (const item of latestData) {
           if (hashList.includes(item.hash)) {
             logger.info({ fileName: item.fileName }, "hash generated and synced");
+            logSuccess({ path: item.path, fileName: item.fileName, hash: item.hash, processedAt: now });
           }
         }
         this.setData(newData);
@@ -346,6 +353,15 @@ exports.getSyncData = async (syncedData = null) => {
             ? { ...item, current_num_monthly_hashes: String(todayHashLimit + hashList.length) }
             : item
         );
+      }
+    }
+
+    if (syncStatus === "0" && hashList.length) {
+      const now = new Date().toISOString();
+      for (const item of latestData) {
+        if (hashList.includes(item.hash)) {
+          logFailure({ path: item.path, fileName: item.fileName, hash: item.hash, errorCode: "SYNC_API_ERROR", errorMessage: "Blockchain API call failed", processedAt: now });
+        }
       }
     }
 

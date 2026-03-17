@@ -3,8 +3,8 @@ import { connect } from "react-redux";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SuspenseLoader } from "./components/common";
 import PageTitle from "./components/common/PageTitle";
-// import Socket from "./components/socket/Socket";
 import DocumentVerification from "./containers/DocumentVerification";
+import HealthDashboard from "./containers/HealthDashboard";
 import { getSubscriptionOverview } from "./redux/actions";
 const Home = lazy(() => import("./containers/Home"));
 
@@ -14,51 +14,40 @@ export const Main = (props) => {
   useEffect(() => {
     getSubscriptionOverview();
   }, []);
-  let routes = [];
+
+  let appRoutes = [];
   if (subscriptionDetails?.subscriptionList?.length === 2) {
-    routes = [
-      {
-        path: "/",
-        element: <Home />,
-      },
-      {
-        path: "/document-verification",
-        element: <DocumentVerification />,
-      },
+    appRoutes = [
+      { path: "/",                       element: <Home /> },
+      { path: "/document-verification",  element: <DocumentVerification /> },
     ];
   } else if (subscriptionDetails?.subscriptionList?.includes("publisher")) {
-    routes = [
-      {
-        path: "/",
-        element: <Home />,
-      },
+    appRoutes = [
+      { path: "/", element: <Home /> },
     ];
   } else if (subscriptionDetails?.subscriptionList?.includes("verifier")) {
-    routes = [
-      {
-        path: "/",
-        element: <Navigate to={"/document-verification"} />,
-      },
-      {
-        path: "/document-verification",
-        element: <DocumentVerification />,
-      },
+    appRoutes = [
+      { path: "/",                      element: <Navigate to="/document-verification" /> },
+      { path: "/document-verification", element: <DocumentVerification /> },
     ];
   }
+
   if (subscriptionDetails?.isLoading && !subscriptionDetails?.data?.length) {
     return <SuspenseLoader />;
   }
+
   return (
     <Suspense fallback={<SuspenseLoader />}>
-      {/* <Socket /> */}
       <BrowserRouter>
         <PageTitle />
         <Routes>
-          {routes?.map((route, key) => {
-            return (
-              <Route path={route.path} element={route.element} key={key} />
-            );
-          })}
+          {/* Subscription-dependent routes */}
+          {appRoutes.map((route, key) => (
+            <Route path={route.path} element={route.element} key={key} />
+          ))}
+
+          {/* Health dashboard — always available regardless of subscription */}
+          <Route path="/health" element={<HealthDashboard />} />
         </Routes>
       </BrowserRouter>
     </Suspense>
