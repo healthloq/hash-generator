@@ -12,6 +12,7 @@ import SystemStatus       from "../components/health/SystemStatus";
 import SummaryCards       from "../components/health/SummaryCards";
 import ProcessingHistogram from "../components/health/ProcessingHistogram";
 import FailedFilesList    from "../components/health/FailedFilesList";
+import ServiceControl     from "../components/health/ServiceControl";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -93,6 +94,14 @@ export default function HealthDashboard() {
     }
   };
 
+  const handleServiceAction = async (action) => {
+    const res = await post(`/api/health/service/${action}`);
+    if (res?.status !== "1") throw new Error(res?.message || `${action} failed`);
+    // Refresh status after a brief delay to let the service state settle
+    setTimeout(() => fetchStatus(), 600);
+    return res.message;
+  };
+
   const handleReprocess = async (filePaths) => {
     const res = await post("/api/health/reprocess", { filePaths });
     if (res?.status !== "1") throw new Error(res?.message || "Reprocess failed");
@@ -129,14 +138,21 @@ export default function HealthDashboard() {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
-          {/* Row 1: System status + summary cards side by side */}
+          {/* Row 1: System status + service control (left) + summary cards (right) */}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "320px 1fr" }, gap: 3 }}>
-            <SystemStatus
-              status={status}
-              loading={loadingStatus}
-              onForceSync={handleForceSync}
-              forceSyncing={forceSyncing}
-            />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <SystemStatus
+                status={status}
+                loading={loadingStatus}
+                onForceSync={handleForceSync}
+                forceSyncing={forceSyncing}
+              />
+              <ServiceControl
+                serviceState={status?.serviceState}
+                loading={loadingStatus}
+                onAction={handleServiceAction}
+              />
+            </Box>
             <Box>
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
                 Documents Processed

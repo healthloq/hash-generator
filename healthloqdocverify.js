@@ -16,6 +16,9 @@ const {
   setDocumentSyncTimeout,
   setDocumentSyncInterval,
 } = require("./utils");
+
+// Service-enabled flag — true by default, toggled via /api/health/service/*
+global.serviceEnabled = true;
 const { getSubscriptionDetail } = require("./services/healthloq");
 
 module.exports = io = require("socket.io")(server);
@@ -47,7 +50,7 @@ io.on("connection", (socket) => {
         awaitWriteFinish: { stabilityThreshold: 2000, pollInterval: 200 },
       });
       watcher.on("all", (eventName) => {
-        if (["add", "unlink", "change"].includes(eventName)) {
+        if (["add", "unlink", "change"].includes(eventName) && global.serviceEnabled !== false) {
           setDocumentSyncTimeout();
         }
       });

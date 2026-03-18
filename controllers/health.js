@@ -4,7 +4,7 @@ const {
   getFailedFiles,
   clearCacheForFiles,
 } = require("../services/healthMetrics");
-const { getSyncData } = require("../utils");
+const { getSyncData, stopService, startService, restartService } = require("../utils");
 const logger = require("../logger");
 
 exports.getSummary = (req, res) => {
@@ -77,16 +77,53 @@ exports.getStatus = (req, res) => {
       try { return JSON.parse(global.localStorage.getItem("staticData") || "{}"); }
       catch { return {}; }
     })();
+    const serviceEnabled = global.serviceEnabled !== false;
+    const syncRunning    = global.isGetSyncDataProcessStart || false;
     res.json({
       status: "ok",
       version: require("../package.json").version,
       lastSyncedDate: staticData?.lastSyncedDate || null,
-      syncRunning: global.isGetSyncDataProcessStart || false,
+      serviceEnabled,
+      // "running" = enabled AND actively syncing right now
+      // "idle"    = enabled AND waiting for next trigger
+      // "stopped" = manually stopped
+      serviceState: !serviceEnabled ? "stopped" : syncRunning ? "running" : "idle",
+      syncRunning,
       verifierRunning: global.isVerifierScriptRunning || false,
       subscriptionTypes: (global.subscriptionDetail || []).map((s) => s.subscription_type),
       rootFolderPath: process.env.ROOT_FOLDER_PATH || null,
     });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+exports.serviceStop = (req, res) => {
+  try {
+    stopService();
+    res.json({ status: "1", message: "Hashing service stopped" });
+  } catch (err) {
+    logger.error({ err }, "health/serviceStop failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.serviceStart = (req, res) => {
+  try {
+    startService();
+    res.json({ status: "1", message: "Hashing service started" });
+  } catch (err) {
+    logger.error({ err }, "health/serviceStart failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.serviceRestart = (req, res) => {
+  try {
+    restartService();
+    res.json({ status: "1", message: "Hashing service restarting" });
+  } catch (err) {
+    logger.error({ err }, "health/serviceRestart failed");
+    res.status(500).json({ status: "0", message: err.message });
   }
 };

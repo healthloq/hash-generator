@@ -413,6 +413,7 @@ exports.setDocumentSyncTimeout = () => {
 exports.setDocumentSyncInterval = () => {
   if (global.documentSyncInterval) clearInterval(global.documentSyncInterval);
   global.documentSyncInterval = setInterval(async () => {
+    if (global.serviceEnabled === false) return;
     if (!global.isGetSyncDataProcessStart) {
       const subscriptionInfo = await getSubscriptionDetail();
       global.subscriptionDetail = subscriptionInfo?.data;
@@ -423,4 +424,37 @@ exports.setDocumentSyncInterval = () => {
       doc_tool_version: packageJson.version,
     });
   }, 5 * 60 * 1000); // 5-minute fallback heartbeat
+};
+
+// ---------------------------------------------------------------------------
+// Service lifecycle control
+// ---------------------------------------------------------------------------
+
+exports.stopService = () => {
+  global.serviceEnabled = false;
+  if (global.documentSyncInterval) {
+    clearInterval(global.documentSyncInterval);
+    global.documentSyncInterval = null;
+  }
+  if (global.documentSyncTimeout) {
+    clearTimeout(global.documentSyncTimeout);
+    global.documentSyncTimeout = null;
+  }
+  logger.info("Hashing service stopped");
+};
+
+exports.startService = () => {
+  global.serviceEnabled = true;
+  this.setDocumentSyncInterval();
+  if (!global.isGetSyncDataProcessStart) {
+    this.getSyncData();
+  }
+  logger.info("Hashing service started");
+};
+
+exports.restartService = () => {
+  this.stopService();
+  // Brief pause so any in-flight sync can record its final state
+  setTimeout(() => this.startService(), 500);
+  logger.info("Hashing service restarting");
 };
