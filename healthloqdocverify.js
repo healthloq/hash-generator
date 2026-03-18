@@ -76,8 +76,9 @@ app.use("/public", express.static(path.join(__dirname, "./public")));
 app.use("/api/client", require("./routes/client"));
 app.use("/api/health", require("./routes/health"));
 
-// Legacy /health alias kept for backwards compatibility
-app.get("/health", require("./controllers/health").getStatus);
+// /health is handled by React Router client-side — do NOT add an Express
+// route here or it will intercept the request before the SPA loads.
+// The JSON status endpoint is at /api/health/status.
 
 app.use(express.static(path.join(__dirname, "client/build")));
 app.get("*", (req, res) => {
