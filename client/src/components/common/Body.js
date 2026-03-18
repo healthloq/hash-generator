@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Container, Tooltip, Fab } from "../";
-import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import { useNavigate } from "react-router-dom";
 
 export default function Body({ children }) {
@@ -26,7 +26,7 @@ export default function Body({ children }) {
             "&:hover": { bgcolor: "primary.main", color: "white" },
           }}
         >
-          <MonitorHeartIcon />
+          <AssessmentIcon />
         </Fab>
       </Tooltip>
     </Box>
