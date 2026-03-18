@@ -8,7 +8,7 @@ import {
   IconButton,
   styled,
 } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import ArrowForward from "@mui/icons-material/ArrowForward";
 import { Link } from "../components";
 import moment from "moment";
 import { connect } from "react-redux";

@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Link } from "../components";
-import { ArrowBack } from "@mui/icons-material";
+import ArrowBack from "@mui/icons-material/ArrowBack";
 import {
   setInitialState,
   getSubscriptionOverview,

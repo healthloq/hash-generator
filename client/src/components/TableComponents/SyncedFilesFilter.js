@@ -2,7 +2,7 @@ import React from "react";
 import { TextField, InputAdornment, styled } from "@mui/material";
 import { handleSyncedFilter } from "../../redux/actions";
 import { connect } from "react-redux";
-import { Search } from "@mui/icons-material";
+import Search from "@mui/icons-material/Search";
 
 export function SyncedFilesFilter({ handleSyncedFilter, syncedFilesFilter }) {
   return (
