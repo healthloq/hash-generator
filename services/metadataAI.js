@@ -1,0 +1,164 @@
+const Anthropic = require("@anthropic-ai/sdk");
+const fs = require("fs");
+const path = require("path");
+const { getCacheEntries } = require("./metadataCache");
+const logger = require("../logger");
+
+const client = new Anthropic();
+
+const IMAGE_MIME = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+};
+
+const MAX_TEXT_BYTES = 100 * 1024; // 100 KB cap for text files
+
+/**
+ * Build the content blocks to send to Claude for a given file path.
+ * Returns an array of Anthropic content block objects.
+ */
+function buildFileContent(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const fileName = path.basename(filePath);
+  const intro = `File name: ${fileName}`;
+
+  // PDF
+  if (ext === ".pdf") {
+    try {
+      const data = fs.readFileSync(filePath);
+      return [
+        { type: "text", text: intro },
+        {
+          type: "document",
+          source: {
+            type: "base64",
+            media_type: "application/pdf",
+            data: data.toString("base64"),
+          },
+        },
+      ];
+    } catch (e) {
+      logger.warn({ filePath, err: e.message }, "metadataAI: cannot read PDF — using filename only");
+      return [{ type: "text", text: `${intro} (unreadable PDF)` }];
+    }
+  }
+
+  // Image
+  if (IMAGE_MIME[ext]) {
+    try {
+      const data = fs.readFileSync(filePath);
+      return [
+        { type: "text", text: intro },
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: IMAGE_MIME[ext],
+            data: data.toString("base64"),
+          },
+        },
+      ];
+    } catch (e) {
+      logger.warn({ filePath, err: e.message }, "metadataAI: cannot read image — using filename only");
+      return [{ type: "text", text: `${intro} (unreadable image)` }];
+    }
+  }
+
+  // Plain text / other
+  try {
+    const raw = fs.readFileSync(filePath);
+    const text = raw.slice(0, MAX_TEXT_BYTES).toString("utf-8");
+    return [{ type: "text", text: `${intro}\n\nContent:\n${text}` }];
+  } catch (e) {
+    logger.warn({ filePath, err: e.message }, "metadataAI: cannot read file — using filename only");
+    return [{ type: "text", text: `${intro} (binary or unreadable file)` }];
+  }
+}
+
+/**
+ * Analyse a single file and return suggested metadata IDs/names.
+ * Any field where confidence < 0.5 is returned as null.
+ *
+ * @param {string} filePath  Absolute path to the file on disk
+ * @returns {{ organization, location, product, batch, reasoning }}
+ */
+exports.analyzeFileForMetadata = async (filePath) => {
+  const orgs      = getCacheEntries("organization");
+  const locations = getCacheEntries("location");
+  const products  = getCacheEntries("product");
+  const batches   = getCacheEntries("batch");
+
+  const fileContent = buildFileContent(filePath);
+
+  const systemPrompt = `You are a metadata classification assistant. Given a document and lists of available metadata options, determine which organization, location, product, and product batch best describes the document.
+
+Respond with a single JSON object — no markdown fences, no extra text:
+{
+  "organization": { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "location":     { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "product":      { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "batch":        { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "reasoning":    "<one or two sentences>"
+}
+
+Rules:
+- Set a field to null if you are less than 50% confident (confidence < 0.5).
+- IDs must exactly match one of the options listed below.
+- If no options exist for a category, set that field to null.
+
+Available options:
+ORGANIZATIONS: ${JSON.stringify(orgs.map((o) => ({ id: o.id, name: o.name })))}
+LOCATIONS: ${JSON.stringify(locations.map((l) => ({ id: l.id, name: l.name, org: l.org_name })))}
+PRODUCTS: ${JSON.stringify(products.map((p) => ({ id: p.id, name: p.name, org: p.org_name })))}
+BATCHES: ${JSON.stringify(batches.map((b) => ({ id: b.id, name: b.name, org: b.org_name, product: b.product_name })))}`;
+
+  const response = await client.messages.create({
+    model: "claude-opus-4-6",
+    max_tokens: 1024,
+    thinking: { type: "adaptive" },
+    system: systemPrompt,
+    messages: [
+      {
+        role: "user",
+        content: [
+          ...fileContent,
+          {
+            type: "text",
+            text: "Determine the appropriate metadata for this file. Return ONLY the JSON object.",
+          },
+        ],
+      },
+    ],
+  });
+
+  const textBlock = response.content.find((b) => b.type === "text");
+  if (!textBlock) throw new Error("No text response from Claude");
+
+  let parsed;
+  try {
+    // Strip markdown code fences if Claude adds them despite instructions
+    const jsonText = textBlock.text
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+    parsed = JSON.parse(jsonText);
+  } catch (e) {
+    throw new Error(`Failed to parse Claude JSON response: ${textBlock.text.slice(0, 200)}`);
+  }
+
+  const threshold = (field) => {
+    if (!field || typeof field.confidence !== "number" || field.confidence < 0.5) return null;
+    return { id: field.id, name: field.name, confidence: field.confidence };
+  };
+
+  return {
+    organization: threshold(parsed.organization),
+    location:     threshold(parsed.location),
+    product:      threshold(parsed.product),
+    batch:        threshold(parsed.batch),
+    reasoning:    parsed.reasoning || "",
+  };
+};

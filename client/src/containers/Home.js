@@ -17,8 +17,10 @@ import EnhancedTable from "../components/TableComponents";
 import { syncedFilesHeaders } from "../constants/tableConfigs";
 import { abbrNum } from "../utils";
 import EditIcon from "@mui/icons-material/Edit";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import UpdateDocumentEffectiveDateDialog from "../components/dialogs/UpdateDocumentEffectiveDateDialog";
+import AutoPopulateMetadataDialog from "../components/dialogs/AutoPopulateMetadataDialog";
 
 const LastSyncedDataList = styled(Box)(({ theme }) => ({
   marginBottom: 30,
@@ -42,6 +44,7 @@ export function Home({
   const [snackbarMsg, setSnackbarMsg] = useState("");
   const [openUpdateEffectiveDateDialog, setOpenUpdateEffectiveDateDialog] =
     useState(false);
+  const [openAutoPopulateDialog, setOpenAutoPopulateDialog] = useState(false);
   const [publisherDataDashboard, setPublisherDataDashboard] = useState({});
   useEffect(() => {
     getDashboardOverviewData();
@@ -157,6 +160,14 @@ export function Home({
             >
               Edit File Metadata
             </Button>
+            <Button
+              startIcon={<AutoAwesomeIcon />}
+              variant="outlined"
+              onClick={() => setOpenAutoPopulateDialog(true)}
+              sx={{ ml: 1 }}
+            >
+              Auto-populate Metadata
+            </Button>
           </>
         }
       />
@@ -169,6 +180,17 @@ export function Home({
         selectedDocuments={selected}
         setSelected={setSelected}
         dashboardOverview={dashboardOverview}
+      />
+      <AutoPopulateMetadataDialog
+        open={openAutoPopulateDialog}
+        onClose={() => {
+          setOpenAutoPopulateDialog(false);
+        }}
+        selectedHashes={selected}
+        onComplete={() => {
+          setSelected([]);
+          getDashboardOverviewData();
+        }}
       />
       <Snackbar
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
