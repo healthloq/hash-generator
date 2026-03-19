@@ -124,6 +124,9 @@ exports.refreshMetadataCache = async () => {
     const locationMap = new Map();
     const productMap  = new Map();
     const batchMap    = new Map();
+    // Log the raw API shape once per entity type (not 35× per org)
+    let _loggedLocShape  = false;
+    let _loggedProdShape = false;
 
     await Promise.allSettled(
       orgs.map(async (org) => {
@@ -146,8 +149,9 @@ exports.refreshMetadataCache = async () => {
           // locationListForMetaData wraps: { status, data: <api_body> }
           // safeArray handles api_body being [...] or { data: [...] }
           const locs = safeArray(locResult.value?.data);
-          if (locs.length === 0 && locResult.value?.status !== "1") {
-            logger.warn({ orgId, response: locResult.value }, "metadataCache: location API returned no data");
+          if (locs.length === 0 && !_loggedLocShape) {
+            _loggedLocShape = true;
+            logger.warn({ orgId, raw: locResult.value }, "metadataCache: location API sample (zero usable records — check raw shape)");
           }
           for (const loc of locs) {
             if (loc?.id != null && loc?.name) {
@@ -165,8 +169,9 @@ exports.refreshMetadataCache = async () => {
         }
 
         const prods = safeArray(prodResult.value?.data);
-        if (prods.length === 0 && prodResult.value?.status !== "1") {
-          logger.warn({ orgId, response: prodResult.value }, "metadataCache: product API returned no data");
+        if (prods.length === 0 && !_loggedProdShape) {
+          _loggedProdShape = true;
+          logger.warn({ orgId, raw: prodResult.value }, "metadataCache: product API sample (zero usable records — check raw shape)");
         }
 
         for (const prod of prods) {
