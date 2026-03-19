@@ -12,7 +12,8 @@ import SystemStatus       from "../components/health/SystemStatus";
 import SummaryCards       from "../components/health/SummaryCards";
 import ProcessingHistogram from "../components/health/ProcessingHistogram";
 import FailedFilesList    from "../components/health/FailedFilesList";
-import ServiceControl     from "../components/health/ServiceControl";
+import ServiceControl      from "../components/health/ServiceControl";
+import MetadataCacheStatus from "../components/health/MetadataCacheStatus";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -22,12 +23,14 @@ export default function HealthDashboard() {
   const [status,      setStatus]      = useState(null);
   const [summary,     setSummary]     = useState(null);
   const [failedFiles, setFailedFiles] = useState([]);
+  const [metaCache,   setMetaCache]   = useState(null);
 
-  const [loadingStatus,  setLoadingStatus]  = useState(true);
-  const [loadingSummary, setLoadingSummary] = useState(true);
-  const [loadingFailed,  setLoadingFailed]  = useState(true);
-  const [refreshing,     setRefreshing]     = useState(false);
-  const [forceSyncing,   setForceSyncing]   = useState(false);
+  const [loadingStatus,    setLoadingStatus]    = useState(true);
+  const [loadingSummary,   setLoadingSummary]   = useState(true);
+  const [loadingFailed,    setLoadingFailed]    = useState(true);
+  const [loadingMetaCache, setLoadingMetaCache] = useState(true);
+  const [refreshing,       setRefreshing]       = useState(false);
+  const [forceSyncing,     setForceSyncing]     = useState(false);
 
   const intervalRef = useRef(null);
 
@@ -60,11 +63,20 @@ export default function HealthDashboard() {
     }
   }, []);
 
+  const fetchMetaCache = useCallback(async () => {
+    try {
+      const res = await get("/api/health/metadata-cache");
+      if (res?.status === "1") setMetaCache(res);
+    } finally {
+      setLoadingMetaCache(false);
+    }
+  }, []);
+
   const refreshAll = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchStatus(), fetchSummary(), fetchFailedFiles()]);
+    await Promise.all([fetchStatus(), fetchSummary(), fetchFailedFiles(), fetchMetaCache()]);
     setRefreshing(false);
-  }, [fetchStatus, fetchSummary, fetchFailedFiles]);
+  }, [fetchStatus, fetchSummary, fetchFailedFiles, fetchMetaCache]);
 
   // ── Mount + polling ──────────────────────────────────────────────────────
 
@@ -72,15 +84,17 @@ export default function HealthDashboard() {
     fetchStatus();
     fetchSummary();
     fetchFailedFiles();
+    fetchMetaCache();
 
     intervalRef.current = setInterval(() => {
       fetchStatus();
       fetchSummary();
       fetchFailedFiles();
+      fetchMetaCache();
     }, POLL_INTERVAL_MS);
 
     return () => clearInterval(intervalRef.current);
-  }, [fetchStatus, fetchSummary, fetchFailedFiles]);
+  }, [fetchStatus, fetchSummary, fetchFailedFiles, fetchMetaCache]);
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
@@ -97,8 +111,22 @@ export default function HealthDashboard() {
   const handleServiceAction = async (action) => {
     const res = await post(`/api/health/service/${action}`);
     if (res?.status !== "1") throw new Error(res?.message || `${action} failed`);
-    // Refresh status after a brief delay to let the service state settle
     setTimeout(() => fetchStatus(), 600);
+    return res.message;
+  };
+
+  const handleMetaCacheRefresh = async () => {
+    const res = await post("/api/health/metadata-cache/refresh");
+    if (res?.status !== "1") throw new Error(res?.message || "Refresh failed");
+    // Poll until the background refresh finishes (up to ~60 s)
+    let polls = 0;
+    const check = setInterval(async () => {
+      polls++;
+      await fetchMetaCache();
+      const latest = await get("/api/health/metadata-cache");
+      if (!latest?.refreshing || polls >= 12) clearInterval(check);
+      if (latest?.status === "1") setMetaCache(latest);
+    }, 5000);
     return res.message;
   };
 
@@ -138,27 +166,32 @@ export default function HealthDashboard() {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
-          {/* Row 1: System status + service control (left) + summary cards (right) */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "320px 1fr" }, gap: 3 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <SystemStatus
-                status={status}
-                loading={loadingStatus}
-                onForceSync={handleForceSync}
-                forceSyncing={forceSyncing}
-              />
-              <ServiceControl
-                serviceState={status?.serviceState}
-                loading={loadingStatus}
-                onAction={handleServiceAction}
-              />
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-                Documents Processed
-              </Typography>
-              <SummaryCards summary={summary} loading={loadingSummary} />
-            </Box>
+          {/* Row 1: System status | Service control | Metadata cache */}
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" }, gap: 3 }}>
+            <SystemStatus
+              status={status}
+              loading={loadingStatus}
+              onForceSync={handleForceSync}
+              forceSyncing={forceSyncing}
+            />
+            <ServiceControl
+              serviceState={status?.serviceState}
+              loading={loadingStatus}
+              onAction={handleServiceAction}
+            />
+            <MetadataCacheStatus
+              data={metaCache}
+              loading={loadingMetaCache}
+              onRefresh={handleMetaCacheRefresh}
+            />
+          </Box>
+
+          {/* Row 2: Summary cards */}
+          <Box>
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
+              Documents Processed
+            </Typography>
+            <SummaryCards summary={summary} loading={loadingSummary} />
           </Box>
 
           {/* Row 2: Histogram */}

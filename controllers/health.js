@@ -4,6 +4,11 @@ const {
   getFailedFiles,
   clearCacheForFiles,
 } = require("../services/healthMetrics");
+const {
+  getCacheSummary,
+  isRefreshing,
+  refreshMetadataCache,
+} = require("../services/metadataCache");
 const { getSyncData, stopService, startService, restartService } = require("../utils");
 const logger = require("../logger");
 
@@ -126,4 +131,33 @@ exports.serviceRestart = (req, res) => {
     logger.error({ err }, "health/serviceRestart failed");
     res.status(500).json({ status: "0", message: err.message });
   }
+};
+
+exports.getMetadataCache = (req, res) => {
+  try {
+    const { counts, lastUpdated } = getCacheSummary();
+    res.json({
+      status: "1",
+      counts,
+      // Normalise SQLite's "YYYY-MM-DD HH:MM:SS" to a proper ISO string
+      lastUpdated: lastUpdated
+        ? new Date(lastUpdated.replace(" ", "T") + "Z").toISOString()
+        : null,
+      refreshing: isRefreshing(),
+    });
+  } catch (err) {
+    logger.error({ err }, "health/getMetadataCache failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.refreshMetadataCache = (req, res) => {
+  if (isRefreshing()) {
+    return res.json({ status: "1", message: "Refresh already in progress" });
+  }
+  // Fire-and-forget — client polls GET /metadata-cache for updated counts
+  refreshMetadataCache().catch((err) =>
+    logger.error({ err }, "metadata cache background refresh failed")
+  );
+  res.json({ status: "1", message: "Metadata cache refresh started" });
 };

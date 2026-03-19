@@ -69,6 +69,20 @@ if (!migrated) {
   }
 }
 
+// ── Metadata cache (id/name lookup tables for org/location/product/batch) ─
+db.exec(`
+  CREATE TABLE IF NOT EXISTS metadata_cache (
+    entity_type TEXT NOT NULL,
+    entity_id   TEXT NOT NULL,
+    entity_name TEXT NOT NULL,
+    org_id      TEXT,
+    product_id  TEXT,
+    updated_at  DATETIME NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (entity_type, entity_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_mc_type ON metadata_cache(entity_type);
+`);
+
 // ── Prepared statements for the key-value interface ───────────────────────
 const stmtGet    = db.prepare("SELECT value FROM store WHERE key = ?");
 const stmtSet    = db.prepare("INSERT OR REPLACE INTO store (key, value) VALUES (?, ?)");
