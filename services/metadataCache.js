@@ -19,6 +19,50 @@ const stmtLastUpdated = db.prepare(
 /**
  * Returns { counts: { organization, location, product, batch }, lastUpdated }
  */
+const VALID_TYPES = new Set(["organization", "location", "product", "batch"]);
+
+/**
+ * Returns the full list of cached records for one entity type.
+ * Locations and products include their parent org name.
+ * Batches include parent org name and product name.
+ */
+exports.getCacheEntries = (entityType) => {
+  if (!VALID_TYPES.has(entityType)) throw new Error("Invalid entity type");
+
+  if (entityType === "organization") {
+    return db.prepare(
+      `SELECT entity_id AS id, entity_name AS name
+       FROM metadata_cache WHERE entity_type = 'organization'
+       ORDER BY entity_name COLLATE NOCASE`
+    ).all();
+  }
+
+  if (entityType === "location" || entityType === "product") {
+    return db.prepare(
+      `SELECT mc.entity_id AS id, mc.entity_name AS name,
+              o.entity_name AS org_name
+       FROM metadata_cache mc
+       LEFT JOIN metadata_cache o
+         ON o.entity_type = 'organization' AND o.entity_id = mc.org_id
+       WHERE mc.entity_type = ?
+       ORDER BY mc.entity_name COLLATE NOCASE`
+    ).all(entityType);
+  }
+
+  // batch
+  return db.prepare(
+    `SELECT mc.entity_id AS id, mc.entity_name AS name,
+            o.entity_name AS org_name, p.entity_name AS product_name
+     FROM metadata_cache mc
+     LEFT JOIN metadata_cache o
+       ON o.entity_type = 'organization' AND o.entity_id = mc.org_id
+     LEFT JOIN metadata_cache p
+       ON p.entity_type = 'product' AND p.entity_id = mc.product_id
+     WHERE mc.entity_type = 'batch'
+     ORDER BY mc.entity_name COLLATE NOCASE`
+  ).all();
+};
+
 exports.getCacheSummary = () => {
   const rows = stmtCounts.all();
   const counts = { organization: 0, location: 0, product: 0, batch: 0 };

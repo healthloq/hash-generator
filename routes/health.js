@@ -10,7 +10,8 @@ router.post("/force-sync",     ctrl.forceSync);
 router.post("/service/start",  ctrl.serviceStart);
 router.post("/service/stop",   ctrl.serviceStop);
 router.post("/service/restart",        ctrl.serviceRestart);
-router.get("/metadata-cache",          ctrl.getMetadataCache);
-router.post("/metadata-cache/refresh", ctrl.refreshMetadataCache);
+router.get("/metadata-cache",                  ctrl.getMetadataCache);
+router.get("/metadata-cache/:entityType",      ctrl.getMetadataCacheEntries);
+router.post("/metadata-cache/refresh",         ctrl.refreshMetadataCache);
 
 module.exports = router;

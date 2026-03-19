@@ -6,6 +6,7 @@ const {
 } = require("../services/healthMetrics");
 const {
   getCacheSummary,
+  getCacheEntries,
   isRefreshing,
   refreshMetadataCache,
 } = require("../services/metadataCache");
@@ -148,6 +149,18 @@ exports.getMetadataCache = (req, res) => {
   } catch (err) {
     logger.error({ err }, "health/getMetadataCache failed");
     res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.getMetadataCacheEntries = (req, res) => {
+  try {
+    const { entityType } = req.params;
+    const rows = getCacheEntries(entityType);
+    res.json({ status: "1", data: rows });
+  } catch (err) {
+    logger.error({ err }, "health/getMetadataCacheEntries failed");
+    const status = err.message === "Invalid entity type" ? 400 : 500;
+    res.status(status).json({ status: "0", message: err.message });
   }
 };
 
