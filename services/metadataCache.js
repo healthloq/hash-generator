@@ -154,9 +154,15 @@ exports.refreshMetadataCache = async () => {
             logger.warn({ orgId, raw: locResult.value }, "metadataCache: location API sample (zero usable records — check raw shape)");
           }
           for (const loc of locs) {
-            if (loc?.id != null && loc?.name) {
+            // Locations use `description` as the display name, not `name`
+            const locName = loc?.description || loc?.name;
+            if (loc?.id != null && locName) {
+              const address = [loc.line_1, loc.line_2, loc.city]
+                .filter(Boolean).join(", ");
               locationMap.set(String(loc.id), {
-                id: String(loc.id), name: loc.name, orgId: orgIdStr,
+                id:      String(loc.id),
+                name:    address ? `${locName} — ${address}` : locName,
+                orgId:   orgIdStr,
               });
             }
           }
@@ -175,9 +181,11 @@ exports.refreshMetadataCache = async () => {
         }
 
         for (const prod of prods) {
-          if (prod?.id != null && prod?.name) {
+          // Products use `title` as the display name, not `name`
+          const prodName = prod?.title || prod?.name;
+          if (prod?.id != null && prodName) {
             productMap.set(String(prod.id), {
-              id: String(prod.id), name: prod.name, orgId: orgIdStr,
+              id: String(prod.id), name: prodName, orgId: orgIdStr,
             });
           }
         }
@@ -190,14 +198,18 @@ exports.refreshMetadataCache = async () => {
               const batchRes = await productBatchListForMetaData({
                 integrant_type_id: prod.id,
                 organization_id:   orgId,
+                offset:            0,
+                limit:             null,
               });
               // productBatchListForMetaData wraps: { status, data: <api_body> }
               const batches = safeArray(batchRes?.data);
               for (const batch of batches) {
-                if (batch?.id != null && batch?.name) {
+                // Batches use `external_id` as the display name, not `name`
+                const batchName = batch?.external_id || batch?.name;
+                if (batch?.id != null && batchName) {
                   batchMap.set(String(batch.id), {
                     id:        String(batch.id),
-                    name:      batch.name,
+                    name:      batchName,
                     orgId:     orgIdStr,
                     productId: String(prod.id),
                   });

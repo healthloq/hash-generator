@@ -37,7 +37,7 @@ const ENTITY_CONFIG = [
     color: "#388e3c",
     columns: [
       { field: "id",       header: "ID"           },
-      { field: "name",     header: "Name"         },
+      { field: "name",     header: "Description / Address" },
       { field: "org_name", header: "Organization" },
     ],
   },
@@ -48,7 +48,7 @@ const ENTITY_CONFIG = [
     color: "#f57c00",
     columns: [
       { field: "id",       header: "ID"           },
-      { field: "name",     header: "Name"         },
+      { field: "name",     header: "Title"        },
       { field: "org_name", header: "Organization" },
     ],
   },
@@ -59,7 +59,7 @@ const ENTITY_CONFIG = [
     color: "#7b1fa2",
     columns: [
       { field: "id",           header: "ID"           },
-      { field: "name",         header: "Name"         },
+      { field: "name",         header: "External ID"  },
       { field: "org_name",     header: "Organization" },
       { field: "product_name", header: "Product"      },
     ],
