@@ -7,6 +7,22 @@ const {
 } = require("./healthloq");
 const logger = require("../logger");
 
+// ── Response normalisation ────────────────────────────────────────────────────
+//
+// The four HealthLOQ service functions wrap their responses inconsistently:
+//   - organizationListForMetaData returns response.data directly
+//     → the raw API body, e.g. { status:"1", data:[...] }
+//   - the others return { status:"1", data: response.data }
+//     → response.data is the raw API body, which may be [...] or { data:[...] }
+//
+// safeArray() extracts the actual array from any of those shapes.
+//
+function safeArray(val) {
+  if (Array.isArray(val))               return val;           // already an array
+  if (val && Array.isArray(val.data))   return val.data;      // { data: [...] }
+  return [];
+}
+
 // ── Read helpers ─────────────────────────────────────────────────────────────
 
 const stmtCounts = db.prepare(
@@ -16,16 +32,20 @@ const stmtLastUpdated = db.prepare(
   "SELECT MAX(updated_at) AS last_updated FROM metadata_cache"
 );
 
-/**
- * Returns { counts: { organization, location, product, batch }, lastUpdated }
- */
+exports.getCacheSummary = () => {
+  const rows = stmtCounts.all();
+  const counts = { organization: 0, location: 0, product: 0, batch: 0 };
+  for (const row of rows) {
+    if (Object.prototype.hasOwnProperty.call(counts, row.entity_type)) {
+      counts[row.entity_type] = row.count;
+    }
+  }
+  const { last_updated } = stmtLastUpdated.get();
+  return { counts, lastUpdated: last_updated || null };
+};
+
 const VALID_TYPES = new Set(["organization", "location", "product", "batch"]);
 
-/**
- * Returns the full list of cached records for one entity type.
- * Locations and products include their parent org name.
- * Batches include parent org name and product name.
- */
 exports.getCacheEntries = (entityType) => {
   if (!VALID_TYPES.has(entityType)) throw new Error("Invalid entity type");
 
@@ -49,7 +69,6 @@ exports.getCacheEntries = (entityType) => {
     ).all(entityType);
   }
 
-  // batch
   return db.prepare(
     `SELECT mc.entity_id AS id, mc.entity_name AS name,
             o.entity_name AS org_name, p.entity_name AS product_name
@@ -61,18 +80,6 @@ exports.getCacheEntries = (entityType) => {
      WHERE mc.entity_type = 'batch'
      ORDER BY mc.entity_name COLLATE NOCASE`
   ).all();
-};
-
-exports.getCacheSummary = () => {
-  const rows = stmtCounts.all();
-  const counts = { organization: 0, location: 0, product: 0, batch: 0 };
-  for (const row of rows) {
-    if (Object.prototype.hasOwnProperty.call(counts, row.entity_type)) {
-      counts[row.entity_type] = row.count;
-    }
-  }
-  const { last_updated } = stmtLastUpdated.get();
-  return { counts, lastUpdated: last_updated || null };
 };
 
 // ── Write helpers ────────────────────────────────────────────────────────────
@@ -91,10 +98,6 @@ const stmtDeleteByType = db.prepare(
 let _refreshing = false;
 exports.isRefreshing = () => _refreshing;
 
-/**
- * Fetches all organisations, then per-org locations + products, then
- * per-product batches.  Replaces the cache atomically per entity type.
- */
 exports.refreshMetadataCache = async () => {
   if (_refreshing) return { skipped: true };
   _refreshing = true;
@@ -104,7 +107,9 @@ exports.refreshMetadataCache = async () => {
 
     // ── 1. Organisations ───────────────────────────────────────────────────
     const orgRes = await organizationListForMetaData({});
-    const orgs   = Array.isArray(orgRes?.data) ? orgRes.data : [];
+    // organizationListForMetaData returns response.data directly (raw API body)
+    const orgs = safeArray(orgRes);
+    logger.info({ count: orgs.length }, "metadataCache: organisations fetched");
 
     db.transaction(() => {
       stmtDeleteByType.run("organization");
@@ -115,7 +120,7 @@ exports.refreshMetadataCache = async () => {
       }
     })();
 
-    // ── 2. Locations + Products (parallel per org) ─────────────────────────
+    // ── 2. Per-org: locations + products (parallel), then per-product batches
     const locationMap = new Map();
     const productMap  = new Map();
     const batchMap    = new Map();
@@ -123,56 +128,78 @@ exports.refreshMetadataCache = async () => {
     await Promise.allSettled(
       orgs.map(async (org) => {
         if (org?.id == null) return;
-        const orgId = String(org.id);
+        // Use the original id type — do NOT convert to string here so the
+        // HealthLOQ API receives the same type it returned (typically a number).
+        const orgId    = org.id;
+        const orgIdStr = String(orgId);
 
+        // Locations and products in parallel
         const [locResult, prodResult] = await Promise.allSettled([
           locationListForMetaData({ organization_id: orgId }),
           productListForMetaData({ organization_id: orgId }),
         ]);
 
-        // Locations
-        if (locResult.status === "fulfilled") {
-          for (const loc of locResult.value?.data ?? []) {
+        // ── Locations ──────────────────────────────────────────────────────
+        if (locResult.status === "rejected") {
+          logger.warn({ orgId, err: locResult.reason }, "metadataCache: location fetch failed");
+        } else {
+          // locationListForMetaData wraps: { status, data: <api_body> }
+          // safeArray handles api_body being [...] or { data: [...] }
+          const locs = safeArray(locResult.value?.data);
+          if (locs.length === 0 && locResult.value?.status !== "1") {
+            logger.warn({ orgId, response: locResult.value }, "metadataCache: location API returned no data");
+          }
+          for (const loc of locs) {
             if (loc?.id != null && loc?.name) {
               locationMap.set(String(loc.id), {
-                id: String(loc.id), name: loc.name, orgId,
+                id: String(loc.id), name: loc.name, orgId: orgIdStr,
               });
             }
           }
         }
 
-        // Products + per-product batches
-        if (prodResult.status === "fulfilled") {
-          const prods = prodResult.value?.data ?? [];
-          for (const prod of prods) {
-            if (prod?.id != null && prod?.name) {
-              productMap.set(String(prod.id), {
-                id: String(prod.id), name: prod.name, orgId,
-              });
-            }
-          }
+        // ── Products ───────────────────────────────────────────────────────
+        if (prodResult.status === "rejected") {
+          logger.warn({ orgId, err: prodResult.reason }, "metadataCache: product fetch failed");
+          return;
+        }
 
-          await Promise.allSettled(
-            prods
-              .filter((p) => p?.id != null)
-              .map(async (prod) => {
-                const batchRes = await productBatchListForMetaData({
-                  integrant_type_id: prod.id,
-                  organization_id:   orgId,
-                });
-                for (const batch of batchRes?.data ?? []) {
-                  if (batch?.id != null && batch?.name) {
-                    batchMap.set(String(batch.id), {
-                      id:        String(batch.id),
-                      name:      batch.name,
-                      orgId,
-                      productId: String(prod.id),
-                    });
-                  }
+        const prods = safeArray(prodResult.value?.data);
+        if (prods.length === 0 && prodResult.value?.status !== "1") {
+          logger.warn({ orgId, response: prodResult.value }, "metadataCache: product API returned no data");
+        }
+
+        for (const prod of prods) {
+          if (prod?.id != null && prod?.name) {
+            productMap.set(String(prod.id), {
+              id: String(prod.id), name: prod.name, orgId: orgIdStr,
+            });
+          }
+        }
+
+        // ── Batches (per product) ──────────────────────────────────────────
+        await Promise.allSettled(
+          prods
+            .filter((p) => p?.id != null)
+            .map(async (prod) => {
+              const batchRes = await productBatchListForMetaData({
+                integrant_type_id: prod.id,
+                organization_id:   orgId,
+              });
+              // productBatchListForMetaData wraps: { status, data: <api_body> }
+              const batches = safeArray(batchRes?.data);
+              for (const batch of batches) {
+                if (batch?.id != null && batch?.name) {
+                  batchMap.set(String(batch.id), {
+                    id:        String(batch.id),
+                    name:      batch.name,
+                    orgId:     orgIdStr,
+                    productId: String(prod.id),
+                  });
                 }
-              })
-          );
-        }
+              }
+            })
+        );
       })
     );
 
