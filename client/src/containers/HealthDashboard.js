@@ -138,58 +138,58 @@ export default function HealthDashboard() {
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-          <Tooltip title="Refresh all">
-            <IconButton onClick={refreshAll} disabled={refreshing}>
-              {refreshing
-                ? <CircularProgress size={20} />
-                : <RefreshIcon />}
-            </IconButton>
-          </Tooltip>
-        </Box>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
-          {/* Row 1: System status | Service control | Metadata cache */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" }, gap: 3 }}>
-            <SystemStatus
-              status={status}
-              loading={loadingStatus}
-              onForceSync={handleForceSync}
-              forceSyncing={forceSyncing}
-            />
-            <ServiceControl
-              serviceState={status?.serviceState}
-              loading={loadingStatus}
-              onAction={handleServiceAction}
-            />
-            <MetadataCacheStatus
-              data={metaCache}
-              loading={loadingMetaCache}
-              onRefresh={handleMetaCacheRefresh}
-            />
-          </Box>
-
-          {/* Row 2: Summary cards */}
-          <Box>
-            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1.5 }}>
-              Documents Processed
-            </Typography>
-            <SummaryCards summary={summary} loading={loadingSummary} />
-          </Box>
-
-          {/* Row 2: Histogram */}
-          <ProcessingHistogram />
-
-          {/* Row 3: Failed files */}
-          <FailedFilesList
-            files={failedFiles}
-            loading={loadingFailed}
-            onReprocess={handleReprocess}
+        {/* Row 1: System status | Service control | Metadata cache */}
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 1fr" }, gap: 3 }}>
+          <SystemStatus
+            status={status}
+            loading={loadingStatus}
+            onForceSync={handleForceSync}
+            forceSyncing={forceSyncing}
+          />
+          <ServiceControl
+            serviceState={status?.serviceState}
+            loading={loadingStatus}
+            onAction={handleServiceAction}
+          />
+          <MetadataCacheStatus
+            data={metaCache}
+            loading={loadingMetaCache}
+            onRefresh={handleMetaCacheRefresh}
           />
         </Box>
-      </Container>
-    </Box>
+
+        {/* Row 2: Summary cards */}
+        <Box>
+          <Box sx={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            bgcolor: "#EAF6EC", borderRadius: "8px 8px 0 0",
+            px: 2, py: 1, mb: 1.5,
+          }}>
+            <Typography variant="subtitle1" fontWeight={700} color="primary">
+              Documents Processed
+            </Typography>
+            <Tooltip title="Refresh all">
+              <IconButton size="small" onClick={refreshAll} disabled={refreshing}>
+                {refreshing ? <CircularProgress size={16} /> : <RefreshIcon fontSize="small" />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <SummaryCards summary={summary} loading={loadingSummary} />
+        </Box>
+
+        {/* Row 3: Histogram */}
+        <ProcessingHistogram />
+
+        {/* Row 4: Failed files */}
+        <FailedFilesList
+          files={failedFiles}
+          loading={loadingFailed}
+          onReprocess={handleReprocess}
+        />
+      </Box>
+    </Container>
   );
 }

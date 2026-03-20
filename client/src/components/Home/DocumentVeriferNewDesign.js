@@ -33,9 +33,10 @@ function DocumentVerifierNewDesign({
   fetchFolderPath,
   handleDocumentVerification,
 }) {
-  const [folderPath, setFolderPath] = useState(null);
-  const [options, setOptions] = useState([]);
-  const [text, setText] = useState(null);
+  const defaultPath = process.env.REACT_APP_ROOT_FOLDER_PATH || null;
+  const [folderPath, setFolderPath] = useState(defaultPath);
+  const [options, setOptions] = useState(defaultPath ? [defaultPath] : []);
+  const [text, setText] = useState(defaultPath);
   const [filesCount, setFilesCount] = useState({
     totalFile: 0,
     newFile: 0,
@@ -76,7 +77,10 @@ function DocumentVerifierNewDesign({
 
   useEffect(() => {
     if (getFolderPathList?.data?.length > 0) {
-      setOptions(getFolderPathList?.data);
+      const merged = defaultPath && !getFolderPathList.data.includes(defaultPath)
+        ? [defaultPath, ...getFolderPathList.data]
+        : getFolderPathList.data;
+      setOptions(merged);
     }
   }, [getFolderPathList]);
 

@@ -4,9 +4,12 @@ import {
   Typography,
   Box,
   Button,
+  Card,
+  CardContent,
   Snackbar,
   IconButton,
   styled,
+  Divider,
 } from "@mui/material";
 import moment from "moment";
 import { connect } from "react-redux";
@@ -20,14 +23,6 @@ import CloseIcon from "@mui/icons-material/Close";
 import UpdateDocumentEffectiveDateDialog from "../components/dialogs/UpdateDocumentEffectiveDateDialog";
 import AutoPopulateMetadataDialog from "../components/dialogs/AutoPopulateMetadataDialog";
 
-const LastSyncedDataList = styled(Box)(({ theme }) => ({
-  marginBottom: 30,
-  "&>div": {
-    "&>h6": {
-      marginRight: 5,
-    },
-  },
-}));
 export function Home({
   getDashboardOverviewData,
   dashboardOverview,
@@ -74,48 +69,52 @@ export function Home({
       setSnackbarMsg(updateEffectiveDateData?.message);
     }
   }, [updateEffectiveDateData]);
+  const showThreshold =
+    !publisherDataDashboard?.organization?.ignore_threshold ||
+    publisherDataDashboard?.organization?.ignore_threshold === 0;
+
   return (
     <Body>
-      <Box
-        display="flex"
-        alignItems={"center"}
-        justifyContent={"space-between"}
-        sx={{ mb: 3 }}
-      >
-        <Typography variant="h3" sx={{ textTransform: "capitalize" }}>
-          Document Protection Dashboard
-        </Typography>
-      </Box>
-      <LastSyncedDataList display={"flex"} flexDirection="column">
-        <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
-          <Typography variant="h6">Last synced:</Typography>
-          <Typography variant="body2">
-            {moment(dashboardOverview?.data?.lastSyncedDate).format(
-              "MM/DD/YYYY hh:mm A"
+      {/* Header tile — matches Card style used in DocumentVerification */}
+      <Card sx={{ mb: 3, boxShadow: 5, borderRadius: "8px" }}>
+        <CardContent>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Last Synced
+              </Typography>
+              <Typography variant="h6">
+                {dashboardOverview?.data?.lastSyncedDate
+                  ? moment(dashboardOverview.data.lastSyncedDate).format("MM/DD/YYYY h:mm A")
+                  : "—"}
+              </Typography>
+            </Box>
+            <Divider orientation="vertical" flexItem />
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Total Files
+              </Typography>
+              <Typography variant="h6">
+                {dashboardOverview?.data?.totalFiles ?? "—"}
+              </Typography>
+            </Box>
+            {showThreshold && (
+              <>
+                <Divider orientation="vertical" flexItem />
+                <Box sx={{ flex: 1, minWidth: 200 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Monthly Document Limit
+                  </Typography>
+                  <MuiLinearProgress
+                    loading={subscriptionDetails?.isLoading}
+                    {...linearProgressData}
+                  />
+                </Box>
+              </>
             )}
-          </Typography>
-        </Box>
-        <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
-          <Typography variant="h6">Total Files:</Typography>
-          <Typography variant="body2">
-            {dashboardOverview?.data?.totalFiles}
-          </Typography>
-        </Box>
-      </LastSyncedDataList>
-      {(!publisherDataDashboard?.organization?.ignore_threshold ||
-        publisherDataDashboard?.organization?.ignore_threshold === 0) && (
-        <Box sx={{ my: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Your current document count and subscription threshold
-          </Typography>
-          <MuiLinearProgress
-            {...{
-              loading: subscriptionDetails?.isLoading,
-              ...linearProgressData,
-            }}
-          />
-        </Box>
-      )}
+          </Box>
+        </CardContent>
+      </Card>
       <EnhancedTable
         tableTitle="Synced Files"
         headCells={syncedFilesHeaders}

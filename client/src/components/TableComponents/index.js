@@ -25,6 +25,9 @@ import DocumentViewerModal from "./DocumentViewModal";
 
 const TableHeadCell = styled(TableCell)(({ theme }) => ({
   fontWeight: theme.typography.fontWeightBold,
+  fontSize: "0.75rem",
+  whiteSpace: "nowrap",
+  lineHeight: 1.3,
 }));
 
 const TableToolBar = styled(Toolbar)(({ theme }) => ({
@@ -290,9 +293,9 @@ export default function EnhancedTable({
           }}
         >
           <Table
-            sx={{ minWidth: 750 }}
+            sx={{ minWidth: 750, tableLayout: "auto" }}
             aria-labelledby="tableTitle"
-            size={"medium"}
+            size="small"
           >
             <EnhancedTableHead
               order={order}
@@ -351,7 +354,6 @@ export default function EnhancedTable({
                       {headCells?.map((column, key) => {
                         return (
                           <TableCell
-                            style={{ wordBreak: "break-word" }}
                             key={key}
                             align={
                               column?.id === "action"
@@ -367,6 +369,11 @@ export default function EnhancedTable({
                               }
                             }}
                             sx={{
+                              fontSize: "0.75rem",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: 220,
                               cursor: column?.id === "file_name" && "pointer",
                               color: column?.id === "file_name" && "blue",
                               textDecoration:
