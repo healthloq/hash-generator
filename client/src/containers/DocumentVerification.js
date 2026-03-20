@@ -11,8 +11,6 @@ import {
   Grid,
   Typography,
 } from "@mui/material";
-import { Link } from "../components";
-import ArrowBack from "@mui/icons-material/ArrowBack";
 import {
   setInitialState,
   getSubscriptionOverview,
@@ -112,17 +110,6 @@ export const DocumentVerification = (props) => {
         >
           Document Verifier Dashboard
         </Typography>
-        {subscriptionDetails?.subscriptionList?.includes("publisher") && (
-          <Link
-            to="/"
-            underline="none"
-            onClick={() =>
-              setInitialState(["documentVerificationData", "folderOverview"])
-            }
-          >
-            <Button startIcon={<ArrowBack />}>Back</Button>
-          </Link>
-        )}
       </Box>
 
       <Box

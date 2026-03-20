@@ -8,8 +8,6 @@ import {
   IconButton,
   styled,
 } from "@mui/material";
-import ArrowForward from "@mui/icons-material/ArrowForward";
-import { Link } from "../components";
 import moment from "moment";
 import { connect } from "react-redux";
 import { getDashboardOverviewData } from "../redux/actions";
@@ -87,13 +85,6 @@ export function Home({
         <Typography variant="h3" sx={{ textTransform: "capitalize" }}>
           Document Protection Dashboard
         </Typography>
-        {subscriptionDetails?.subscriptionList?.includes("verifier") && (
-          <Link to="/document-verification" underline="none">
-            <Button endIcon={<ArrowForward />} variant="contained">
-              Go To Document Verifier
-            </Button>
-          </Link>
-        )}
       </Box>
       <LastSyncedDataList display={"flex"} flexDirection="column">
         <Box display="flex" alignItems="center" justifyContent={"flex-start"}>

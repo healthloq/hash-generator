@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  AppBar, Box, Container, IconButton, Toolbar,
-  Typography, Tooltip, CircularProgress,
+  Box, Container, IconButton,
+  Tooltip, CircularProgress, Typography,
 } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { useNavigate } from "react-router-dom";
 import { get, post } from "../Api";
 
 import SystemStatus       from "../components/health/SystemStatus";
@@ -18,7 +16,6 @@ import MetadataCacheStatus from "../components/health/MetadataCacheStatus";
 const POLL_INTERVAL_MS = 30_000;
 
 export default function HealthDashboard() {
-  const navigate = useNavigate();
 
   const [status,      setStatus]      = useState(null);
   const [summary,     setSummary]     = useState(null);
@@ -142,17 +139,8 @@ export default function HealthDashboard() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "grey.50" }}>
-      {/* Top nav bar */}
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar>
-          <Tooltip title="Back">
-            <IconButton edge="start" onClick={() => navigate(-1)} sx={{ mr: 1 }}>
-              <ArrowBackIcon />
-            </IconButton>
-          </Tooltip>
-          <Typography variant="h6" fontWeight={600} sx={{ flexGrow: 1 }}>
-            Application Health
-          </Typography>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
           <Tooltip title="Refresh all">
             <IconButton onClick={refreshAll} disabled={refreshing}>
               {refreshing
@@ -160,10 +148,7 @@ export default function HealthDashboard() {
                 : <RefreshIcon />}
             </IconButton>
           </Tooltip>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+        </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 
           {/* Row 1: System status | Service control | Metadata cache */}

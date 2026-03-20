@@ -1,55 +1,54 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { connect } from "react-redux";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Box, Tabs, Tab } from "@mui/material";
 import { SuspenseLoader } from "./components/common";
-import PageTitle from "./components/common/PageTitle";
 import DocumentVerification from "./containers/DocumentVerification";
 import HealthDashboard from "./containers/HealthDashboard";
 import { getSubscriptionOverview } from "./redux/actions";
 const Home = lazy(() => import("./containers/Home"));
 
-export const Main = (props) => {
-  const { getSubscriptionOverview, subscriptionDetails } = props;
+export const Main = ({ getSubscriptionOverview, subscriptionDetails }) => {
+  const [activeTab, setActiveTab] = useState(0);
 
   useEffect(() => {
     getSubscriptionOverview();
   }, []);
 
-  let appRoutes = [];
-  if (subscriptionDetails?.subscriptionList?.length === 2) {
-    appRoutes = [
-      { path: "/",                       element: <Home /> },
-      { path: "/document-verification",  element: <DocumentVerification /> },
-    ];
-  } else if (subscriptionDetails?.subscriptionList?.includes("publisher")) {
-    appRoutes = [
-      { path: "/", element: <Home /> },
-    ];
-  } else if (subscriptionDetails?.subscriptionList?.includes("verifier")) {
-    appRoutes = [
-      { path: "/",                      element: <Navigate to="/document-verification" /> },
-      { path: "/document-verification", element: <DocumentVerification /> },
-    ];
-  }
-
   if (subscriptionDetails?.isLoading && !subscriptionDetails?.data?.length) {
     return <SuspenseLoader />;
   }
 
+  const subs = subscriptionDetails?.subscriptionList ?? [];
+  const hasPublisher = subs.includes("publisher");
+  const hasVerifier = subs.includes("verifier");
+
+  const tabs = [];
+  if (hasPublisher) tabs.push({ label: "Document Protection", component: <Home /> });
+  if (hasVerifier) tabs.push({ label: "Document Verification", component: <DocumentVerification /> });
+  tabs.push({ label: "Health Status", component: <HealthDashboard /> });
+
+  const safeTab = Math.min(activeTab, tabs.length - 1);
+
   return (
     <Suspense fallback={<SuspenseLoader />}>
-      <BrowserRouter>
-        <PageTitle />
-        <Routes>
-          {/* Subscription-dependent routes */}
-          {appRoutes.map((route, key) => (
-            <Route path={route.path} element={route.element} key={key} />
-          ))}
-
-          {/* Health dashboard — always available regardless of subscription */}
-          <Route path="/health" element={<HealthDashboard />} />
-        </Routes>
-      </BrowserRouter>
+      <Box sx={{ bgcolor: "grey.50", minHeight: "100vh" }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "white", boxShadow: 1 }}>
+          <Tabs
+            value={safeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            indicatorColor="primary"
+            textColor="primary"
+            sx={{ px: 2 }}
+          >
+            {tabs.map((t, i) => (
+              <Tab key={i} label={t.label} />
+            ))}
+          </Tabs>
+        </Box>
+        {tabs.map((t, i) =>
+          safeTab === i ? <Box key={i}>{t.component}</Box> : null
+        )}
+      </Box>
     </Suspense>
   );
 };
