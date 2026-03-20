@@ -112,8 +112,21 @@ export default function AutoPopulateMetadataDialog({
       const hash = selectedHashes[i];
 
       try {
-        const res = await post("/api/client/auto-populate-metadata", { hash });
+        const res = await post("/api/client/auto-populate-metadata", { hash }, { timeout: 300_000 });
         if (abortRef.current) break;
+        if (!res) {
+          // axios timed out or got no response
+          setResults((prev) => [...prev, {
+            hash,
+            fileName:     hash,
+            status:       "error",
+            suggestion:   null,
+            applied:      false,
+            applyMessage: "",
+            message:      "Request timed out — the file may be too large to analyse",
+          }]);
+          continue;
+        }
         setResults((prev) => [
           ...prev,
           {
