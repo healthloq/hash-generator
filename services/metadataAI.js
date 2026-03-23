@@ -121,9 +121,8 @@ BATCHES: ${JSON.stringify(batches.map((b) => ({ id: b.id, name: b.name, org: b.o
   // typical batch run. This reduces input token cost by ~90% per file after
   // the first request when the metadata lists haven't changed.
   const response = await client.messages.create({
-    model: "claude-opus-4-6",
+    model: "claude-haiku-4-5",
     max_tokens: 1024,
-    thinking: { type: "adaptive" },
     system: [
       {
         type: "text",
