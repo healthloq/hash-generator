@@ -286,7 +286,7 @@ exports.getSyncData = async (syncedData = null) => {
     let todayHashLimit = parseInt(subscriptionData?.current_num_monthly_hashes || "0");
 
     if (!ignoreThreshold) {
-      if (!hashLimit || !todayHashLimit) {
+      if (!hashLimit) {
         global.isGetSyncDataProcessStart = false;
         logger.warn("getSyncData: invalid subscription information");
         syncDocToolLogs({
