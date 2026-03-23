@@ -11,6 +11,7 @@ const {
   refreshMetadataCache,
 } = require("../services/metadataCache");
 const { getSyncData, stopService, startService, restartService } = require("../utils");
+const alertSvc = require("../services/alertService");
 const logger = require("../logger");
 
 exports.getSummary = (req, res) => {
@@ -173,4 +174,72 @@ exports.refreshMetadataCache = (req, res) => {
     logger.error({ err }, "metadata cache background refresh failed")
   );
   res.json({ status: "1", message: "Metadata cache refresh started" });
+};
+
+// ── Alert rules ────────────────────────────────────────────────────────────
+
+exports.listAlertRules = (req, res) => {
+  try {
+    res.json({ status: "1", data: alertSvc.listRules() });
+  } catch (err) {
+    logger.error({ err }, "listAlertRules failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.createAlertRule = (req, res) => {
+  try {
+    const { alert_type, email, threshold_minutes, enabled } = req.body;
+    if (!["service_offline", "no_documents"].includes(alert_type)) {
+      return res.status(400).json({ status: "0", message: "Invalid alert_type" });
+    }
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ status: "0", message: "Valid email is required" });
+    }
+    if (!threshold_minutes || threshold_minutes < 1) {
+      return res.status(400).json({ status: "0", message: "threshold_minutes must be >= 1" });
+    }
+    const rule = alertSvc.createRule({ alert_type, email, threshold_minutes, enabled });
+    res.json({ status: "1", data: rule });
+  } catch (err) {
+    logger.error({ err }, "createAlertRule failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.updateAlertRule = (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const rule = alertSvc.updateRule(id, req.body);
+    if (!rule) return res.status(404).json({ status: "0", message: "Rule not found" });
+    res.json({ status: "1", data: rule });
+  } catch (err) {
+    logger.error({ err }, "updateAlertRule failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.deleteAlertRule = (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    alertSvc.deleteRule(id);
+    res.json({ status: "1", message: "Alert rule deleted" });
+  } catch (err) {
+    logger.error({ err }, "deleteAlertRule failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
+};
+
+exports.testAlertEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({ status: "0", message: "Valid email is required" });
+    }
+    await alertSvc.sendTestEmail(email);
+    res.json({ status: "1", message: `Test email sent to ${email}` });
+  } catch (err) {
+    logger.error({ err }, "testAlertEmail failed");
+    res.status(500).json({ status: "0", message: err.message });
+  }
 };

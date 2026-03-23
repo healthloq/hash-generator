@@ -138,7 +138,8 @@ exports.getHistogram = (groupBy = "day") => {
   // Build human-readable category labels
   const categories = periods.map((p) => {
     if (groupBy === "month") {
-      return format(new Date(p + "-01"), "MMM yyyy");
+      const [y, m] = p.split("-").map(Number);
+      return format(new Date(y, m - 1, 1), "MMM yyyy");
     }
     if (groupBy === "week") {
       return `Wk ${format(new Date(p), "MMM d")}`;

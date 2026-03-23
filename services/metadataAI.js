@@ -115,11 +115,22 @@ LOCATIONS: ${JSON.stringify(locations.map((l) => ({ id: l.id, name: l.name, org:
 PRODUCTS: ${JSON.stringify(products.map((p) => ({ id: p.id, name: p.name, org: p.org_name })))}
 BATCHES: ${JSON.stringify(batches.map((b) => ({ id: b.id, name: b.name, org: b.org_name, product: b.product_name })))}`;
 
+  // Cache the system prompt (metadata lists) across file analyses in the same batch.
+  // The cache key is based on exact content, so a metadata refresh naturally
+  // produces a new cache entry. TTL defaults to 5 minutes, which covers any
+  // typical batch run. This reduces input token cost by ~90% per file after
+  // the first request when the metadata lists haven't changed.
   const response = await client.messages.create({
     model: "claude-opus-4-6",
     max_tokens: 1024,
     thinking: { type: "adaptive" },
-    system: systemPrompt,
+    system: [
+      {
+        type: "text",
+        text: systemPrompt,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [
       {
         role: "user",
@@ -133,6 +144,16 @@ BATCHES: ${JSON.stringify(batches.map((b) => ({ id: b.id, name: b.name, org: b.o
       },
     ],
   });
+
+  logger.debug(
+    {
+      cache_creation_tokens: response.usage?.cache_creation_input_tokens,
+      cache_read_tokens:     response.usage?.cache_read_input_tokens,
+      input_tokens:          response.usage?.input_tokens,
+      output_tokens:         response.usage?.output_tokens,
+    },
+    "metadataAI: token usage"
+  );
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock) throw new Error("No text response from Claude");

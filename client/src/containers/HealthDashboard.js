@@ -12,6 +12,7 @@ import ProcessingHistogram from "../components/health/ProcessingHistogram";
 import FailedFilesList    from "../components/health/FailedFilesList";
 import ServiceControl      from "../components/health/ServiceControl";
 import MetadataCacheStatus from "../components/health/MetadataCacheStatus";
+import AlertRules          from "../components/health/AlertRules";
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -189,6 +190,9 @@ export default function HealthDashboard() {
           loading={loadingFailed}
           onReprocess={handleReprocess}
         />
+
+        {/* Row 5: Email alerts */}
+        <AlertRules />
       </Box>
     </Container>
   );

@@ -83,6 +83,19 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_mc_type ON metadata_cache(entity_type);
 `);
 
+// ── Alert rules ───────────────────────────────────────────────────────────
+db.exec(`
+  CREATE TABLE IF NOT EXISTS alert_rules (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    alert_type        TEXT    NOT NULL CHECK(alert_type IN ('service_offline','no_documents')),
+    email             TEXT    NOT NULL,
+    threshold_minutes INTEGER NOT NULL DEFAULT 60,
+    enabled           INTEGER NOT NULL DEFAULT 1,
+    last_sent_at      DATETIME,
+    created_at        DATETIME NOT NULL DEFAULT (datetime('now'))
+  )
+`);
+
 // ── Prepared statements for the key-value interface ───────────────────────
 const stmtGet    = db.prepare("SELECT value FROM store WHERE key = ?");
 const stmtSet    = db.prepare("INSERT OR REPLACE INTO store (key, value) VALUES (?, ?)");

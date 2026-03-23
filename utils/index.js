@@ -440,11 +440,19 @@ exports.stopService = () => {
     clearTimeout(global.documentSyncTimeout);
     global.documentSyncTimeout = null;
   }
+  // Record the time the service went offline so alert rules can measure duration
+  try {
+    global.localStorage.setItem("service_offline_since", new Date().toISOString());
+  } catch (_) {}
   logger.info("Hashing service stopped");
 };
 
 exports.startService = () => {
   global.serviceEnabled = true;
+  // Clear the offline timestamp so alert cooldowns reset correctly
+  try {
+    global.localStorage.removeItem("service_offline_since");
+  } catch (_) {}
   this.setDocumentSyncInterval();
   if (!global.isGetSyncDataProcessStart) {
     this.getSyncData();

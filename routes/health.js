@@ -14,4 +14,10 @@ router.get("/metadata-cache",                  ctrl.getMetadataCache);
 router.get("/metadata-cache/:entityType",      ctrl.getMetadataCacheEntries);
 router.post("/metadata-cache/refresh",         ctrl.refreshMetadataCache);
 
+router.get("/alert-rules",         ctrl.listAlertRules);
+router.post("/alert-rules",        ctrl.createAlertRule);
+router.put("/alert-rules/:id",     ctrl.updateAlertRule);
+router.delete("/alert-rules/:id",  ctrl.deleteAlertRule);
+router.post("/alert-rules/test",   ctrl.testAlertEmail);
+
 module.exports = router;

@@ -20,6 +20,7 @@ const {
 // Service-enabled flag — true by default, toggled via /api/health/service/*
 global.serviceEnabled = true;
 const { getSubscriptionDetail } = require("./services/healthloq");
+const { startAlertChecker } = require("./services/alertService");
 
 module.exports = io = require("socket.io")(server);
 
@@ -88,6 +89,7 @@ app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "client/build/index.html"));
 });
 
-server.listen(port, () =>
-  logger.info(`Server running at http://localhost:${port}`)
-);
+server.listen(port, () => {
+  logger.info(`Server running at http://localhost:${port}`);
+  startAlertChecker();
+});
