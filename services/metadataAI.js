@@ -97,17 +97,20 @@ exports.analyzeFileForMetadata = async (filePath) => {
 
 Respond with a single JSON object — no markdown fences, no extra text:
 {
-  "organization": { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
-  "location":     { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
-  "product":      { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
-  "batch":        { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
-  "reasoning":    "<one or two sentences>"
+  "organization":    { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "location":        { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "product":         { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "batch":           { "id": "<id>", "name": "<name>", "confidence": <0.0–1.0> } | null,
+  "effective_date":  { "value": "<YYYY-MM-DD>", "confidence": <0.0–1.0> } | null,
+  "expiration_date": { "value": "<YYYY-MM-DD>", "confidence": <0.0–1.0> } | null,
+  "reasoning":       "<one or two sentences>"
 }
 
 Rules:
 - Set a field to null if you are less than 50% confident (confidence < 0.5).
 - IDs must exactly match one of the options listed below.
 - If no options exist for a category, set that field to null.
+- Dates must be in YYYY-MM-DD format. Look for effective/valid/issue dates and expiry/expiration dates in the document. Set to null if not found or confidence < 0.5.
 
 Available options:
 ORGANIZATIONS: ${JSON.stringify(orgs.map((o) => ({ id: o.id, name: o.name })))}
@@ -174,11 +177,19 @@ BATCHES: ${JSON.stringify(batches.map((b) => ({ id: b.id, name: b.name, org: b.o
     return { id: field.id, name: field.name, confidence: field.confidence };
   };
 
+  const thresholdDate = (field) => {
+    if (!field || typeof field.confidence !== "number" || field.confidence < 0.5) return null;
+    if (!field.value || !/^\d{4}-\d{2}-\d{2}$/.test(field.value)) return null;
+    return { value: field.value, confidence: field.confidence };
+  };
+
   return {
-    organization: threshold(parsed.organization),
-    location:     threshold(parsed.location),
-    product:      threshold(parsed.product),
-    batch:        threshold(parsed.batch),
-    reasoning:    parsed.reasoning || "",
+    organization:    threshold(parsed.organization),
+    location:        threshold(parsed.location),
+    product:         threshold(parsed.product),
+    batch:           threshold(parsed.batch),
+    effective_date:  thresholdDate(parsed.effective_date),
+    expiration_date: thresholdDate(parsed.expiration_date),
+    reasoning:       parsed.reasoning || "",
   };
 };

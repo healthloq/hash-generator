@@ -34,19 +34,21 @@ function pct(confidence) {
  */
 function MetadataChips({ suggestion }) {
   const fields = [
-    { label: "Org",      value: suggestion?.organization },
-    { label: "Location", value: suggestion?.location },
-    { label: "Product",  value: suggestion?.product },
-    { label: "Batch",    value: suggestion?.batch },
+    { label: "Org",       value: suggestion?.organization,    display: (v) => v.name  },
+    { label: "Location",  value: suggestion?.location,        display: (v) => v.name  },
+    { label: "Product",   value: suggestion?.product,         display: (v) => v.name  },
+    { label: "Batch",     value: suggestion?.batch,           display: (v) => v.name  },
+    { label: "Eff. Date", value: suggestion?.effective_date,  display: (v) => v.value },
+    { label: "Exp. Date", value: suggestion?.expiration_date, display: (v) => v.value },
   ];
 
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
-      {fields.map(({ label, value }) =>
+      {fields.map(({ label, value, display }) =>
         value ? (
           <Tooltip key={label} title={`${pct(value.confidence)} confidence`} placement="top">
             <Chip
-              label={`${label}: ${value.name}`}
+              label={`${label}: ${display(value)}`}
               size="small"
               color="primary"
               variant="outlined"

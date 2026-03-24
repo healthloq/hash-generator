@@ -692,11 +692,11 @@ exports.autoPopulateMetadata = async (req, res) => {
     logger.info({ hash, filePath }, "autoPopulateMetadata: analysing file");
     const suggestion = await analyzeFileForMetadata(filePath);
 
-    // Build payload for HealthLOQ — only send fields that AI suggested
+    // Build payload for HealthLOQ — prefer AI-suggested dates, fall back to existing
     const payload = {
       hashList:                    [hash],
-      effective_date:              fileRecord.effective_date  || null,
-      expiration_date:             fileRecord.expiration_date || null,
+      effective_date:              suggestion.effective_date?.value  || fileRecord.effective_date  || null,
+      expiration_date:             suggestion.expiration_date?.value || fileRecord.expiration_date || null,
       meta_data_org_id:            suggestion.organization?.id   || null,
       meta_data_org_location_id:   suggestion.location?.id       || null,
       meta_data_product_id:        suggestion.product?.id        || null,
@@ -710,9 +710,10 @@ exports.autoPopulateMetadata = async (req, res) => {
     let applied = false;
     let applyMessage = "";
 
-    // Only call HealthLOQ if at least one metadata field was determined
+    // Only call HealthLOQ if at least one field was determined by AI
     const hasAnyMetadata = payload.meta_data_org_id || payload.meta_data_org_location_id ||
-      payload.meta_data_product_id || payload.meta_data_product_batch_id;
+      payload.meta_data_product_id || payload.meta_data_product_batch_id ||
+      suggestion.effective_date || suggestion.expiration_date;
 
     if (hasAnyMetadata) {
       const healthloqRes = await updateDocumentEffectiveDateIntoHealthLOQ(payload);
@@ -732,6 +733,8 @@ exports.autoPopulateMetadata = async (req, res) => {
                 location_name:      payload.location_name      || null,
                 product_name:       payload.product_name       || null,
                 product_batch_name: payload.product_batch_name || null,
+                effective_date:     payload.effective_date     || item.effective_date,
+                expiration_date:    payload.expiration_date    || item.expiration_date,
               }
             : item
         );
