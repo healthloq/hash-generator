@@ -33,10 +33,9 @@ function DocumentVerifierNewDesign({
   fetchFolderPath,
   handleDocumentVerification,
 }) {
-  const defaultPath = process.env.REACT_APP_ROOT_FOLDER_PATH || null;
-  const [folderPath, setFolderPath] = useState(defaultPath);
-  const [options, setOptions] = useState(defaultPath ? [defaultPath] : []);
-  const [text, setText] = useState(defaultPath);
+  const [folderPath, setFolderPath] = useState(null);
+  const [options, setOptions] = useState([]);
+  const [text, setText] = useState(null);
   const [filesCount, setFilesCount] = useState({
     totalFile: 0,
     newFile: 0,
@@ -64,6 +63,17 @@ function DocumentVerifierNewDesign({
 
   useEffect(() => {
     fetchFolderPath();
+    // Fetch the server-configured root folder path to use as the default
+    axios.get(
+      `${process.env.REACT_APP_API_BASE_URL || ""}/api/health/status`
+    ).then((res) => {
+      const root = res.data?.rootFolderPath;
+      if (root) {
+        setFolderPath(root);
+        setText(root);
+        setOptions((prev) => (prev.includes(root) ? prev : [root, ...prev]));
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -77,10 +87,12 @@ function DocumentVerifierNewDesign({
 
   useEffect(() => {
     if (getFolderPathList?.data?.length > 0) {
-      const merged = defaultPath && !getFolderPathList.data.includes(defaultPath)
-        ? [defaultPath, ...getFolderPathList.data]
-        : getFolderPathList.data;
-      setOptions(merged);
+      setOptions((prev) => {
+        const incoming = getFolderPathList.data;
+        // Keep any server-default path that isn't in the saved list
+        const extras = prev.filter((p) => !incoming.includes(p));
+        return [...extras, ...incoming];
+      });
     }
   }, [getFolderPathList]);
 

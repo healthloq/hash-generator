@@ -60,12 +60,27 @@ async function sendAlert(rule, subject, body) {
   }
 }
 
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/**
+ * Parse a date string that may be either:
+ *   - SQLite datetime:  "YYYY-MM-DD HH:MM:SS"   (no T, no Z)
+ *   - ISO 8601:         "YYYY-MM-DDTHH:MM:SS.sssZ"  (already valid)
+ */
+function parseDbDate(str) {
+  if (!str) return new Date(NaN);
+  // Already ISO — pass through as-is
+  if (str.includes("T")) return new Date(str);
+  // SQLite format — replace space with T and append Z (UTC)
+  return new Date(str.replace(" ", "T") + "Z");
+}
+
 // ── Condition checks ───────────────────────────────────────────────────────
 
 async function checkRule(rule, now) {
   // Per-rule cooldown: don't re-fire until threshold_minutes after last send
   if (rule.last_sent_at) {
-    const msSinceSent = now - new Date(rule.last_sent_at.replace(" ", "T") + "Z");
+    const msSinceSent = now - parseDbDate(rule.last_sent_at);
     if (msSinceSent < rule.threshold_minutes * 60_000) return;
   }
 
@@ -90,7 +105,7 @@ async function checkRule(rule, now) {
     const row = stmtLastProcessed.get();
     if (!row?.ts) return; // no records at all yet
 
-    const lastProcessed = new Date(row.ts.replace(" ", "T") + "Z");
+    const lastProcessed = parseDbDate(row.ts);
     const minutesSince  = (now - lastProcessed) / 60_000;
     if (minutesSince < rule.threshold_minutes) return;
 

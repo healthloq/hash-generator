@@ -212,10 +212,17 @@ export default function EnhancedTable({
   selected = [],
   getBulkActionInfo = null,
 }) {
+  const storageKey = tableId ? `rowsPerPage_${tableId}` : null;
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("calories");
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [rowsPerPage, setRowsPerPage] = React.useState(() => {
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return parseInt(saved, 10);
+    }
+    return 10;
+  });
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -237,8 +244,10 @@ export default function EnhancedTable({
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const val = parseInt(event.target.value, 10);
+    setRowsPerPage(val);
     setPage(0);
+    if (storageKey) localStorage.setItem(storageKey, val);
   };
 
   const handleClick = (event, id) => {
