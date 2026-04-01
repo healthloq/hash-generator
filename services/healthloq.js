@@ -1,4 +1,14 @@
-const { default: axios } = require("axios");
+const axios = require("axios");
+const axiosRetry = require("axios-retry").default;
+
+// Retry up to 3 times on network errors or 5xx responses with exponential backoff
+axiosRetry(axios, {
+  retries: 3,
+  retryDelay: axiosRetry.exponentialDelay,
+  retryCondition: (error) =>
+    axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+    (error.response && error.response.status >= 500),
+});
 
 exports.syncHash = async (data) => {
   let response = null;
@@ -321,6 +331,54 @@ exports.locationListForMetaData = async (data = {}) => {
       status: "0",
       message: error.message,
     };
+  }
+};
+
+exports.verifyBlockchainProof = async (params = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/client-app/verify`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data?.message,
+      };
+    }
+    return { status: "0", message: error.message };
+  }
+};
+
+exports.verifyCoaDocumentProof = async (params = {}) => {
+  try {
+    const response = await axios.post(
+      `${process.env.REACT_APP_HEALTHLOQ_API_BASE_URL}/client-app/verify-coa-document-doc-tool`,
+      params,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_JWT_TOKEN}`,
+        },
+      }
+    );
+    return response?.data;
+  } catch (error) {
+    if (error.response) {
+      return {
+        status: "0",
+        message: `API Error: ${error.response.status} - ${error.response.statusText}`,
+        details: error.response.data?.message,
+      };
+    }
+    return { status: "0", message: error.message };
   }
 };
 

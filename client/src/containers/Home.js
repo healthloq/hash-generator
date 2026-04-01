@@ -4,12 +4,13 @@ import {
   Typography,
   Box,
   Button,
+  Card,
+  CardContent,
   Snackbar,
   IconButton,
   styled,
+  Divider,
 } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
-import { Link } from "../components";
 import moment from "moment";
 import { connect } from "react-redux";
 import { getDashboardOverviewData } from "../redux/actions";
@@ -17,17 +18,11 @@ import EnhancedTable from "../components/TableComponents";
 import { syncedFilesHeaders } from "../constants/tableConfigs";
 import { abbrNum } from "../utils";
 import EditIcon from "@mui/icons-material/Edit";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import CloseIcon from "@mui/icons-material/Close";
 import UpdateDocumentEffectiveDateDialog from "../components/dialogs/UpdateDocumentEffectiveDateDialog";
+import AutoPopulateMetadataDialog from "../components/dialogs/AutoPopulateMetadataDialog";
 
-const LastSyncedDataList = styled(Box)(({ theme }) => ({
-  marginBottom: 30,
-  "&>div": {
-    "&>h6": {
-      marginRight: 5,
-    },
-  },
-}));
 export function Home({
   getDashboardOverviewData,
   dashboardOverview,
@@ -42,6 +37,7 @@ export function Home({
   const [snackbarMsg, setSnackbarMsg] = useState("");
   const [openUpdateEffectiveDateDialog, setOpenUpdateEffectiveDateDialog] =
     useState(false);
+  const [openAutoPopulateDialog, setOpenAutoPopulateDialog] = useState(false);
   const [publisherDataDashboard, setPublisherDataDashboard] = useState({});
   useEffect(() => {
     getDashboardOverviewData();
@@ -73,55 +69,52 @@ export function Home({
       setSnackbarMsg(updateEffectiveDateData?.message);
     }
   }, [updateEffectiveDateData]);
+  const showThreshold =
+    !publisherDataDashboard?.organization?.ignore_threshold ||
+    publisherDataDashboard?.organization?.ignore_threshold === 0;
+
   return (
     <Body>
-      <Box
-        display="flex"
-        alignItems={"center"}
-        justifyContent={"space-between"}
-        sx={{ mb: 3 }}
-      >
-        <Typography variant="h3" sx={{ textTransform: "capitalize" }}>
-          Document Protection Dashboard
-        </Typography>
-        {subscriptionDetails?.subscriptionList?.includes("verifier") && (
-          <Link to="/document-verification" underline="none">
-            <Button endIcon={<ArrowForward />} variant="contained">
-              Go To Document Verifier
-            </Button>
-          </Link>
-        )}
-      </Box>
-      <LastSyncedDataList display={"flex"} flexDirection="column">
-        <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
-          <Typography variant="h6">Last synced:</Typography>
-          <Typography variant="body2">
-            {moment(dashboardOverview?.data?.lastSyncedDate).format(
-              "MM/DD/YYYY hh:mm A"
+      {/* Header tile — matches Card style used in DocumentVerification */}
+      <Card sx={{ mb: 3, boxShadow: 5, borderRadius: "8px" }}>
+        <CardContent>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Last Synced
+              </Typography>
+              <Typography variant="h6">
+                {dashboardOverview?.data?.lastSyncedDate
+                  ? moment(dashboardOverview.data.lastSyncedDate).format("MM/DD/YYYY h:mm A")
+                  : "—"}
+              </Typography>
+            </Box>
+            <Divider orientation="vertical" flexItem />
+            <Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Total Files
+              </Typography>
+              <Typography variant="h6">
+                {dashboardOverview?.data?.totalFiles ?? "—"}
+              </Typography>
+            </Box>
+            {showThreshold && (
+              <>
+                <Divider orientation="vertical" flexItem />
+                <Box sx={{ flex: 1, minWidth: 200 }}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Monthly Document Limit
+                  </Typography>
+                  <MuiLinearProgress
+                    loading={subscriptionDetails?.isLoading}
+                    {...linearProgressData}
+                  />
+                </Box>
+              </>
             )}
-          </Typography>
-        </Box>
-        <Box display="flex" alignItems="center" justifyContent={"flex-start"}>
-          <Typography variant="h6">Total Files:</Typography>
-          <Typography variant="body2">
-            {dashboardOverview?.data?.totalFiles}
-          </Typography>
-        </Box>
-      </LastSyncedDataList>
-      {(!publisherDataDashboard?.organization?.ignore_threshold ||
-        publisherDataDashboard?.organization?.ignore_threshold === 0) && (
-        <Box sx={{ my: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Your current document count and subscription threshold
-          </Typography>
-          <MuiLinearProgress
-            {...{
-              loading: subscriptionDetails?.isLoading,
-              ...linearProgressData,
-            }}
-          />
-        </Box>
-      )}
+          </Box>
+        </CardContent>
+      </Card>
       <EnhancedTable
         tableTitle="Synced Files"
         headCells={syncedFilesHeaders}
@@ -157,6 +150,14 @@ export function Home({
             >
               Edit File Metadata
             </Button>
+            <Button
+              startIcon={<AutoAwesomeIcon />}
+              variant="outlined"
+              onClick={() => setOpenAutoPopulateDialog(true)}
+              sx={{ ml: 1 }}
+            >
+              Auto-populate Metadata
+            </Button>
           </>
         }
       />
@@ -169,6 +170,17 @@ export function Home({
         selectedDocuments={selected}
         setSelected={setSelected}
         dashboardOverview={dashboardOverview}
+      />
+      <AutoPopulateMetadataDialog
+        open={openAutoPopulateDialog}
+        onClose={() => {
+          setOpenAutoPopulateDialog(false);
+        }}
+        selectedHashes={selected}
+        onComplete={() => {
+          setSelected([]);
+          getDashboardOverviewData();
+        }}
       />
       <Snackbar
         anchorOrigin={{ vertical: "top", horizontal: "right" }}

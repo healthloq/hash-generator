@@ -1,630 +1,421 @@
 const fs = require("fs");
-const crypto = require("crypto");
 const path = require("path");
-const {
-  ALLOWED_DOCUMENT_FILE_TYPES,
-  ALLOWED_DOCUMENT_FILE_MIME_TYPES,
-} = require("../constants");
-const {
-  syncHash,
-  getSubscriptionDetail,
-  syncDocToolLogs,
-  publisherScriptIsRunningOrNot,
-} = require("../services/healthloq");
-const moment = require("moment");
-const notifier = require("node-notifier");
+const { syncHash, getSubscriptionDetail, syncDocToolLogs, publisherScriptIsRunningOrNot } = require("../services/healthloq");
+const { scanDirectory } = require("../services/fileScanner");
+const { hashFile } = require("../services/hasher");
+const { logSuccess, logFailure } = require("../services/healthMetrics");
+const { isEqual } = require("date-fns");
+const logger = require("../logger");
 const packageJson = require("../package.json");
-const { execSync } = require("child_process");
-const mime = require("mime-types");
+
+// ---------------------------------------------------------------------------
+// Storage helpers (backed by SQLite via global.localStorage)
+// ---------------------------------------------------------------------------
 
 /**
- *
- * @param {String} prop
- * @param {Array} arr
- * @returns
- */
-exports.sort = (prop, arr) => {
-  prop = prop.split(".");
-  let len = prop.length;
-
-  arr.sort(function (a, b) {
-    var i = 0;
-    while (i < len) {
-      a = a[prop[i]];
-      b = b[prop[i]];
-      i++;
-    }
-    if (a < b) {
-      return -1;
-    } else if (a > b) {
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-  return arr;
-};
-
-/**
- * This function return data in array format
- * @returns data
+ * Return stored publisher hash data as an array.
  */
 exports.getData = async (fileName) => {
   let data = [];
   try {
-    let tempData = await JSON.parse(
-      localStorage.getItem(fileName ? fileName : "data")
-    );
-    if (tempData) data = Object.values(tempData);
-  } catch (error) {}
+    const raw = localStorage.getItem(fileName || "data");
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed) data = Object.values(parsed);
+  } catch (_) {}
   return data;
 };
 
 /**
- * This function return data in object format
- * @returns data
+ * Return stored publisher hash data as an object keyed by inode.
  */
 exports.getDataInObjectFormat = async (fileName) => {
   let data = {};
   try {
-    let tempData = await JSON.parse(
-      localStorage.getItem(fileName ? fileName : "data")
-    );
-    if (tempData) data = tempData;
-  } catch (error) {}
+    const raw = localStorage.getItem(fileName || "data");
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed) data = parsed;
+  } catch (_) {}
   return data;
 };
 
 /**
- *
- * @param {Array} data
+ * Persist an array of file records, keyed by inode.
  */
 exports.setData = (data, fileName) =>
   localStorage.setItem(
-    fileName ? fileName : "data",
+    fileName || "data",
     JSON.stringify(
       Object.fromEntries(data?.map((item) => [item?.state?.ino, item]))
     )
   );
 
-// function getMimeType(filePath) {
-//   try {
-//     // Use the `file` command to get MIME type
-//     const output = execSync(`file --mime-type -b "${filePath}"`, {
-//       encoding: "utf8",
-//     }).trim();
-//     return output;
-//   } catch (error) {
-//     console.error("Error getting MIME type:", error);
-//     return null;
-//   }
-// }
-function getMimeType(filePath) {
-  if (fs.existsSync(filePath)) {
-    const mimeType = mime.lookup(filePath);
-    if (mimeType) {
-      return mimeType;
-    } else {
-      console.error("Unable to determine MIME type");
-      return null;
-    }
-  } else {
-    console.error("File does not exist:", filePath);
-    return null;
-  }
-}
-exports.getFolderOverview = async (rootFolderPath) => {
-  let unreadFolders = [];
-  let unreadFiles = [];
-  let filesCount = 0;
-  let newFilesCount = 0;
-  let errorMsg = "";
-  let folderPath = "";
-  try {
-    const oldData = await this.getDataInObjectFormat(
-      "documentVerificationData"
-    );
-    let foldersArr = [rootFolderPath];
-    while (foldersArr?.length > 0) {
-      folderPath = foldersArr?.pop();
-      let files = [];
-      try {
-        files = fs.opendirSync(folderPath);
-      } catch (error) {
-        unreadFolders.push(folderPath);
-      }
-      if (Array.isArray(files) && !files?.length) {
-        unreadFolders.push(folderPath);
-      }
+// ---------------------------------------------------------------------------
+// Misc helpers
+// ---------------------------------------------------------------------------
 
-      for await (const item of files) {
-        if (item.isFile()) {
-          const filePath = path.join(folderPath, item.name);
-          const mime_type = getMimeType(filePath);
-          if (
-            !ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mime_type)
-            // item?.name
-            //   ?.split(".")
-            //   ?.pop()
-            //   ?.toLowerCase()
-            //   ?.match(ALLOWED_DOCUMENT_FILE_TYPES) === null
-          )
-            continue;
-          filesCount++;
-          const fullFilePath = path.join(folderPath, item.name);
-          const state = fs.statSync(fullFilePath);
-          if (
-            state &&
-            (!oldData ||
-              (Boolean(oldData) && !Boolean(oldData?.[state?.ino])) ||
-              !moment(oldData?.[state?.ino]?.state?.mtime).isSame(
-                moment(state?.mtime)
-              ))
-          )
-            newFilesCount++;
-        } else {
-          foldersArr.push(path.join(folderPath, item.name));
-        }
-      }
-    }
-    return {
-      errorMsg,
-      filesCount,
-      newFilesCount,
-      unreadFiles,
-      unreadFolders,
-    };
-  } catch (error) {
-    unreadFolders.push(folderPath);
-    return {
-      errorMsg,
-      filesCount,
-      newFilesCount,
-      unreadFiles,
-      unreadFolders,
-    };
+exports.sort = (prop, arr) => {
+  const keys = prop.split(".");
+  arr.sort((a, b) => {
+    let av = a;
+    let bv = b;
+    for (const k of keys) { av = av?.[k]; bv = bv?.[k]; }
+    if (av < bv) return -1;
+    if (av > bv) return 1;
+    return 0;
+  });
+  return arr;
+};
+
+exports.filterObj = (obj, keys) =>
+  Object.fromEntries(Object.entries(obj).filter(([k]) => !keys.includes(k)));
+
+exports.setFolderPathToArray = (folderPath) => {
+  let array = JSON.parse(localStorage.getItem("folderPath") || "[]");
+  if (!array.includes(folderPath.trim())) {
+    array.push(folderPath);
+    localStorage.setItem("folderPath", JSON.stringify(array));
   }
 };
+
+// ---------------------------------------------------------------------------
+// Hash generation — verifier mode
+// ---------------------------------------------------------------------------
 
 exports.generateHashForVerifier = async (
   rootFolderPath = process.env.ROOT_FOLDER_PATH
 ) => {
-  let arr = [];
-  let unreadFolders = [];
-  let unreadFiles = [];
-  let folderPath = "";
+  const arr = [];
+  const unreadFiles = [];
+  const unreadFolders = [];
+
   try {
-    const oldData = await this.getDataInObjectFormat(
-      "documentVerificationData"
-    );
-    let foldersArr = [rootFolderPath];
-    while (foldersArr?.length > 0) {
-      folderPath = foldersArr?.pop();
-      let files = [];
+    const oldData = await this.getDataInObjectFormat("documentVerificationData");
+
+    for await (const entry of scanDirectory(rootFolderPath)) {
+      // Collect any unreadable folders the scanner found
+      if (entry._unreadFolders?.length) {
+        unreadFolders.push(...entry._unreadFolders.splice(0));
+      }
+
+      let state;
       try {
-        files = fs.opendirSync(folderPath);
-      } catch (error) {
-        unreadFolders.push(folderPath);
-        console.log("generateHashForVerifier => ", error);
-        notifier.notify({
-          title: "HealthLOQ - Doc Tool Warning",
-          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder.`,
-          sound: true,
-        });
-        syncDocToolLogs({
-          message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
-          error_message: error?.message,
-          error,
-        });
+        state = fs.statSync(entry.filePath);
+      } catch (err) {
+        unreadFiles.push(entry.filePath);
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_STAT_ERROR", errorMessage: err.message });
+        continue;
       }
-      if (Array.isArray(files) && !files?.length) {
-        unreadFolders.push(folderPath);
-        notifier.notify({
-          title: "HealthLOQ - Doc Tool Warning",
-          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder.`,
-          sound: true,
-        });
-        syncDocToolLogs({
-          message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
-          error_message: `generateHashForVerifier => We are not able to read the directory ${folderPath}`,
-          error: null,
-        });
+
+      // Skip unchanged files (same inode + same mtime)
+      const cached = oldData?.[state.ino];
+      if (cached && isEqual(new Date(cached.state.mtime), new Date(state.mtime))) {
+        continue;
       }
-      // console.log("files ====>>>>>>", files)
-      for await (const item of files) {
-        if (item.isFile()) {
-          // const pathName = `${item.path}/${item.name}`;
-          const filePath = path.join(folderPath, item.name);
-          const mimeType = getMimeType(filePath);
-          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
-          let state = null;
-          try {
-            state = fs.statSync(filePath);
-            if (
-              state &&
-              Boolean(oldData) &&
-              Boolean(oldData?.[state?.ino]) &&
-              moment(oldData?.[state?.ino]?.state?.mtime).isSame(
-                moment(state?.mtime)
-              )
-            )
-              continue;
-          } catch (error) {
-            unreadFiles.push(filePath);
-            continue;
-          }
-          let fileBuffer = null;
-          try {
-            fileBuffer = fs.readFileSync(filePath);
-          } catch (error) {
-            unreadFiles.push(filePath);
-            continue;
-          }
-          const hash = crypto
-            .createHash("sha256")
-            .update(fileBuffer)
-            .digest("hex");
-          arr.push({
-            fileName: item.name,
-            hash,
-            path: filePath,
-            state,
-            createdAt: new Date(),
-          });
-        } else {
-          foldersArr.push(path.join(folderPath, item.name));
-        }
+
+      let hash;
+      try {
+        hash = hashFile(entry.filePath);
+      } catch (err) {
+        unreadFiles.push(entry.filePath);
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_READ_ERROR", errorMessage: err.message });
+        continue;
       }
+
+      arr.push({ fileName: entry.name, hash, path: entry.filePath, state, createdAt: new Date() });
     }
-    return {
-      data: arr,
-      unreadFiles,
-      unreadFolders,
-    };
-  } catch (error) {
-    unreadFolders.push(folderPath);
-    console.log("generateHashForVerifier => ", error);
-    notifier.notify({
-      title: "HealthLOQ - Doc Tool Error",
-      message: `Something went wrong! We are trying to read directory ${folderPath}`,
-      sound: true,
-    });
+  } catch (err) {
+    logger.error({ err }, "generateHashForVerifier: unexpected error");
     syncDocToolLogs({
-      message: `generateHashForVerifier => Something went wrong! We are trying to read directory ${folderPath}`,
-      error_message: error?.message,
-      error,
+      message: "generateHashForVerifier => unexpected error",
+      error_message: err?.message,
+      error: err,
     });
-    return {
-      data: arr,
-      unreadFiles,
-      unreadFolders,
-    };
   }
+
+  return { data: arr, unreadFiles, unreadFolders };
 };
 
-exports.generateHashFromFileName = (filePath = "", file) => {
-  let state = fs.statSync(filePath);
-  let fileBuffer = fs.readFileSync(filePath);
-  let hash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
-  return {
-    fileName: file.name,
-    hash,
-    path: filePath,
-    state,
-    createdAt: new Date(),
-  };
-};
+// ---------------------------------------------------------------------------
+// Hash generation — publisher mode
+// ---------------------------------------------------------------------------
 
 exports.generateHashForPublisher = async (
   rootFolderPath = process.env.ROOT_FOLDER_PATH
 ) => {
-  let arr = [];
-  let count = 0;
+  const arr = [];
   let hasMoreFiles = false;
-  let folderPath = "";
+  let count = 0;
+
   try {
-    let oldData = await this.getDataInObjectFormat();
-    let foldersArr = [rootFolderPath];
-    while (foldersArr?.length > 0 && arr?.length < 500) {
-      folderPath = foldersArr?.pop();
-      let files = [];
+    const oldData = await this.getDataInObjectFormat();
+
+    for await (const entry of scanDirectory(rootFolderPath)) {
+      if (arr.length >= 500) {
+        hasMoreFiles = true;
+        break;
+      }
+
+      count++;
+
+      let state;
       try {
-        files = fs.opendirSync(folderPath);
-      } catch (error) {
-        console.log("generateHashForPublisher => ", error);
-        notifier.notify({
-          title: "HealthLOQ - Doc Tool Warning",
-          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder and reading again after some time.`,
-          sound: true,
-        });
-        syncDocToolLogs({
-          message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
-          error_message: error?.message,
-          error,
-        });
+        state = fs.statSync(entry.filePath);
+      } catch (err) {
+        logger.warn({ filePath: entry.filePath, err }, "generateHashForPublisher: cannot stat file");
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_STAT_ERROR", errorMessage: err.message });
+        continue;
       }
-      if (Array.isArray(files) && !files?.length) {
-        notifier.notify({
-          title: "HealthLOQ - Doc Tool Warning",
-          message: `Something went wrong! We are not able to read the directory ${folderPath}. so, we are skipping that folder and reading again after some time.`,
-          sound: true,
-        });
-        syncDocToolLogs({
-          message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
-          error_message: `generateHashForPublisher => We are not able to read the directory ${folderPath}`,
-          error: null,
-        });
+
+      // Skip unchanged files
+      const cached = oldData?.[state.ino];
+      if (cached && isEqual(new Date(cached.state.mtime), new Date(state.mtime))) {
+        continue;
       }
-      let lastSyncedFile = localStorage.getItem("lastSyncedFile");
-      for await (const item of files) {
-        if (arr?.length === 500) {
-          hasMoreFiles = true;
-          break;
-        }
-        if (item.isFile()) {
-          // const pathName = `${item.path}/${item.name}`;
-          const filePath = path.join(folderPath, item.name);
-          const mimeType = getMimeType(filePath);
-          count++;
-          if (!ALLOWED_DOCUMENT_FILE_MIME_TYPES.includes(mimeType)) continue;
-          // if (lastSyncedFile) {
-          //   if (item?.name === lastSyncedFile) lastSyncedFile = null;
-          //   continue;
-          // }
-          let state = fs.statSync(filePath);
-          if (
-            state &&
-            Boolean(oldData) &&
-            Boolean(oldData?.[state?.ino]) &&
-            moment(oldData?.[state?.ino]?.state?.mtime).isSame(
-              moment(state?.mtime)
-            )
-          )
-            continue;
-          const fileBuffer = fs.readFileSync(filePath);
-          const hash = crypto
-            .createHash("sha256")
-            .update(fileBuffer)
-            .digest("hex");
-          arr.push({
-            fileName: item.name,
-            hash,
-            path: filePath,
-            state,
-            createdAt: new Date(),
-            effective_date: moment("9999-12-31", "YYYY-MM-DD"),
-            organization_id: "",
-            location_id: "",
-            product_id: "",
-            product_batch_id: "",
-            expiration_date: moment("9999-12-31", "YYYY-MM-DD"),
-            organization_name: null,
-            location_name: null,
-            product_name: null,
-            product_batch_name: null,
-          });
-          if (arr?.length === 500) {
-            lastSyncedFile = item?.name;
-          }
-        } else {
-          foldersArr.push(path.join(folderPath, item.name));
-        }
+
+      let hash;
+      try {
+        hash = hashFile(entry.filePath);
+      } catch (err) {
+        logger.warn({ filePath: entry.filePath, err }, "generateHashForPublisher: cannot read file");
+        logFailure({ path: entry.filePath, fileName: entry.name, errorCode: "FILE_READ_ERROR", errorMessage: err.message });
+        continue;
+      }
+
+      arr.push({
+        fileName: entry.name,
+        hash,
+        path: entry.filePath,
+        state,
+        createdAt: new Date(),
+        effective_date: "9999-12-31",
+        expiration_date: "9999-12-31",
+        organization_id: "",
+        location_id: "",
+        product_id: "",
+        product_batch_id: "",
+        organization_name: null,
+        location_name: null,
+        product_name: null,
+        product_batch_name: null,
+      });
+    }
+  } catch (err) {
+    logger.error({ err }, "generateHashForPublisher: unexpected error");
+    syncDocToolLogs({
+      message: "generateHashForPublisher => unexpected error",
+      error_message: err?.message,
+      error: err,
+    });
+  }
+
+  return { data: arr, hasMoreFiles, count };
+};
+
+// ---------------------------------------------------------------------------
+// Single-file hash (used by controllers directly)
+// ---------------------------------------------------------------------------
+
+exports.generateHashFromFileName = (filePath = "", file) => {
+  const state = fs.statSync(filePath);
+  const hash = hashFile(filePath);
+  return { fileName: file.name, hash, path: filePath, state, createdAt: new Date() };
+};
+
+// ---------------------------------------------------------------------------
+// Folder overview (used by verifier dashboard)
+// ---------------------------------------------------------------------------
+
+exports.getFolderOverview = async (rootFolderPath) => {
+  let filesCount = 0;
+  let newFilesCount = 0;
+  const unreadFiles = [];
+  const unreadFolders = [];
+
+  try {
+    const oldData = await this.getDataInObjectFormat("documentVerificationData");
+
+    for await (const entry of scanDirectory(rootFolderPath)) {
+      if (entry._unreadFolders?.length) {
+        unreadFolders.push(...entry._unreadFolders.splice(0));
+      }
+
+      filesCount++;
+
+      let state;
+      try {
+        state = fs.statSync(entry.filePath);
+      } catch {
+        continue;
+      }
+
+      const cached = oldData?.[state.ino];
+      if (!cached || !isEqual(new Date(cached.state.mtime), new Date(state.mtime))) {
+        newFilesCount++;
       }
     }
-    return {
-      data: arr,
-      hasMoreFiles,
-      count,
-    };
-  } catch (error) {
-    console.log("generateHashForPublisher => ", error);
-    notifier.notify({
-      title: "HealthLOQ - Doc Tool Error",
-      message: `Something went wrong! We are trying to read directory ${folderPath}`,
-      sound: true,
-    });
-    syncDocToolLogs({
-      message: `generateHashForPublisher => Something went wrong! We are trying to read directory ${folderPath}`,
-      error_message: error?.message,
-      error,
-    });
-    return {
-      data: arr,
-      hasMoreFiles,
-      count,
-    };
+  } catch (err) {
+    logger.error({ err }, "getFolderOverview: unexpected error");
   }
+
+  return { errorMsg: "", filesCount, newFilesCount, unreadFiles, unreadFolders };
 };
+
+// ---------------------------------------------------------------------------
+// Sync orchestration
+// ---------------------------------------------------------------------------
 
 exports.getSyncData = async (syncedData = null) => {
   try {
     global.isGetSyncDataProcessStart = true;
     const subscriptionData =
-      subscriptionDetail?.filter(
-        (item) => item?.subscription_type === "publisher"
-      )[0] || null;
+      global.subscriptionDetail?.find((item) => item?.subscription_type === "publisher") || null;
+
     if (!subscriptionData || !Object.keys(subscriptionData).length) {
       global.isGetSyncDataProcessStart = false;
+      logger.warn("getSyncData: publisher subscription not found");
       syncDocToolLogs({
-        message: `getSyncData => Something went wrong! Publisher subscription not found.`,
-        error_message:
-          "Something went wrong! Publisher subscription not found.",
+        message: "getSyncData => Publisher subscription not found.",
+        error_message: "Publisher subscription not found.",
         error: null,
-      });
-      notifier.notify({
-        title: "HealthLOQ - Doc Tool Error",
-        message: `Something went wrong! Publisher subscription not found. Please check whether the subscription is active or not.`,
-        sound: true,
       });
       return;
     }
-    let hashLimit = subscriptionData?.num_monthly_hashes || "0";
-    let todayHashLimit = subscriptionData?.current_num_monthly_hashes || "0";
-    // bypass if admin set ignore_threshold value
-    if (
-      !(
-        subscriptionData &&
-        subscriptionData?.organization &&
-        subscriptionData?.organization?.ignore_threshold > 0
-      )
-    ) {
-      if (!hashLimit || !todayHashLimit) {
+
+    const ignoreThreshold = subscriptionData?.organization?.ignore_threshold;
+    let hashLimit = parseInt(subscriptionData?.num_monthly_hashes || "0");
+    let todayHashLimit = parseInt(subscriptionData?.current_num_monthly_hashes || "0");
+
+    if (!ignoreThreshold) {
+      if (!hashLimit) {
         global.isGetSyncDataProcessStart = false;
+        logger.warn("getSyncData: invalid subscription information");
         syncDocToolLogs({
-          message: `getSyncData => Something went wrong! Invalid subscription information.`,
-          error_message:
-            "Something went wrong! Invalid subscription information.",
+          message: "getSyncData => Invalid subscription information.",
+          error_message: "Invalid subscription information.",
           error: null,
-        });
-        notifier.notify({
-          title: "HealthLOQ - Doc Tool Error",
-          message: `Something went wrong! Invalid Subscription Information.`,
-          sound: true,
         });
         return;
       }
-      hashLimit = parseInt(hashLimit);
-      todayHashLimit = parseInt(todayHashLimit);
       if (hashLimit <= todayHashLimit) {
         global.isGetSyncDataProcessStart = false;
+        logger.warn("getSyncData: monthly hash limit exceeded");
         syncDocToolLogs({
-          message: `getSyncData => Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
-          error_message:
-            "Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.",
+          message: "getSyncData => Monthly document upload limit exceeded.",
+          error_message: "Monthly document upload limit exceeded.",
           error: null,
         });
-        notifier.notify({
-          title: "HealthLOQ - Doc Tool Error",
-          message: `Your monthly document upload limit is exceeded. So, We will try again on the next month after the limit is reset.`,
-          sound: true,
-        });
         return;
-      }
-    }
-    if (!syncedData) {
-      syncedData = await this.getData();
-    }
-    const {
-      data: latestData,
-      hasMoreFiles,
-      count,
-    } = await this.generateHashForPublisher(process.env.ROOT_FOLDER_PATH);
-    const syncedhash = syncedData?.map((item) => item?.hash);
-    const latestHash = latestData?.map((item) => item?.hash);
-    // const deletedHashList = syncedhash?.filter(
-    //   (hash) => !latestHash?.includes(hash)
-    // );
-    const deletedHashList = [];
-    let hashList = latestHash?.filter((hash) => !syncedhash?.includes(hash));
-    if (
-      subscriptionData?.organization?.ignore_threshold === 0 ||
-      !subscriptionData?.organization?.ignore_threshold
-    ) {
-      if (todayHashLimit + hashList?.length > hashLimit) {
-        const extraDocLength = todayHashLimit + hashList?.length - hashLimit;
-        hashList = hashList?.slice(0, hashList?.length - extraDocLength);
       }
     }
 
-    const updateData = latestData.filter((data) => !syncedhash.includes(data.hash) )
-    let newData = syncedData?.concat(updateData || []);
+    if (!syncedData) {
+      syncedData = await this.getData();
+    }
+
+    const { data: latestData, hasMoreFiles, count } = await this.generateHashForPublisher(
+      process.env.ROOT_FOLDER_PATH
+    );
+
+    const syncedHashes = new Set(syncedData.map((item) => item?.hash));
+    const latestHashes = new Set(latestData.map((item) => item?.hash));
+    const deletedHashList = [];
+    let hashList = latestData
+      .filter((item) => !syncedHashes.has(item.hash))
+      .map((item) => item.hash);
+
+    if (!ignoreThreshold) {
+      if (todayHashLimit + hashList.length > hashLimit) {
+        hashList = hashList.slice(0, hashLimit - todayHashLimit);
+      }
+    }
+
+    const updateData = latestData.filter((d) => !syncedHashes.has(d.hash));
+    let newData = syncedData.concat(updateData);
     let syncStatus = null;
-    if (hashList?.length || deletedHashList?.length) {
+
+    if (hashList.length || deletedHashList.length) {
       syncStatus = await syncHash({
         deletedHashList,
         hashList,
-        hashCount: todayHashLimit + hashList?.length,
+        hashCount: todayHashLimit + hashList.length,
       });
       if (syncStatus === "1") {
-        // ?.filter((item) => {
-        //   deletedHashList?.includes(item?.hash) &&
-        //     console.log(
-        //       `=== ${item?.fileName} file deleted from path ${item?.path}`
-        //     );
-        //   return !deletedHashList?.includes(item?.hash);
-        // })
-        for (let item of latestData) {
-          if (hashList?.includes(item?.hash)) {
-            console.log(`=== ${item?.fileName} hash generated`);
+        const now = new Date().toISOString();
+        for (const item of latestData) {
+          if (hashList.includes(item.hash)) {
+            logger.info({ fileName: item.fileName }, "hash generated and synced");
+            logSuccess({ path: item.path, fileName: item.fileName, hash: item.hash, processedAt: now });
           }
         }
         this.setData(newData);
-        global.subscriptionDetail = subscriptionDetail?.map((item) =>
+        global.subscriptionDetail = global.subscriptionDetail?.map((item) =>
           item?.subscription_type === "publisher"
-            ? {
-                ...item,
-                current_num_monthly_hashes: String(
-                  todayHashLimit + hashList?.length
-                ),
-              }
+            ? { ...item, current_num_monthly_hashes: String(todayHashLimit + hashList.length) }
             : item
         );
       }
     }
+
+    if (syncStatus === "0" && hashList.length) {
+      const now = new Date().toISOString();
+      for (const item of latestData) {
+        if (hashList.includes(item.hash)) {
+          logFailure({ path: item.path, fileName: item.fileName, hash: item.hash, errorCode: "SYNC_API_ERROR", errorMessage: "Blockchain API call failed", processedAt: now });
+        }
+      }
+    }
+
     publisherScriptIsRunningOrNot({
       is_running: hasMoreFiles,
-      todayHashLimit: todayHashLimit,
-      syncedData: syncedData?.length,
-      hashList: hashList?.length,
-      newData: newData?.length,
-      deletedHashList: deletedHashList?.length,
-      latestData: latestData?.length,
-      lastSyncedFile: latestData?.[latestData?.length - 1]?.fileName,
+      todayHashLimit,
+      syncedData: syncedData.length,
+      hashList: hashList.length,
+      newData: newData.length,
+      deletedHashList: deletedHashList.length,
+      latestData: latestData.length,
+      lastSyncedFile: latestData?.[latestData.length - 1]?.fileName,
       count,
     });
+
     if (hasMoreFiles && syncStatus !== "0") {
-      localStorage.setItem(
-        "lastSyncedFile",
-        latestData?.[latestData?.length - 1]?.fileName
-      );
+      localStorage.setItem("lastSyncedFile", latestData?.[latestData.length - 1]?.fileName);
       this.getSyncData(newData);
     } else {
       localStorage.removeItem("lastSyncedFile");
       global.isGetSyncDataProcessStart = false;
-      localStorage.setItem(
-        "staticData",
-        JSON.stringify({
-          lastSyncedDate: new Date(),
-        })
-      );
+      localStorage.setItem("staticData", JSON.stringify({ lastSyncedDate: new Date() }));
     }
-  } catch (error) {
-    console.log("getSyncData => ", error);
+  } catch (err) {
+    logger.error({ err }, "getSyncData: unexpected error");
     syncDocToolLogs({
-      message: `getSyncData => Something went wrong!`,
-      error_message: error?.message,
-      error,
-    });
-    notifier.notify({
-      title: "HealthLOQ - Doc Tool Error",
-      message: `Something went wrong! We will re-try after some time.`,
-      sound: true,
+      message: "getSyncData => unexpected error",
+      error_message: err?.message,
+      error: err,
     });
   }
 };
+
+// ---------------------------------------------------------------------------
+// Watcher debounce / interval
+// ---------------------------------------------------------------------------
 
 exports.setDocumentSyncTimeout = () => {
   if (global.documentSyncTimeout) {
     clearTimeout(global.documentSyncTimeout);
-    if (global.documentSyncInterval) {
-      clearInterval(global.documentSyncInterval);
-    }
+    if (global.documentSyncInterval) clearInterval(global.documentSyncInterval);
   }
   global.documentSyncTimeout = setTimeout(async () => {
-    if (!global.isGetSyncDataProcessStart) {
-      this.getSyncData();
-    }
+    if (!global.isGetSyncDataProcessStart) this.getSyncData();
     this.setDocumentSyncInterval();
-  }, 0.1 * 60 * 1000); // 10 Sec
+  }, 6 * 1000); // 6 seconds debounce
 };
 
 exports.setDocumentSyncInterval = () => {
-  if (global.documentSyncInterval) {
-    clearInterval(global.documentSyncInterval);
-  }
+  if (global.documentSyncInterval) clearInterval(global.documentSyncInterval);
   global.documentSyncInterval = setInterval(async () => {
+    if (global.serviceEnabled === false) return;
     if (!global.isGetSyncDataProcessStart) {
-      let subscriptionInfo = await getSubscriptionDetail();
+      const subscriptionInfo = await getSubscriptionDetail();
       global.subscriptionDetail = subscriptionInfo?.data;
       this.getSyncData();
     }
@@ -632,21 +423,46 @@ exports.setDocumentSyncInterval = () => {
       is_running: global.isGetSyncDataProcessStart,
       doc_tool_version: packageJson.version,
     });
-  }, 5 * 60 * 1000); // 5 min
+  }, 5 * 60 * 1000); // 5-minute fallback heartbeat
 };
 
-exports.filterObj = (obj, keys) =>
-  Object.fromEntries(
-    Object.entries(obj).filter(([key, value]) => !keys.includes(key))
-  );
+// ---------------------------------------------------------------------------
+// Service lifecycle control
+// ---------------------------------------------------------------------------
 
-// function for set folderPath in array
-
-exports.setFolderPathToArray = (folderPath) => {
-  let array = JSON.parse(localStorage.getItem("folderPath")) || [];
-  if (!array.includes(folderPath.trim())) {
-    array.push(folderPath);
-
-    localStorage.setItem("folderPath", JSON.stringify(array));
+exports.stopService = () => {
+  global.serviceEnabled = false;
+  if (global.documentSyncInterval) {
+    clearInterval(global.documentSyncInterval);
+    global.documentSyncInterval = null;
   }
+  if (global.documentSyncTimeout) {
+    clearTimeout(global.documentSyncTimeout);
+    global.documentSyncTimeout = null;
+  }
+  // Record the time the service went offline so alert rules can measure duration
+  try {
+    global.localStorage.setItem("service_offline_since", new Date().toISOString());
+  } catch (_) {}
+  logger.info("Hashing service stopped");
+};
+
+exports.startService = () => {
+  global.serviceEnabled = true;
+  // Clear the offline timestamp so alert cooldowns reset correctly
+  try {
+    global.localStorage.removeItem("service_offline_since");
+  } catch (_) {}
+  this.setDocumentSyncInterval();
+  if (!global.isGetSyncDataProcessStart) {
+    this.getSyncData();
+  }
+  logger.info("Hashing service started");
+};
+
+exports.restartService = () => {
+  this.stopService();
+  // Brief pause so any in-flight sync can record its final state
+  setTimeout(() => this.startService(), 500);
+  logger.info("Hashing service restarting");
 };

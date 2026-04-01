@@ -63,6 +63,17 @@ function DocumentVerifierNewDesign({
 
   useEffect(() => {
     fetchFolderPath();
+    // Fetch the server-configured root folder path to use as the default
+    axios.get(
+      `${process.env.REACT_APP_API_BASE_URL || ""}/api/health/status`
+    ).then((res) => {
+      const root = res.data?.rootFolderPath;
+      if (root) {
+        setFolderPath(root);
+        setText(root);
+        setOptions((prev) => (prev.includes(root) ? prev : [root, ...prev]));
+      }
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -76,7 +87,12 @@ function DocumentVerifierNewDesign({
 
   useEffect(() => {
     if (getFolderPathList?.data?.length > 0) {
-      setOptions(getFolderPathList?.data);
+      setOptions((prev) => {
+        const incoming = getFolderPathList.data;
+        // Keep any server-default path that isn't in the saved list
+        const extras = prev.filter((p) => !incoming.includes(p));
+        return [...extras, ...incoming];
+      });
     }
   }, [getFolderPathList]);
 

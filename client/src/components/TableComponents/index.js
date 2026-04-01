@@ -25,6 +25,9 @@ import DocumentViewerModal from "./DocumentViewModal";
 
 const TableHeadCell = styled(TableCell)(({ theme }) => ({
   fontWeight: theme.typography.fontWeightBold,
+  fontSize: "0.75rem",
+  whiteSpace: "nowrap",
+  lineHeight: 1.3,
 }));
 
 const TableToolBar = styled(Toolbar)(({ theme }) => ({
@@ -209,10 +212,17 @@ export default function EnhancedTable({
   selected = [],
   getBulkActionInfo = null,
 }) {
+  const storageKey = tableId ? `rowsPerPage_${tableId}` : null;
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("calories");
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(() => {
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return parseInt(saved, 10);
+    }
+    return 10;
+  });
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
@@ -234,8 +244,10 @@ export default function EnhancedTable({
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const val = parseInt(event.target.value, 10);
+    setRowsPerPage(val);
     setPage(0);
+    if (storageKey) localStorage.setItem(storageKey, val);
   };
 
   const handleClick = (event, id) => {
@@ -290,9 +302,9 @@ export default function EnhancedTable({
           }}
         >
           <Table
-            sx={{ minWidth: 750 }}
+            sx={{ minWidth: 750, tableLayout: "auto" }}
             aria-labelledby="tableTitle"
-            size={"medium"}
+            size="small"
           >
             <EnhancedTableHead
               order={order}
@@ -351,7 +363,6 @@ export default function EnhancedTable({
                       {headCells?.map((column, key) => {
                         return (
                           <TableCell
-                            style={{ wordBreak: "break-word" }}
                             key={key}
                             align={
                               column?.id === "action"
@@ -367,6 +378,11 @@ export default function EnhancedTable({
                               }
                             }}
                             sx={{
+                              fontSize: "0.75rem",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: 220,
                               cursor: column?.id === "file_name" && "pointer",
                               color: column?.id === "file_name" && "blue",
                               textDecoration:
