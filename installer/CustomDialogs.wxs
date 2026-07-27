@@ -68,7 +68,7 @@
         <Control Id="JwtLabel" Type="Text" X="20" Y="112" Width="330" Height="12"
                  Text="HealthLOQ JWT Token (required):" />
         <Control Id="JwtEdit" Type="Edit" X="20" Y="127" Width="330" Height="18"
-                 Property="JWT_TOKEN" Text="{200}" Password="yes" />
+                 Property="JWT_TOKEN" Text="{2000}" Password="yes" />
         <Control Id="JwtNote" Type="Text" X="20" Y="148" Width="330" Height="12"
                  Text="{\WixUI_Font_Smaller}Found in your HealthLOQ partner portal under API Settings." />
 
