@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+
+  <Package Name="HealthLOQ Document Hash Generator"
+           Manufacturer="HealthLOQ"
+           Version="1.0.26"
+           UpgradeCode="A3F1C2D4-5E6F-7A8B-9C0D-E1F2A3B4C5D6"
+           Compressed="yes">
+
+    <MajorUpgrade
+        AllowSameVersionUpgrades="yes"
+        Schedule="afterInstallInitialize"
+        DowngradeErrorMessage="A newer version of HealthLOQ Document Hash Generator is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <!-- Node.js prerequisite check -->
+    <Launch Condition="Installed OR NODEJS_EXE"
+            Message="Node.js must be installed before running this installer. Please install Node.js (v18 or newer) from https://nodejs.org and try again." />
+
+    <!-- ═══════════════════════════════════════════════
+         CONFIGURATION PROPERTIES
+         ═══════════════════════════════════════════════ -->
+    <Property Id="PORT" Value="8003" />
+    <Property Id="DOCS_FOLDER" Value="C:\HealthLOQ Documents" />
+    <Property Id="JWT_TOKEN" Secure="yes" />
+    <Property Id="ALERT_EMAIL" Secure="yes" />
+
+    <!-- Search for node.exe in common install path -->
+    <Property Id="NODEJS_EXE">
+      <DirectorySearch Id="NodeSearch1" Path="[WindowsVolume]Program Files\nodejs" Depth="0">
+        <FileSearch Name="node.exe" />
+      </DirectorySearch>
+    </Property>
+
+    <!-- ═══════════════════════════════════════════════
+         DIRECTORY STRUCTURE
+         ═══════════════════════════════════════════════ -->
+    <StandardDirectory Id="ProgramFilesFolder">
+      <Directory Id="COMPANYDIR" Name="HealthLOQ">
+        <Directory Id="INSTALLFOLDER" Name="HealthLOQ Document Hash" />
+      </Directory>
+    </StandardDirectory>
+
+    <!-- ═══════════════════════════════════════════════
+         FEATURES
+         ═══════════════════════════════════════════════ -->
+    <Feature Id="ProductFeature" Title="HealthLOQ Document Hash Generator" Level="1">
+      <ComponentGroupRef Id="AppComponents" />
+      <ComponentRef Id="DocsFolderTracker" />
+    </Feature>
+
+    <!-- ═══════════════════════════════════════════════
+         CUSTOM ACTIONS
+         WiX formats [PROPERTY] refs in ExeCommand at schedule time so all
+         values (including Secure ones) are embedded before the deferred CA runs.
+         InstallDir is derived from $PSScriptRoot inside the scripts.
+         ═══════════════════════════════════════════════ -->
+
+    <CustomAction Id="RunInstallScript"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check"
+                  Directory="SystemFolder"
+                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NonInteractive -NoProfile -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]setup.ps1&quot; -Port &quot;[PORT]&quot; -DocsFolder &quot;[DOCS_FOLDER] &quot; -JwtToken &quot;[JWT_TOKEN]&quot; -AlertEmail &quot;[ALERT_EMAIL]&quot;" />
+
+    <CustomAction Id="RunUninstallScript"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"
+                  Directory="SystemFolder"
+                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NonInteractive -NoProfile -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]teardown.ps1&quot;" />
+
+    <!-- ═══════════════════════════════════════════════
+         INSTALL SEQUENCES
+         ═══════════════════════════════════════════════ -->
+    <InstallExecuteSequence>
+      <Custom Action="RunInstallScript"   After="InstallFiles"      Condition="NOT Installed" />
+      <Custom Action="RunUninstallScript" After="InstallInitialize" Condition="Installed AND REMOVE=&quot;ALL&quot;" />
+    </InstallExecuteSequence>
+
+    <!-- ═══════════════════════════════════════════════
+         UI
+         Dialog flow overrides must live in this file alongside ui:WixUI
+         so WiX 4 merges them into the ControlEvent table correctly.
+         ═══════════════════════════════════════════════ -->
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <ui:WixUI Id="WixUI_InstallDir" />
+
+    <UI>
+      <!-- WelcomeDlg: upgrade detected (different ProductCode, same UpgradeCode) -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
+               Value="HLQUpgradeDlg"
+               Condition="WIX_UPGRADE_DETECTED"
+               Order="3" />
+
+      <!-- WelcomeDlg: same version already installed → maintenance (Repair/Remove) -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
+               Value="MaintenanceTypeDlg"
+               Condition="Installed AND NOT PATCH"
+               Order="2" />
+
+      <!-- InstallDirDlg Next → HLQConfigDlg (Order=5 beats built-in Order=4) -->
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog"
+               Value="HLQConfigDlg"
+               Condition="WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID = &quot;1&quot;"
+               Order="5" />
+
+      <!-- VerifyReadyDlg Back → HLQAlertDlg (Order=5 beats built-in Order=1) -->
+      <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog"
+               Value="HLQAlertDlg"
+               Condition="NOT Installed"
+               Order="5" />
+    </UI>
+
+  </Package>
+
+</Wix>

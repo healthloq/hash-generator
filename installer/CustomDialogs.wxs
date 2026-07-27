@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <UI>
+      <!-- ═══════════════════════════════════════
+           DIALOG: Previous version detected
+           Shown when WIX_UPGRADE_DETECTED is TRUE
+           (same UpgradeCode, different ProductCode)
+           ═══════════════════════════════════════ -->
+      <Dialog Id="HLQUpgradeDlg" Width="370" Height="270" Title="HealthLOQ Document Hash Generator Setup">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="{\WixUI_Font_Title}Previous Installation Found" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
+                 TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+        <Control Id="Msg1" Type="Text" X="20" Y="60" Width="330" Height="20"
+                 Text="A previous version of HealthLOQ Document Hash Generator is already installed." />
+        <Control Id="Msg2" Type="Text" X="20" Y="90" Width="330" Height="50"
+                 Text="The existing installation will be removed and replaced. On the following screens you will be asked to re-enter your configuration settings." />
+        <Control Id="Msg3" Type="Text" X="20" Y="148" Width="330" Height="30"
+                 Text="Click Next to continue, or Cancel to exit without making changes." />
+
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
+                 Text="&amp;Back">
+          <Publish Event="NewDialog" Value="WelcomeDlg" />
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
+                 Default="yes" Text="&amp;Next">
+          <Publish Event="NewDialog" Value="LicenseAgreementDlg" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"
+                 Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+
+      <!-- ═══════════════════════════════════════
+           PAGE 1: Required settings
+           ═══════════════════════════════════════ -->
+      <Dialog Id="HLQConfigDlg" Width="370" Height="270" Title="HealthLOQ Configuration">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="{\WixUI_Font_Title}Server Configuration" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
+                 TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+        <Control Id="PortLabel" Type="Text" X="20" Y="57" Width="100" Height="12"
+                 Text="Server Port:" />
+        <Control Id="PortEdit" Type="Edit" X="130" Y="54" Width="80" Height="18"
+                 Property="PORT" Text="{5}" />
+
+        <Control Id="DocsFolderLabel" Type="Text" X="20" Y="83" Width="100" Height="12"
+                 Text="Documents Folder:" />
+        <Control Id="DocsFolderEdit" Type="Edit" X="130" Y="80" Width="185" Height="18"
+                 Property="DOCS_FOLDER" Text="{100}" />
+        <!-- Browse button: sets _BrowseProperty then opens BrowseDlg -->
+        <Control Id="DocsFolderBrowse" Type="PushButton" X="318" Y="80" Width="32" Height="18"
+                 Text="...">
+          <Publish Property="_BrowseProperty" Value="DOCS_FOLDER" Order="1" />
+          <Publish Event="SpawnDialog" Value="BrowseDlg" Order="2" />
+        </Control>
+
+        <Control Id="JwtLabel" Type="Text" X="20" Y="112" Width="330" Height="12"
+                 Text="HealthLOQ JWT Token (required):" />
+        <Control Id="JwtEdit" Type="Edit" X="20" Y="127" Width="330" Height="18"
+                 Property="JWT_TOKEN" Text="{200}" Password="yes" />
+        <Control Id="JwtNote" Type="Text" X="20" Y="148" Width="330" Height="12"
+                 Text="{\WixUI_Font_Smaller}Found in your HealthLOQ partner portal under API Settings." />
+
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
+                 Text="&amp;Back">
+          <Publish Event="NewDialog" Value="InstallDirDlg" />
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
+                 Default="yes" Text="&amp;Next"
+                 EnableCondition="JWT_TOKEN &lt;&gt; &quot;&quot;"
+                 DisableCondition="JWT_TOKEN = &quot;&quot;">
+          <Publish Event="NewDialog" Value="HLQAlertDlg" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"
+                 Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+
+      <!-- ═══════════════════════════════════════
+           PAGE 2: Alert email (optional)
+           ═══════════════════════════════════════ -->
+      <Dialog Id="HLQAlertDlg" Width="370" Height="270" Title="HealthLOQ Configuration">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="{\WixUI_Font_Title}Alert Notifications (Optional)" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
+                 TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+        <Control Id="SkipNote" Type="Text" X="20" Y="56" Width="330" Height="30"
+                 Text="Alert notifications are sent through the HealthLOQ platform. This setting can be changed later by editing the .env file in the install directory." />
+
+        <Control Id="AlertEmailLabel" Type="Text" X="20" Y="96" Width="330" Height="12"
+                 Text="Alert Email Address:" />
+        <Control Id="AlertEmailEdit" Type="Edit" X="20" Y="111" Width="330" Height="18"
+                 Property="ALERT_EMAIL" Text="{200}" />
+        <Control Id="AlertEmailNote" Type="Text" X="20" Y="133" Width="330" Height="12"
+                 Text="{\WixUI_Font_Smaller}Leave blank to disable alert notifications." />
+
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
+                 Text="&amp;Back">
+          <Publish Event="NewDialog" Value="HLQConfigDlg" />
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
+                 Default="yes" Text="&amp;Next">
+          <Publish Event="NewDialog" Value="VerifyReadyDlg" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"
+                 Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+    </UI>
+  </Fragment>
+
+  <!-- DOCS_FOLDER must be a costed Directory (i.e. have a Component) for
+       BrowseDlg's SetTargetPath to work.  A registry component satisfies
+       that requirement without writing any files into the user's docs folder. -->
+  <Fragment>
+    <StandardDirectory Id="TARGETDIR">
+      <Directory Id="DOCS_FOLDER" Name="HealthLOQ Documents">
+        <Component Id="DocsFolderTracker"
+                   Guid="B5C6D7E8-9F0A-1B2C-3D4E-5F6A7B8C9D0E">
+          <RegistryValue Root="HKLM"
+                         Key="Software\HealthLOQ\HashGenerator"
+                         Name="DocumentsFolder"
+                         Type="string"
+                         Value="[DOCS_FOLDER]"
+                         KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+  </Fragment>
+</Wix>
