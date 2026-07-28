@@ -29,6 +29,73 @@
         </Control>
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
                  Default="yes" Text="&amp;Next">
+          <Publish Event="NewDialog" Value="HLQPreflightDlg" />
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"
+                 Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg" />
+        </Control>
+      </Dialog>
+
+      <!-- ═══════════════════════════════════════
+           DIALOG: System compatibility preflight
+           Runs before LicenseAgreementDlg so the
+           customer sees any blockers up front.
+           Each result control shows the property
+           value directly: "[  OK  ]" or "[ FAIL ]".
+           Default is "[ FAIL ]" if the CA did not run.
+           ═══════════════════════════════════════ -->
+      <Dialog Id="HLQPreflightDlg" Width="370" Height="270" Title="HealthLOQ Document Hash Generator Setup">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="280" Height="15"
+                 Transparent="yes" NoPrefix="yes"
+                 Text="{\WixUI_Font_Title}System Compatibility Check" />
+        <Control Id="BannerBitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="44"
+                 TabSkip="no" Text="WixUI_Bmp_Banner" />
+        <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+
+        <Control Id="Instr" Type="Text" X="20" Y="52" Width="330" Height="12"
+                 Text="The following checks verify this server is ready for installation." />
+
+        <!-- Row 1: Node.js -->
+        <Control Id="NodeLabel"  Type="Text" X="20"  Y="72" Width="255" Height="12"
+                 Text="Node.js v18 or newer installed" />
+        <Control Id="NodeResult" Type="Text" X="278" Y="72" Width="72"  Height="12"
+                 Text="[PREFLIGHT_NODE]" />
+
+        <!-- Row 2: Port 8003 -->
+        <Control Id="PortLabel"  Type="Text" X="20"  Y="92" Width="255" Height="12"
+                 Text="Port 8003 not in use by another process" />
+        <Control Id="PortResult" Type="Text" X="278" Y="92" Width="72"  Height="12"
+                 Text="[PREFLIGHT_PORT]" />
+
+        <!-- Row 3: Outbound HTTPS -->
+        <Control Id="NetworkLabel"  Type="Text" X="20"  Y="112" Width="255" Height="12"
+                 Text="Outbound HTTPS to api.healthloq.com" />
+        <Control Id="NetworkResult" Type="Text" X="278" Y="112" Width="72"  Height="12"
+                 Text="[PREFLIGHT_NETWORK]" />
+
+        <!-- Row 4: Disk space -->
+        <Control Id="DiskLabel"  Type="Text" X="20"  Y="132" Width="255" Height="12"
+                 Text="500 MB or more free disk space" />
+        <Control Id="DiskResult" Type="Text" X="278" Y="132" Width="72"  Height="12"
+                 Text="[PREFLIGHT_DISK]" />
+
+        <!-- Row 5: Windows version -->
+        <Control Id="WindowsLabel"  Type="Text" X="20"  Y="152" Width="255" Height="12"
+                 Text="Windows 10 / Server 2016 or newer" />
+        <Control Id="WindowsResult" Type="Text" X="278" Y="152" Width="72"  Height="12"
+                 Text="[PREFLIGHT_WINDOWS]" />
+
+        <Control Id="WarnNote" Type="Text" X="20" Y="174" Width="330" Height="46"
+                 Text="{\WixUI_Font_Smaller}Items marked FAIL may prevent the application from working correctly. You may continue, but review any failed items. Contact your network or security team if outbound HTTPS is blocked." />
+
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17"
+                 Text="&amp;Back">
+          <Publish Event="NewDialog" Value="WelcomeDlg" />
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17"
+                 Default="yes" Text="&amp;Next">
           <Publish Event="NewDialog" Value="LicenseAgreementDlg" />
         </Control>
         <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17"

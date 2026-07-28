@@ -5,7 +5,7 @@
 
   <Package Name="HealthLOQ Document Hash Generator"
            Manufacturer="HealthLOQ"
-           Version="1.0.26"
+           Version="1.1.0"
            UpgradeCode="A3F1C2D4-5E6F-7A8B-9C0D-E1F2A3B4C5D6"
            Compressed="yes">
 
@@ -35,6 +35,39 @@
     </Property>
 
     <!-- ═══════════════════════════════════════════════
+         PREFLIGHT CHECK PROPERTIES
+         RunPreflight (immediate CA, Before="AppSearch") writes the
+         display strings "[  OK  ]" or "[ FAIL ]" to HKCU.
+         AppSearch reads them back; default is "[ FAIL ]" if the CA
+         did not run or the registry key does not exist.
+         ═══════════════════════════════════════════════ -->
+    <Property Id="PREFLIGHT_NODE" Value="[ FAIL ]">
+      <RegistrySearch Id="PF_Node" Root="HKCU"
+                      Key="Software\HealthLOQ\HashGenerator\Preflight"
+                      Name="NodeOK" Type="raw" />
+    </Property>
+    <Property Id="PREFLIGHT_PORT" Value="[ FAIL ]">
+      <RegistrySearch Id="PF_Port" Root="HKCU"
+                      Key="Software\HealthLOQ\HashGenerator\Preflight"
+                      Name="PortOK" Type="raw" />
+    </Property>
+    <Property Id="PREFLIGHT_NETWORK" Value="[ FAIL ]">
+      <RegistrySearch Id="PF_Network" Root="HKCU"
+                      Key="Software\HealthLOQ\HashGenerator\Preflight"
+                      Name="NetworkOK" Type="raw" />
+    </Property>
+    <Property Id="PREFLIGHT_DISK" Value="[ FAIL ]">
+      <RegistrySearch Id="PF_Disk" Root="HKCU"
+                      Key="Software\HealthLOQ\HashGenerator\Preflight"
+                      Name="DiskOK" Type="raw" />
+    </Property>
+    <Property Id="PREFLIGHT_WINDOWS" Value="[ FAIL ]">
+      <RegistrySearch Id="PF_Windows" Root="HKCU"
+                      Key="Software\HealthLOQ\HashGenerator\Preflight"
+                      Name="WindowsOK" Type="raw" />
+    </Property>
+
+    <!-- ═══════════════════════════════════════════════
          DIRECTORY STRUCTURE
          ═══════════════════════════════════════════════ -->
     <StandardDirectory Id="ProgramFilesFolder">
@@ -53,10 +86,19 @@
 
     <!-- ═══════════════════════════════════════════════
          CUSTOM ACTIONS
-         WiX formats [PROPERTY] refs in ExeCommand at schedule time so all
-         values (including Secure ones) are embedded before the deferred CA runs.
-         InstallDir is derived from $PSScriptRoot inside the scripts.
+         RunPreflight: immediate, runs before AppSearch in UISequence.
+           Uses -EncodedCommand so no installed file is needed yet.
+           PREFLIGHT_B64 is injected by build-msi.ps1 via -d flag.
+         RunInstallScript / RunUninstallScript: deferred (elevated).
+           WiX formats [PROPERTY] refs at schedule time so Secure values
+           are embedded before execution.  InstallDir via $PSScriptRoot.
          ═══════════════════════════════════════════════ -->
+
+    <CustomAction Id="RunPreflight"
+                  Execute="immediate"
+                  Return="ignore"
+                  Directory="SystemFolder"
+                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $(var.PREFLIGHT_B64)" />
 
     <CustomAction Id="RunInstallScript"
                   Execute="deferred"
@@ -75,6 +117,11 @@
     <!-- ═══════════════════════════════════════════════
          INSTALL SEQUENCES
          ═══════════════════════════════════════════════ -->
+    <InstallUISequence>
+      <!-- Run before AppSearch so RegistrySearch can read the results -->
+      <Custom Action="RunPreflight" Before="AppSearch" />
+    </InstallUISequence>
+
     <InstallExecuteSequence>
       <Custom Action="RunInstallScript"   After="InstallFiles"      Condition="NOT Installed" />
       <Custom Action="RunUninstallScript" After="InstallInitialize" Condition="Installed AND REMOVE=&quot;ALL&quot;" />
@@ -89,7 +136,7 @@
     <ui:WixUI Id="WixUI_InstallDir" />
 
     <UI>
-      <!-- WelcomeDlg: upgrade detected (different ProductCode, same UpgradeCode) -->
+      <!-- WelcomeDlg: upgrade detected → upgrade info dialog -->
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
                Value="HLQUpgradeDlg"
                Condition="WIX_UPGRADE_DETECTED"
@@ -100,6 +147,12 @@
                Value="MaintenanceTypeDlg"
                Condition="Installed AND NOT PATCH"
                Order="2" />
+
+      <!-- WelcomeDlg: fresh install → preflight check screen (Order=4 beats built-in) -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog"
+               Value="HLQPreflightDlg"
+               Condition="NOT Installed AND NOT WIX_UPGRADE_DETECTED"
+               Order="4" />
 
       <!-- InstallDirDlg Next → HLQConfigDlg (Order=5 beats built-in Order=4) -->
       <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog"

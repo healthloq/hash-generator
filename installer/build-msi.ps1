@@ -171,8 +171,9 @@ Copy-Item -Path "$root\client\build" -Destination "$staging\client\build" -Recur
 
 # Copy NSSM and setup scripts into staging root (installed alongside the app)
 Copy-Item $nssmExe "$staging\nssm.exe"
-Copy-Item "$PSScriptRoot\setup.ps1"    "$staging\setup.ps1"
-Copy-Item "$PSScriptRoot\teardown.ps1" "$staging\teardown.ps1"
+Copy-Item "$PSScriptRoot\setup.ps1"     "$staging\setup.ps1"
+Copy-Item "$PSScriptRoot\teardown.ps1"  "$staging\teardown.ps1"
+Copy-Item "$PSScriptRoot\preflight.ps1" "$staging\preflight.ps1"
 
 Write-Host "  Staging ready: $staging" -ForegroundColor Green
 
@@ -186,6 +187,13 @@ Write-Host "`n[5/5] Building MSI..." -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $msiPath = "$outDir\HealthLOQHashGenerator.msi"
 
+# Base64-encode preflight.ps1 (UTF-16LE) for PowerShell -EncodedCommand.
+# This is injected as a WiX preprocessor variable so the script runs as an
+# immediate CA before AppSearch, without needing INSTALLFOLDER to exist yet.
+$preflightSrc = Get-Content "$PSScriptRoot\preflight.ps1" -Raw -Encoding UTF8
+$preflightB64 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($preflightSrc))
+Write-Host "  preflight.ps1 encoded ($($preflightB64.Length) chars)" -ForegroundColor Gray
+
 # Run wix build from the installer directory so relative paths in WXS resolve correctly
 Push-Location $PSScriptRoot
 & $wix build `
@@ -195,7 +203,8 @@ Push-Location $PSScriptRoot
     -ext $uiExt `
     -ext $utilExt `
     -out $msiPath `
-    -pdbtype none
+    -pdbtype none `
+    -d "PREFLIGHT_B64=$preflightB64"
 $exitCode = $LASTEXITCODE
 Pop-Location
 
