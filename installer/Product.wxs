@@ -150,6 +150,7 @@
          ═══════════════════════════════════════════════ -->
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
     <ui:WixUI Id="WixUI_InstallDir" />
+    <WixVariable Id="WixUILicenseRtf" Value="license.rtf" />
 
     <UI>
       <!-- WelcomeDlg: upgrade detected → upgrade info dialog -->
