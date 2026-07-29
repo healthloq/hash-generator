@@ -86,19 +86,33 @@
 
     <!-- ═══════════════════════════════════════════════
          CUSTOM ACTIONS
-         RunPreflight: immediate, runs before AppSearch in UISequence.
-           Uses -EncodedCommand so no installed file is needed yet.
+         RunPreflight: immediate type-50 CA (Property holds EXE path).
+           Runs before AppSearch in the UISequence.  Cannot use
+           Directory="SystemFolder" there because the Directory Manager
+           is not yet initialized (error 2732).  Instead we use a
+           SetProperty (type-51, no Directory Manager needed) to resolve
+           [SystemFolder] into POWERSHELL_EXE, then reference that
+           property as the executable.
            PREFLIGHT_B64 is injected by build-msi.ps1 via -d flag.
          RunInstallScript / RunUninstallScript: deferred (elevated).
            WiX formats [PROPERTY] refs at schedule time so Secure values
            are embedded before execution.  InstallDir via $PSScriptRoot.
          ═══════════════════════════════════════════════ -->
 
+    <!-- Type-51 CA: sets POWERSHELL_EXE from a formatted string.
+         [SystemFolder] is a standard MSI property available at startup
+         (no Directory Manager needed).  Named so it can be an After= anchor. -->
+    <CustomAction Id="SetPSPath"
+                  Property="POWERSHELL_EXE"
+                  Value="[SystemFolder]WindowsPowerShell\v1.0\powershell.exe" />
+
+    <!-- Type-50 CA: Property="POWERSHELL_EXE" supplies the resolved exe path.
+         No Directory attribute → no Directory Manager → no error 2732. -->
     <CustomAction Id="RunPreflight"
                   Execute="immediate"
                   Return="ignore"
-                  Directory="SystemFolder"
-                  ExeCommand="&quot;[SystemFolder]WindowsPowerShell\v1.0\powershell.exe&quot; -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $(var.PREFLIGHT_B64)" />
+                  Property="POWERSHELL_EXE"
+                  ExeCommand="-NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand $(var.PREFLIGHT_B64)" />
 
     <CustomAction Id="RunInstallScript"
                   Execute="deferred"
@@ -118,8 +132,10 @@
          INSTALL SEQUENCES
          ═══════════════════════════════════════════════ -->
     <InstallUISequence>
-      <!-- Run before AppSearch so RegistrySearch can read the results -->
-      <Custom Action="RunPreflight" Before="AppSearch" />
+      <!-- SetPSPath (type-51) resolves [SystemFolder] into POWERSHELL_EXE.
+           RunPreflight (type-50) fires after, then AppSearch reads results. -->
+      <Custom Action="SetPSPath"    Before="AppSearch" />
+      <Custom Action="RunPreflight" After="SetPSPath" />
     </InstallUISequence>
 
     <InstallExecuteSequence>
