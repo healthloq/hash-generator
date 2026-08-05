@@ -11,11 +11,15 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 export default function SystemStatus({ status, onForceSync, forceSyncing }) {
   if (!status) return null;
 
-  const { version, lastSyncedDate, syncRunning, verifierRunning, subscriptionTypes, rootFolderPath } = status;
+  const { version, lastSyncedDate, syncRunning, verifierRunning, subscriptionTypes, rootFolderPath, nextScheduledSync } = status;
 
   const formattedDate = lastSyncedDate
     ? new Date(lastSyncedDate).toLocaleString()
     : "Never";
+
+  const formattedNextSync = nextScheduledSync
+    ? new Date(nextScheduledSync).toLocaleString()
+    : "Unknown";
 
   return (
     <Card elevation={2} sx={{ height: "100%" }}>
@@ -36,6 +40,7 @@ export default function SystemStatus({ status, onForceSync, forceSyncing }) {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           <Row label="Version" value={`v${version}`} />
           <Row label="Last Sync" value={formattedDate} />
+          <Row label="Next Sync" value={syncRunning ? "Running now…" : formattedNextSync} />
 
           <Divider />
 

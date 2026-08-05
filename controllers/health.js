@@ -99,6 +99,7 @@ exports.getStatus = (req, res) => {
       verifierRunning: global.isVerifierScriptRunning || false,
       subscriptionTypes: (global.subscriptionDetail || []).map((s) => s.subscription_type),
       rootFolderPath: process.env.ROOT_FOLDER_PATH || null,
+      nextScheduledSync: global.nextScheduledSync || null,
     });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });

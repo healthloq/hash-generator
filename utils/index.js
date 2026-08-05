@@ -417,7 +417,11 @@ exports.setDocumentSyncTimeout = () => {
 
 exports.setDocumentSyncInterval = () => {
   if (global.documentSyncInterval) clearInterval(global.documentSyncInterval);
+  const INTERVAL_MS = 5 * 60 * 1000;
+  global.nextScheduledSync = new Date(Date.now() + INTERVAL_MS);
   global.documentSyncInterval = setInterval(async () => {
+    // Update next-run timestamp at the start of each tick so status reflects the upcoming fire
+    global.nextScheduledSync = new Date(Date.now() + INTERVAL_MS);
     if (global.serviceEnabled === false) return;
     if (!global.isGetSyncDataProcessStart) {
       const subscriptionInfo = await getSubscriptionDetail();
@@ -428,7 +432,7 @@ exports.setDocumentSyncInterval = () => {
       is_running: global.isGetSyncDataProcessStart,
       doc_tool_version: packageJson.version,
     });
-  }, 5 * 60 * 1000); // 5-minute fallback heartbeat
+  }, INTERVAL_MS); // 5-minute fallback heartbeat
 };
 
 // ---------------------------------------------------------------------------
