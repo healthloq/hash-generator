@@ -28,7 +28,6 @@ export default function HealthDashboard() {
   const [loadingFailed,    setLoadingFailed]    = useState(true);
   const [loadingMetaCache, setLoadingMetaCache] = useState(true);
   const [refreshing,       setRefreshing]       = useState(false);
-  const [forceSyncing,     setForceSyncing]     = useState(false);
 
   const intervalRef = useRef(null);
 
@@ -97,13 +96,24 @@ export default function HealthDashboard() {
   // ── Actions ──────────────────────────────────────────────────────────────
 
   const handleForceSync = async () => {
-    setForceSyncing(true);
-    try {
-      await post("/api/health/force-sync");
-      await fetchStatus();
-    } finally {
-      setForceSyncing(false);
-    }
+    const res = await post("/api/health/force-sync");
+    if (res?.status !== "1") throw new Error(res?.message || "Force sync failed");
+    // Poll until the background sync finishes (up to ~60 s)
+    let polls = 0;
+    await new Promise((resolve) => {
+      const check = setInterval(async () => {
+        polls++;
+        const latest = await get("/api/health/status");
+        if (!latest?.syncRunning || polls >= 30) {
+          clearInterval(check);
+          if (latest) setStatus(latest);
+          fetchSummary();
+          fetchFailedFiles();
+          resolve();
+        }
+      }, 2000);
+    });
+    return res.message || "Sync complete";
   };
 
   const handleServiceAction = async (action) => {
@@ -148,7 +158,6 @@ export default function HealthDashboard() {
             status={status}
             loading={loadingStatus}
             onForceSync={handleForceSync}
-            forceSyncing={forceSyncing}
           />
           <ServiceControl
             serviceState={status?.serviceState}

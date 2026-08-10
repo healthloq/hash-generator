@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import {
-  Card, CardContent, Typography, Chip, Box, Button,
+  Alert, Card, CardContent, Typography, Chip, Box, Button,
   Divider, CircularProgress,
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -8,7 +8,10 @@ import SyncIcon from "@mui/icons-material/Sync";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
-export default function SystemStatus({ status, onForceSync, forceSyncing }) {
+export default function SystemStatus({ status, onForceSync }) {
+  const [syncing, setSyncing] = useState(false);
+  const [result, setResult] = useState(null);
+
   if (!status) return null;
 
   const { version, lastSyncedDate, syncRunning, verifierRunning, subscriptionTypes, rootFolderPath, nextScheduledSync } = status;
@@ -21,6 +24,19 @@ export default function SystemStatus({ status, onForceSync, forceSyncing }) {
     ? new Date(nextScheduledSync).toLocaleString()
     : "Unknown";
 
+  const handleForceSync = async () => {
+    setSyncing(true);
+    setResult(null);
+    try {
+      const msg = await onForceSync();
+      setResult({ type: "success", message: msg || "Sync complete" });
+    } catch (err) {
+      setResult({ type: "error", message: err.message || "Force sync failed" });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <Card elevation={2} sx={{ height: "100%" }}>
       <CardContent>
@@ -29,13 +45,19 @@ export default function SystemStatus({ status, onForceSync, forceSyncing }) {
           <Button
             size="small"
             variant="outlined"
-            startIcon={forceSyncing ? <CircularProgress size={14} /> : <RefreshIcon />}
-            onClick={onForceSync}
-            disabled={forceSyncing || syncRunning}
+            startIcon={syncing ? <CircularProgress size={14} /> : <RefreshIcon />}
+            onClick={handleForceSync}
+            disabled={syncing || syncRunning}
           >
-            {syncRunning ? "Syncing…" : "Force Sync"}
+            {syncing || syncRunning ? "Syncing…" : "Force Sync"}
           </Button>
         </Box>
+
+        {result && (
+          <Alert severity={result.type} onClose={() => setResult(null)} sx={{ mb: 2 }} size="small">
+            {result.message}
+          </Alert>
+        )}
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           <Row label="Version" value={`v${version}`} />
